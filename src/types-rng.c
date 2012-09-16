@@ -51,8 +51,9 @@ main(int argc, char **argv)
     sfmt_init_by_array(&rng_state[0], seed, SEED_LENGTH);
     for (unsigned i = JUMP_FACTOR; i < NGEN; i += JUMP_FACTOR) {
         fprintf(stderr, ":");
-        rng_state[i] = rng_state[i-JUMP_FACTOR];
-        SFMT_jump(&rng_state[i], JUMP_MANY);
+        rng_state_t tmp = rng_state[i-JUMP_FACTOR];
+        SFMT_jump(&tmp, JUMP_MANY);
+        rng_state[i] = tmp;
     }
 
     // Then generate in parallel:
