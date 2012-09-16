@@ -1,3 +1,4 @@
+*.pyc
 etc/config.inc
 bin
 build
