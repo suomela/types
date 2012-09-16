@@ -164,6 +164,7 @@ class Config:
         self.find_platform()
         self.find_cc()
         self.find_python()
+        self.find_sqlite()
         self.platform_features()
         self.compiler_flags()
         self.write_flags()
@@ -208,6 +209,14 @@ class Config:
         print "I will use Python interpreter %s, version %s." % (self.python, versionstring(self.pythonversion))
         print "You can override it with the --python flag."
         print
+
+    def find_sqlite(self):
+        print "Making sure that sqlite3 is installed..."
+        print
+        result = tryrun(['sqlite3', '-version'])
+        if result is None:
+            print "Error: could not find sqlite3."
+            sys.exit(1)
 
     def platform_features(self):
         print "Inspecting the platform..."
