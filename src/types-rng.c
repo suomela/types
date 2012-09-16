@@ -63,8 +63,9 @@ main(int argc, char **argv)
     for (unsigned i = 0; i < NGEN; i += JUMP_FACTOR) {
         for (unsigned j = i+1; j < i+JUMP_FACTOR && j < NGEN; j++) {
             fprintf(stderr, ".");
-            rng_state[j] = rng_state[j-1];
-            SFMT_jump(&rng_state[j], JUMP_ONE);
+            rng_state_t tmp = rng_state[j-1];
+            SFMT_jump(&tmp, JUMP_ONE);
+            rng_state[j] = tmp;
         }
     }
     fprintf(stderr, "\n");
