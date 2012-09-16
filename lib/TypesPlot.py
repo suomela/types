@@ -410,4 +410,5 @@ class Curve:
             ))
 
         doc = E.html(E.head(*headblocks), E.body(*bodyblocks))
-        f.write(etree.tostring(doc, method='html', doctype='<!DOCTYPE html>', pretty_print=True))
+        f.write('<!DOCTYPE html>\n')
+        f.write(etree.tostring(doc, method='html', pretty_print=True))
