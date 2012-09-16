@@ -5,18 +5,35 @@ This is a new version of the tool that is available at
 http://www.cs.helsinki.fi/jukka.suomela/types/
 
 
-Compilation
------------
+Downloading and compilation
+---------------------------
 
 Open a terminal and run:
 
+    git clone git://github.com/suomela/types.git
+    cd types
+    
     ./config
     make
     make check
 
 
-Installing Dependencies
+Installing dependencies
 -----------------------
+
+### Ubuntu 12.04
+
+Open a terminal and run:
+
+    sudo apt-get install git python-matplotlib sqlite3 libsqlite3-dev
+
+
+### Ubuntu 10.04
+
+Open a terminal and run:
+
+    sudo apt-get install git-core python-lxml python-matplotlib sqlite3 libsqlite3-dev
+
 
 ### OS X 10.8.1
 
