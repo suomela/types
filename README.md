@@ -136,3 +136,5 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Copyright (c) 2012, Jukka Suomela.
 
 Enjoy, use at your own risk.
+
+To contact the author, see http://www.cs.helsinki.fi/jukka.suomela/
