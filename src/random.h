@@ -1,6 +1,18 @@
 #ifndef TYPES_RANDOM_H
 #define TYPES_RANDOM_H
 
+/*
+    Note:
+    
+    Malloc and rng_state_read do not necessarily return properly aligned memory.
+    However, myrand_n will expect properly aligned memory.
+    Use a temporary variable as follows to solve the problem:
+    
+        rng_state_t *rng_state = rng_state_read(...);
+        rng_state_t s = rng_state[i];
+        myrand_n(&s, n);
+*/
+
 #include "io.h"
 #include "SFMT.h"
 #include <limits.h>

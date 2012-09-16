@@ -45,12 +45,13 @@ main(int argc, char **argv)
             w[i] = 0;
         }
         for (unsigned gen = 0; gen < NGEN; gen++) {
+            rng_state_t rng = rng_state[gen];
             unsigned v[n];
             for (unsigned i = 0; i < n; i++) {
                 v[i] = 0;
             }
             for (unsigned j = 0; j < ITER; j++) {
-                unsigned i = myrand_n(&rng_state[gen], n);
+                unsigned i = myrand_n(&rng, n);
                 assert(i < n);
                 v[i]++;
                 w[i]++;
@@ -58,6 +59,7 @@ main(int argc, char **argv)
             for (unsigned i = 0; i < n; i++) {
                 assert(v[i] > 0);
             }
+            rng_state[gen] = rng;
         }
         int expected = NGEN*ITER/n;
         for (unsigned i = 0; i < n; i++) {
