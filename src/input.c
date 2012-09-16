@@ -23,7 +23,7 @@ const input_t INPUT_NULL_C = {
 static void
 usage(void)
 {
-    short_version();
+    version();
     printf(
         "\n"
         "Computation.\n"

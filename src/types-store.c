@@ -33,7 +33,7 @@ typedef struct {
 _Noreturn static void
 usage(void)
 {
-    short_version();
+    version();
     printf(
         "\n"
         "Store results in the database.\n"

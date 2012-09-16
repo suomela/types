@@ -11,7 +11,7 @@ const char * const TOOL = "types-convert";
 _Noreturn static void
 usage(void)
 {
-    short_version();
+    version();
     printf(
         "\n"
         "Store plain text dataset files into the database.\n"

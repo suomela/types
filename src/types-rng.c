@@ -16,7 +16,7 @@ const char * const TOOL = "types-rng";
 _Noreturn static void
 usage(void)
 {
-    short_version();
+    version();
     printf(
         "\n"
         "Generate the initial state for the random number generator.\n"

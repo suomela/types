@@ -9,7 +9,7 @@ const char * const TOOL = "types-query";
 _Noreturn static void
 usage(void)
 {
-    short_version();
+    version();
     printf(
         "\n"
         "Read datasets from the database.\n"
