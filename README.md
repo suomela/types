@@ -6,7 +6,7 @@ http://www.cs.helsinki.fi/jukka.suomela/types/
 
 
 Compilation
-===========
+-----------
 
 Open a terminal and run:
 
@@ -16,10 +16,9 @@ Open a terminal and run:
 
 
 Installing Dependencies
-=======================
+-----------------------
 
-OS X 10.8.1
------------
+### OS X 10.8.1
 
 Install Xcode command line tools:
 
@@ -94,10 +93,9 @@ For cluster environments, you can also install *Gnu Parallel*:
 
 
 License
-=======
+-------
 
-SFMT and SFMTJump
------------------
+### SFMT and SFMTJump
 
 Copyright (c) 2006,2007 Mutsuo Saito, Makoto Matsumoto and Hiroshima
 University.
@@ -109,16 +107,16 @@ Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
 
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above
-      copyright notice, this list of conditions and the following
-      disclaimer in the documentation and/or other materials provided
-      with the distribution.
-    * Neither the names of Hiroshima University, The University of
-      Tokyo nor the names of its contributors may be used to endorse
-      or promote products derived from this software without specific
-      prior written permission.
+* Redistributions of source code must retain the above copyright
+  notice, this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above
+  copyright notice, this list of conditions and the following
+  disclaimer in the documentation and/or other materials provided
+  with the distribution.
+* Neither the names of Hiroshima University, The University of
+  Tokyo nor the names of its contributors may be used to endorse
+  or promote products derived from this software without specific
+  prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -133,8 +131,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-Other parts
------------
+### Other parts
 
 Copyright (c) 2012, Jukka Suomela.
 
