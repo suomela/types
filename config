@@ -1,0 +1,337 @@
+#!/usr/bin/env python
+
+import optparse
+import os
+import os.path
+import re
+import subprocess
+import sys
+
+MEXP = 19937
+
+FLAGS_RE = re.compile('flags\s*:')
+
+def tryrun2(cmd):
+    try:
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    except:
+        return None
+    output, error = p.communicate()
+    if p.returncode:
+        return None
+    else:
+        return (output, error)
+        
+def tryrun(cmd):
+    r = tryrun2(cmd)
+    if r is None:
+        return None
+    output, error = r
+    if error != '':
+        return None
+    else:
+        return output
+
+def tryrun_get_err(cmd):
+    r = tryrun2(cmd)
+    if r is None:
+        return None
+    output, error = r
+    return error
+
+def versionstring(version):
+    return '.'.join([str(v) for v in version])
+
+def test_cc(cc):
+    BAD = (None, False)
+    version = tryrun([cc, '-dumpversion'])
+    if version is None:
+        return BAD
+    version = version.rstrip(' \n\r').split('.')
+    for v in version:
+        if not v.isdigit():
+            return BAD
+    version = [ int(v) for v in version ]
+    ok = True
+    return (version, ok)
+
+PYTHON_TEST = 'src/test.py'
+
+def test_python(python):
+    BAD = (None, False)
+    version = tryrun_get_err([python, '--version'])
+    if version is None:
+        return BAD
+    version = version.rstrip(' \n\r')
+    if not version.startswith('Python '):
+        return BAD
+    version = version.split(' ')[1].split('.')
+    for v in version:
+        if not v.isdigit():
+            return BAD
+    version = [ int(v) for v in version ]
+    ok = tryrun([python, PYTHON_TEST]) == 'OK\n'
+    return (version, ok)
+
+class Tool:
+    def __init__(self, short, long, re, hook):
+        self.short = short
+        self.long = long
+        self.re = re
+        self.hook = hook
+        self.msg = None
+
+    def report(self, full, version, ok):
+        okstring = "looks good" if ok else "test failed"
+        if version is None:
+            toolstring = "?"
+        else:
+            toolstring = "%s %s" % (self.short, versionstring(version))
+        print "- %-30s %-20s %s" % (full, toolstring, okstring)
+
+    def find_best(self):
+        print "Trying to find %s..." % self.long
+        if self.msg is not None:
+            print self.msg
+        print
+        tool = None
+        toolversion = None
+        pathseen = set()
+        for d in os.environ['PATH'].split(os.pathsep):
+            if d in pathseen:
+                continue
+            pathseen.add(d)
+            if os.path.isdir(d):
+                for f in sorted(os.listdir(d)):
+                    if self.re.match(f):
+                        full = os.path.join(d, f)
+                        (version, ok) = self.hook(full)
+                        self.report(full, version, ok)
+                        if ok and (toolversion is None or toolversion < version):
+                            tool = full
+                            toolversion = version
+        print
+        if tool is None:
+            print "Error: could not find %s." % self.long
+            sys.exit(1)
+        return (tool, toolversion)
+
+    def find_tool(self, hint):
+        tool = None
+        toolversion = None
+        if hint is not None:
+            print "Testing %s..." % hint
+            if self.msg is not None:
+                print self.msg
+            print
+            (version, ok) = self.hook(hint)
+            self.report(hint, version, ok)
+            print
+            if ok:
+                return (hint, version)
+        if tool is None:
+            return self.find_best()
+
+GCC_RE = re.compile('gcc(-[0-9]+(\.[0-9]+)+)?\Z')
+PYTHON_RE = re.compile('python(-?2+(\.[0-9]+)+)?\Z')
+
+GCC = Tool('gcc', 'a C compiler', GCC_RE, test_cc)
+PYTHON = Tool('python', 'a Python interpreter', PYTHON_RE, test_python)
+PYTHON.msg = "I will try to run the test script %s" % PYTHON_TEST
+
+
+class Config:
+    def __init__(self):
+        self.cc = None
+        self.ccversion = None
+        self.python = None
+        self.cflags_prod = []
+        self.cflags_debug = []
+        self.cflags_dep = []
+        self.cppflags_prod = []
+        self.cppflags_debug = []
+        self.cppflags_dep = []
+        self.ldflags_prod = []
+        self.ldflags_debug = []
+        self.popcnt = False
+        self.sse2 = False
+        self.disable_avx = False
+        self.openmp = True
+
+    def do_all(self):
+        self.get_args()
+        print
+        self.find_platform()
+        self.find_cc()
+        self.find_python()
+        self.platform_features()
+        self.compiler_flags()
+        self.write_flags()
+
+    def get_args(self):
+        parser = optparse.OptionParser(description='Configure the system.')
+        parser.add_option('--cc', metavar='X', dest='cc',
+                          help='Which C compiler to use')
+        parser.add_option('--python', metavar='X', dest='python',
+                          help='Which Python interpreter to use (full path required)')
+        parser.add_option('--enable-openmp', dest='enable_openmp',
+                          action='store_true', default=False,
+                          help='Use OpenMP even if it looks risky')
+        parser.add_option('--disable-openmp', dest='disable_openmp',
+                          action='store_true', default=False,
+                          help='Do not try to use OpenMP')
+        (options, args) = parser.parse_args()
+        self.args = options
+
+    def find_platform(self):
+        self.osx = False
+        self.linux = False
+        if sys.platform.startswith('darwin'):
+            print "This seems to be a Mac OS X system."
+            self.osx = True
+        elif sys.platform.startswith('linux'):
+            print "This seems to be a Linux system."
+            self.linux = True
+        else:
+            print "I do not recognise platform '%s'." % sys.platform
+            print "I will try to use reasonable default values."
+        print
+
+    def find_cc(self):
+        (self.cc, self.ccversion) = GCC.find_tool(self.args.cc)
+        print "I will use %s, which seems to be GCC version %s." % (self.cc, versionstring(self.ccversion))
+        print "You can override it with the --cc flag."
+        print
+
+    def find_python(self):
+        (self.python, self.pythonversion) = PYTHON.find_tool(self.args.python)
+        print "I will use Python interpreter %s, version %s." % (self.python, versionstring(self.pythonversion))
+        print "You can override it with the --python flag."
+        print
+
+    def platform_features(self):
+        print "Inspecting the platform..."
+        print
+        if self.linux and os.path.isfile('/proc/cpuinfo'):
+            print "- reading processor features..."
+            print
+            with open('/proc/cpuinfo') as f:
+                for l in f:
+                    if FLAGS_RE.match(l):
+                        flags = set(l.split(':')[1].split())
+                        if 'sse2' in flags:
+                            self.sse2 = True
+                        if 'popcnt' in flags:
+                            self.popcnt = True
+        elif self.osx:
+            # all Intel Macs should have SSE2
+            self.sse2 = True
+
+        if self.osx:
+            print "- OS X assembler has difficulties with AVX instructions, disabling"
+            print
+            self.disable_avx = True
+
+        if self.args.disable_openmp:
+            print "- not using OpenMP as requested"
+            print
+            self.openmp = False
+        elif self.osx and self.ccversion < [4,3,0]:
+            print "- most likely this compiler does not work reliably with OpenMP"
+            print "  (consider installing gcc-4.7 from Homebrew)"
+            print
+            self.openmp = False
+        elif self.ccversion < [4,2,0]:
+            print "- the C compiler is too old to support OpenMP"
+            print
+            self.openmp = False
+        if self.args.enable_openmp and self.openmp == False:
+            print "- using OpenMP as requested"
+            print
+            self.openmp = True
+
+        features = []
+        features.append("OpenMP" if self.openmp else "no OpenMP")
+        features.append("SSE2" if self.sse2 else "no SSE2")
+        features.append("POPCNT" if self.popcnt else "no POPCNT")
+        if self.disable_avx:
+            features.append("avoiding AVX")
+
+        print "- summary:", ', '.join(features)
+        print
+
+
+    def compiler_flags(self):
+        for cppflags in (self.cppflags_prod, self.cppflags_debug, self.cppflags_dep):
+            cppflags.append("-DSFMT_MEXP=%s" % MEXP)
+
+        self.cppflags_prod.append("-DNDEBUG")
+
+        if self.ccversion >= [4,2,4]:
+            self.cflags_prod.append("-march=native")
+            if self.disable_avx:
+                self.cflags_prod.append("-mno-avx")
+
+        if self.openmp:
+            self.cflags_prod.append("-fopenmp")
+            self.ldflags_prod.append("-fopenmp")
+
+        if self.sse2:
+            self.cppflags_prod.append("-DHAVE_SSE2")
+
+        if self.popcnt:
+            self.cppflags_prod.append("-DUSE_BUILTIN_POPCOUNT")
+
+        self.cflags_prod.append("-O3")
+
+        if self.ccversion >= [4,7,0]:
+            for cflags in (self.cflags_prod, self.cflags_debug, self.cflags_dep):
+                cflags.extend(("-std=c11", "-g", "-pedantic",
+                               "-Werror", "-Wall", "-Wextra",
+                               "-Wformat=2", "-Winit-self", "-Wswitch-enum", "-Wstrict-aliasing",
+                               "-Wundef", "-Wshadow", "-Wpointer-arith", "-Wbad-function-cast",
+                               "-Wcast-qual", "-Wcast-align", "-Wwrite-strings", "-Wstrict-prototypes",
+                               "-Wold-style-definition", "-Wmissing-prototypes", "-Wmissing-declarations",
+                               "-Wredundant-decls", "-Wnested-externs", "-Wdisabled-optimization",
+                               "-Wno-maybe-uninitialized", "-Wno-sign-compare"))
+            self.cflags_prod.append("-Wno-unused")
+            self.cflags_debug.append("-Wunused-macros")
+        else:
+            for cflags in (self.cflags_prod, self.cflags_debug, self.cflags_dep):
+                cflags.extend(("-std=c99", "-g", "-Wall", "-Wextra", "-Wno-unused", "-Wno-sign-compare"))
+            for cppflags in (self.cppflags_prod, self.cppflags_debug, self.cppflags_dep):
+                cppflags.append("-D_Noreturn='__attribute__((noreturn))'")
+
+        if not self.openmp:
+            self.cflags_prod.append("-Wno-unknown-pragmas")
+        self.cflags_debug.append("-Wno-unknown-pragmas")
+
+
+    def write_flags(self):
+        print "Writing configuration..."
+        print
+        with open('etc/config.inc', 'w') as f:
+            def setval(what, val):
+                l = "%s = %s" % (what, val)
+                print l
+                f.write(l)
+                f.write("\n")
+            def setlist(what, l):
+                setval(what, ' '.join(l))
+
+            setval('PYTHON', self.python)
+            setval('CC', self.cc)
+            setlist('CPPFLAGS',  self.cppflags_prod)
+            setlist('CPPFLAGSD', self.cppflags_debug)
+            setlist('CPPFLAGSM', self.cppflags_dep)
+            setlist('CFLAGS',    self.cflags_prod)
+            setlist('CFLAGSD',   self.cflags_debug)
+            setlist('CFLAGSM',   self.cflags_dep)
+            setlist('LDFLAGS',   self.ldflags_prod)
+            setlist('LDFLAGSD',  self.ldflags_debug)
+            setlist('LDLIBSDB',  ['-lsqlite3'])
+            setval('MEXP', str(MEXP))
+
+        print
+
+Config().do_all()

@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+
+import subprocess
+import sys
+
+# Command line parameters
+dummy, mexp, calc_jump, characteristic_file, target_file = sys.argv
+
+# Each generator can generate at lest SEP random numbers without overlaps
+SEP = 10L**60
+
+# Generate polynomials for both 1*SEP and FACTOR*SEP jumps
+FACTOR = 100
+
+def gen_jump(step):
+    result = subprocess.check_output([calc_jump, str(step), characteristic_file])
+    head, poly, empty = result.split("\n")
+    assert head == 'jump polynomial:'
+    assert empty == ''
+    return poly
+
+jump_one = gen_jump(SEP)
+jump_many = gen_jump(FACTOR * SEP)
+
+with open(target_file, 'w') as f:
+    f.write('MEXP = %s\n' % mexp)
+    f.write('JUMP_FACTOR = %d\n' % FACTOR)
+    f.write('JUMP_ONE = %s\n' % repr(jump_one))
+    f.write('JUMP_MANY = %s\n' % repr(jump_many))

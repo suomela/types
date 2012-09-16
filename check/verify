@@ -1,0 +1,15 @@
+#!/bin/sh
+
+prefix="$1"
+
+sqlite3 tmp/types.sqlite "SELECT collectioncode,statcode,total,below,above FROM check_expected_p WHERE corpuscode='check-$prefix' AND datasetcode='example' ORDER BY collectioncode,statcode,total" > tmp/expected || exit 1
+
+sqlite3 tmp/types.sqlite "SELECT collectioncode,statcode,total,below,above FROM result_p WHERE corpuscode='check-$prefix' AND datasetcode='example' ORDER BY collectioncode,statcode,total" > tmp/got || exit 1
+
+cmp tmp/expected tmp/got || exit 1
+
+sqlite3 tmp/types.sqlite "SELECT statcode,level,side,x,y FROM check_expected_curve WHERE corpuscode='check-$prefix' AND datasetcode='example' ORDER BY statcode,level,side,x" > tmp/expected || exit 1
+
+sqlite3 tmp/types.sqlite "SELECT statcode,level,side,x,y FROM result_curve JOIN result_curve_point ON result_curve.id = result_curve_point.curveid WHERE corpuscode='check-$prefix' AND datasetcode='example' ORDER BY statcode,level,side,x" > tmp/got || exit 1
+
+cmp tmp/expected tmp/got || exit 1

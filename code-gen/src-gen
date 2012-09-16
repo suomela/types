@@ -1,0 +1,869 @@
+#!/usr/bin/env python
+
+import struct
+import sys
+
+DIR = "src"
+
+#--- Utility functions ---
+
+def dd(*l):
+    result = dict()
+    for x in l:
+        result.update(x.d)
+    return result
+
+def indent(w, i):
+    prefix = "    " * i;
+    def w2(msg):
+        w("".join([prefix + line for line in msg.splitlines(True)]))
+    return w2
+
+def gen_list(w, l, pat1, pat2):
+    for a in l:
+        w(pat1 % a.d)
+        w("\n")
+    w(pat2 % { "count": len(l) })
+    w("\n\n")
+
+def any_array(width, l):
+    r = []
+    tail = l
+    while len(tail) > 0:
+        head, tail = tail[:width], tail[width:]
+        r.append(", ".join(head))
+    return ",\n    ".join(r)
+
+def char_array(s):
+    return any_array(12, ["'%s'" % i for i in s] + ["0"])
+
+def uint32_array(l):
+    return any_array(6, ["0x%08x" % i for i in l])
+
+#--------
+
+def setup_all():
+    for c in ("none", "curves", "permtest"):
+        setup_class(Class(c))
+    
+    Y_TYPE = Y("type", True)
+    Y_HAPAX = Y("hapax", False)
+    Y_TOKEN = Y("token", True)
+
+    X_WORD = X("word", ["WITH_WORD_COUNT"])
+    X_TOKEN = X("token", [])
+
+    for x in (X_WORD, X_TOKEN):
+        setup_x(x)
+    for y in (Y_TYPE, Y_HAPAX, Y_TOKEN):
+        setup_y(y)
+    for y in (Y_TYPE, Y_HAPAX):
+        for x in (X_WORD, X_TOKEN):
+            setup_yx(y, x)
+    setup_yx(Y_TOKEN, X_WORD)
+
+    YY_TYPE = YY((Y_TYPE,), "type", "vector", ["WITH_MATRIX_BINARY"])
+    YY_HAPAX = YY((Y_HAPAX,), "hapax", "zom", ["WITH_MATRIX_ZOM"])
+    YY_TYPE_HAPAX = YY((Y_TYPE, Y_HAPAX), "typehapax", "zom", ["WITH_MATRIX_ZOM"])
+    YY_TOKEN = YY((Y_TOKEN,), "token", None, [])
+
+    XX_TOKEN = XX((X_TOKEN,), "t", False)
+    XX_WORD = XX((X_WORD,), "w", False)
+    XX_WORD_TOKEN = XX((X_WORD, X_TOKEN), "wt", True)
+
+    V_DENSE = V("dense")
+    V_SPARSE = V("sparse")
+    V_NORMAL = V(None)
+
+    for yy in (YY_TYPE, YY_HAPAX, YY_TYPE_HAPAX):
+        for xx in (XX_TOKEN, XX_WORD, XX_WORD_TOKEN):
+            setup_variants(yy, xx, [V_DENSE, V_SPARSE])
+    setup_variants(YY_TOKEN, XX_WORD, [V_NORMAL])
+
+def record(w, y, x):
+    # Store new per-slot bounds based on per-gap bounds.
+    # Example:
+    # - threshold is 0, 10, 20, etc.
+    # - "xslot" is 2
+    # Then:
+    # - "b_prev_gap" is the bounds for the gap 10..20
+    # - "b_this_gap is the bounds for the gap 20..30
+    # - we update the bounds for the slot 20.
+    w('''\
+    {
+''')
+    if y.nondecreasing:
+        w('''\
+        assert(b_prev_gap_%(y)s_%(x)s.lower <= b_this_gap_%(y)s_%(x)s.lower);
+        assert(b_prev_gap_%(y)s_%(x)s.upper <= b_this_gap_%(y)s_%(x)s.upper);
+        const unsigned lower = b_prev_gap_%(y)s_%(x)s.lower;
+        const unsigned upper = b_this_gap_%(y)s_%(x)s.upper;
+''' % dd(y, x))
+    else:
+        w('''\
+        const unsigned lower = MIN(b_prev_gap_%(y)s_%(x)s.lower, b_this_gap_%(y)s_%(x)s.lower);
+        const unsigned upper = MAX(b_prev_gap_%(y)s_%(x)s.upper, b_this_gap_%(y)s_%(x)s.upper);
+''' % dd(y, x))
+    w('''\
+        const unsigned yslot_lower = get_yslot(pgrid, Y%(Y)s, lower);
+        const unsigned yslot_upper = get_yslot_up(pgrid, Y%(Y)s, upper);
+        const unsigned index_lower = slot(pgrid, Y%(Y)s, X%(X)s, yslot_lower, xslot_%(x)s);
+        const unsigned index_upper = slot(pgrid, Y%(Y)s, X%(X)s, yslot_upper, xslot_%(x)s);
+        pyxstat->yx[YX_%(Y)s_%(X)s][index_lower].lower++;
+        pyxstat->yx[YX_%(Y)s_%(X)s][index_upper].upper++;
+    }
+''' % dd(y, x))
+
+def gen_summarise_collection_var(f, var):
+    w = f.cw
+    xx = var.alg.xx
+    yy = var.alg.yy
+    
+    w('''\
+static void
+summarise_collection_%(yy)s_%(xx)s%(maybev)s(
+    const input_t * restrict pinput,
+    collection_t * restrict pcoll,
+    const unsigned c)
+{
+''' % var.d)
+
+    if yy.temp is not None:
+        w('''\
+    %(temp)s_t temp[pinput->types.nvector];
+    %(temp)s_clear(temp, pinput->types.nvector);
+''' % var.d)
+
+    for x in xx.x:
+        w('''\
+    unsigned xaccum_%(x)s = 0;
+''' % x.d)
+
+    for y in yy.y:
+        w('''\
+    unsigned yaccum_%(y)s = 0;
+''' % y.d)
+
+    w('''\
+    for (unsigned id = 0; id < pinput->types.nrow; id++) {
+        if (matrix_element_b(&pinput->collections, id, c)) {
+            calculate_bounds_%(yy)s%(maybev)s(
+                pinput, id%(maybetemp)s, %(yaccumlist)s
+            );
+''' % var.d)
+    for x in xx.x:
+        w('''\
+            xaccum_%(x)s += %(getsamples)s;
+''' % { "x": x.key, "getsamples": xx.get_samples(x)})
+    w('''\
+        }
+    }
+''')
+
+    for x in xx.x:
+        w('''\
+    pcoll[c].x.x[X%(X)s] = xaccum_%(x)s;
+''' % x.d)
+
+    for y in yy.y:
+        w('''\
+    pcoll[c].y.y[Y%(Y)s] = yaccum_%(y)s;
+''' % y.d)
+
+    w('''\
+}
+
+''')
+
+def gen_calculate_permtest_one(f, var):
+    w = f.cw
+    xx = var.alg.xx
+    yy = var.alg.yy
+    
+    w('''\
+static void
+calculate_permtest_%(yy)s_%(xx)s%(maybev)s_one(
+    const input_t * restrict pinput,
+    const collection_t * restrict pcoll,
+    const yxstat_t * restrict pyxstat,
+    const unsigned * restrict sample_order)
+{
+''' % var.d)
+
+    w('''\
+    for (unsigned c = 0; c < pinput->collections.ncol; c++) {
+''')
+    for x in xx.x:
+        w('''\
+        if (pcoll[c].x.x[X%(X)s] == 0) {
+''' % x.d)
+        for y in yy.y:
+            w('''\
+            pyxstat->yx[YX_%(Y)s_%(X)s][c].lower++;
+            pyxstat->yx[YX_%(Y)s_%(X)s][c].upper++;
+''' % dd(y, x))
+        w('''\
+        }
+''')
+    w('''\
+    }
+''')
+
+    if yy.temp is not None:
+        w('''\
+    %(temp)s_t temp[pinput->types.nvector];
+    %(temp)s_clear(temp, pinput->types.nvector);
+''' % var.d)
+
+    for x in xx.x:
+        w('''\
+    unsigned xaccum_%(x)s = 0;
+''' % x.d)
+
+    for y in yy.y:
+        w('''\
+    unsigned yaccum_%(y)s = 0;
+''' % y.d)
+
+    w('''\
+    for (unsigned i = 0; i < pinput->types.nrow; i++) {
+        const unsigned id = sample_order[i];
+        const %(yy)s_bounds_t b_sample = calculate_bounds_%(yy)s%(maybev)s(
+            pinput, id%(maybetemp)s, %(yaccumlist)s
+        );
+''' % var.d)
+
+    for x in xx.x:
+        w('''\
+        const unsigned xprev_%(x)s = xaccum_%(x)s;
+        xaccum_%(x)s += %(getsamples)s;
+''' % { "x": x.key, "getsamples": xx.get_samples(x)})
+
+    w('''\
+        for (unsigned c = 0; c < pinput->collections.ncol; c++) {
+''')
+    for x in xx.x:
+        w('''\
+            if (xprev_%(x)s < pcoll[c].x.x[X%(X)s] && pcoll[c].x.x[X%(X)s] <= xaccum_%(x)s) {
+''' % x.d)
+        for y in yy.y:
+            w('''\
+                if (b_sample.y%(y)s.lower <= pcoll[c].y.y[Y%(Y)s]) {
+                    pyxstat->yx[YX_%(Y)s_%(X)s][c].lower++;
+                }
+                if (b_sample.y%(y)s.upper >= pcoll[c].y.y[Y%(Y)s]) {
+                    pyxstat->yx[YX_%(Y)s_%(X)s][c].upper++;
+                }
+''' % dd(y, x))
+        w('''\
+            }
+''')
+    w('''\
+        }
+    }
+}
+
+''')
+
+def gen_calculate_curves_one(f, var):
+    w = f.cw
+    xx = var.alg.xx
+    yy = var.alg.yy
+    
+    w('''\
+static void
+calculate_curves_%(yy)s_%(xx)s%(maybev)s_one(
+    const input_t * restrict pinput,
+    const grid_t * restrict pgrid,
+    const yxstat_t * restrict pyxstat,
+    const unsigned * restrict sample_order)
+{
+''' % var.d)
+
+    if yy.temp is not None:
+        w('''\
+    %(temp)s_t temp[pinput->types.nvector];
+    %(temp)s_clear(temp, pinput->types.nvector);
+''' % var.d)
+
+    for x in xx.x:
+        w('''\
+    unsigned xaccum_%(x)s = 0;
+    unsigned xslot_%(x)s = 0;
+''' % x.d)
+
+    for y in yy.y:
+        w('''\
+    unsigned yaccum_%(y)s = 0;
+''' % y.d)
+
+    for x in xx.x:
+        for y in yy.y:
+            w('''\
+    bounds_t b_prev_gap_%(y)s_%(x)s = BOUNDS_NULL;
+    bounds_t b_this_gap_%(y)s_%(x)s = BOUNDS_NULL;
+''' % dd(y, x))
+
+    w('''\
+    for (unsigned i = 0; i < pinput->types.nrow; i++) {
+        const unsigned id = sample_order[i];
+        const %(yy)s_bounds_t b_sample = calculate_bounds_%(yy)s%(maybev)s(
+            pinput, id%(maybetemp)s, %(yaccumlist)s
+        );
+''' % var.d)
+
+    for x in xx.x:
+        w('''\
+
+        xaccum_%(x)s += %(getsamples)s;
+''' % { "x": x.key, "getsamples": xx.get_samples(x)})
+        for y in yy.y:
+            if y.nondecreasing:
+                w('''\
+        assert(b_this_gap_%(y)s_%(x)s.lower <= b_sample.y%(y)s.lower);
+        assert(b_sample.y%(y)s.lower <= b_this_gap_%(y)s_%(x)s.upper);
+        assert(b_this_gap_%(y)s_%(x)s.upper <= b_sample.y%(y)s.upper);
+        b_this_gap_%(y)s_%(x)s.upper = b_sample.y%(y)s.upper;
+''' % dd(y, x))
+            else:
+                w('''\
+        b_this_gap_%(y)s_%(x)s.lower = MIN(b_sample.y%(y)s.lower, b_this_gap_%(y)s_%(x)s.lower);
+        b_this_gap_%(y)s_%(x)s.upper = MAX(b_sample.y%(y)s.upper, b_this_gap_%(y)s_%(x)s.upper);
+''' % dd(y, x))
+
+        w('''\
+        while (xaccum_%(x)s >= get_xthreshold(pgrid, X%(X)s, xslot_%(x)s+1)) {
+''' % x.d)
+        for y in yy.y:
+            record(indent(w, 2), y, x)
+            w('''\
+            b_prev_gap_%(y)s_%(x)s = b_this_gap_%(y)s_%(x)s;
+            b_this_gap_%(y)s_%(x)s = b_sample.y%(y)s;
+''' % dd(y, x))
+        w('''\
+            xslot_%(x)s++;
+        }
+        if (xaccum_%(x)s == get_xthreshold(pgrid, X%(X)s, xslot_%(x)s)) {
+''' % x.d)
+        for y in yy.y:
+            w('''\
+            b_this_gap_%(y)s_%(x)s.lower = yaccum_%(y)s;
+            b_this_gap_%(y)s_%(x)s.upper = yaccum_%(y)s;
+''' % dd(y, x))
+        w('''\
+        }
+''')
+
+    w('''\
+    }
+''')
+
+    for x in xx.x:
+        w('''\
+    assert(xslot_%(x)s == pgrid->xslots.x[X%(X)s] - 1);
+''' % x.d)
+        for y in yy.y:
+            record(w, y, x)
+
+
+    w('''\
+}
+
+''')
+
+def gen_calculate_x_var(f, var, what, type1, var1):
+    f.cw('''\
+static void
+calculate_%(what)s_%(yy)s_%(xx)s%(maybev)s(
+    const input_t * restrict pinput,
+    const rng_state_t * restrict rng_state_init,
+    %(type1)s %(var1)s,
+    const yxstat_t * restrict pyxstat,
+    unsigned part)
+{
+    unsigned sample_order[pinput->types.nrow];
+    unsigned from = get_iteration(pinput->iterations, part);
+    unsigned to = get_iteration(pinput->iterations, part + 1);
+    rng_state_t rng_state = rng_state_init[part];
+    for (unsigned iteration = from; iteration < to; iteration++) {
+        rand_permutation(&rng_state, pinput->types.nrow, sample_order);
+        calculate_%(what)s_%(yy)s_%(xx)s%(maybev)s_one(pinput, %(var1)s, pyxstat, sample_order);
+    }
+}
+
+''' % dict(var.d, what=what, type1=type1, var1=var1))
+
+def gen_calculate_permtest_var(f, var):
+    gen_calculate_x_var(f, var, "permtest", "const collection_t * restrict", "pcoll")
+
+def gen_calculate_curves_var(f, var):
+    gen_calculate_x_var(f, var, "curves", "const grid_t * restrict", "pgrid")
+
+def gen_array(f):
+    for v in ("sparse", "dense"):
+        f.cw('''\
+const algv_t ALG_%(V)s[NALG] = {
+''' % { "V": v.upper() }  )
+        for alg in ALGORITHMS:
+            maybev1 = ("_" + v if alg.has_variants else "")
+            maybev2 = (v if alg.has_variants else "")
+            f.cw('''\
+    {
+        summarise_collection_%(yy)s_%(xx)s%(maybev1)s,
+        calculate_permtest_%(yy)s_%(xx)s%(maybev1)s,
+        calculate_curves_%(yy)s_%(xx)s%(maybev1)s,
+        "%(yy)s-%(xx)s", "%(maybev2)s"
+    },
+''' % dict(alg.d.items(), maybev1=maybev1, maybev2=maybev2))
+        f.cw('''\
+};
+
+''')
+
+    f.cw('''\
+const alg_t ALG[NALG] = {
+''')
+    for alg in ALGORITHMS:
+        f.cw('''\
+    {
+        %(featurelist)s,
+        { { %(outputlist)s } }
+    },
+''' % alg.d)
+    f.cw('''\
+};
+
+''')
+
+def gen_jump_h(f):
+    import JumpTable
+    d = {
+        "JUMP_FACTOR": JumpTable.JUMP_FACTOR,
+        "MEXP": JumpTable.MEXP,
+    }
+    
+    f.hw('''\
+#define JUMP_FACTOR %(JUMP_FACTOR)d
+
+extern const char JUMP_ONE[];
+extern const char JUMP_MANY[];
+
+''' % d)
+
+def gen_jump_c(f):
+    import JumpTable
+    d = {
+        "MEXP": JumpTable.MEXP,
+        "JUMP_ONE": char_array(JumpTable.JUMP_ONE),
+        "JUMP_MANY": char_array(JumpTable.JUMP_MANY),
+    }
+    
+    f.cw('''\
+
+#if !defined(SFMT_MEXP)
+#error "SFMT_MEXP is not defined"
+#endif
+
+#if SFMT_MEXP != %(MEXP)d
+#error "this file assumes SFMT_MEXT = %(MEXP)d"
+#endif
+
+const char JUMP_ONE[] = {
+    %(JUMP_ONE)s
+};
+const char JUMP_MANY[] = {
+    %(JUMP_MANY)s
+};
+''' % d)
+
+def get_seed():
+    FORMAT = '<L'
+    LEN = struct.calcsize(FORMAT)
+    assert LEN == 4
+    seed = []
+    with open('etc/seed') as f:
+        while True:
+            s = f.read(LEN)
+            if s == '':
+                break
+            seed.append(struct.unpack(FORMAT, s))
+    return {
+        "SEED_LENGTH": len(seed),
+        "SEED": uint32_array(seed),
+    }
+
+def gen_seed_h(f):
+    d = get_seed()
+
+    f.hw('''\
+#include <stdint.h>
+
+#define SEED_LENGTH %(SEED_LENGTH)d
+
+extern const uint32_t SEED[SEED_LENGTH];
+
+''' % d)
+
+def gen_seed_c(f):
+    d = get_seed()
+
+    f.cw('''\
+
+const uint32_t SEED[SEED_LENGTH] = {
+    %(SEED)s
+};
+''' % d)
+
+def gen_yx_h(f):
+    f.hw('''\
+#include <stdbool.h>
+#include "io.h"
+
+''')
+
+    gen_list(f.hw, CLASS_LIST, "#define CLASS_%(CLASS)s %(index)d", "#define NCLASS %(count)d")
+    gen_list(f.hw, X_LIST, "#define X%(X)s %(index)d", "#define NX %(count)d")
+    gen_list(f.hw, Y_LIST, "#define Y%(Y)s %(index)d", "#define NY %(count)d")
+    gen_list(f.hw, YX_LIST, "#define YX_%(Y)s_%(X)s %(index)d", "#define NYX %(count)d")
+
+    d = {
+        "forx":  ", ".join(["a" for x in X_LIST]),
+        "fory":  ", ".join(["a" for y in Y_LIST]),
+        "foryx": ", ".join(["a" for yx in YX_LIST]),
+    }
+
+    f.hw('''\
+typedef struct {
+    unsigned y;
+    unsigned x;
+    const char * label;
+    const char * cswitch;
+    const char * pswitch;
+} yxmap_t;
+
+extern const yxmap_t YX[NYX];
+
+typedef struct { unsigned x[NX];   } x_t;
+typedef struct { unsigned y[NY];   } y_t;
+typedef struct { unsigned yx[NYX]; } yx_t;
+typedef struct { double   x[NX];   } xd_t;
+typedef struct { double   y[NY];   } yd_t;
+typedef struct { bool     yx[NYX]; } yxbool_t;
+
+#define FOREACH_X(a) %(forx)s
+#define FOREACH_Y(a) %(forx)s
+#define FOREACH_YX(a) %(forx)s
+
+#define X_NULL      { { FOREACH_X(0) } }
+#define Y_NULL      { { FOREACH_Y(0) } }
+#define YX_NULL     { { FOREACH_YX(0) } }
+#define XD_NULL     { { FOREACH_X(0.0) } }
+#define YD_NULL     { { FOREACH_Y(0.0) } }
+#define YXBOOL_NULL { { FOREACH_YX(false) } }
+
+extern const x_t X_NULL_C;
+extern const y_t Y_NULL_C;
+extern const yx_t YX_NULL_C;
+
+''' % d)
+
+
+def gen_yx_c(f):
+    f.cw('''\
+const yxmap_t YX[NYX] = {
+''')
+    for yx in YX_LIST:
+        f.cw('''\
+    { Y%(Y)s, X%(X)s, "%(y)s-%(x)s", "--%(y)s-%(x)s", "--p-%(y)s-%(x)s" },
+''' % yx.d)
+    f.cw('''\
+};
+
+const x_t X_NULL_C = X_NULL;
+const y_t Y_NULL_C = Y_NULL;
+const yx_t YX_NULL_C = YX_NULL;
+''')
+
+def gen_alg_h(f):
+    gen_list(f.hw, ALGORITHMS, "#define ALG_%(YY)s_%(XX)s %(index)d", "#define NALG %(count)d")
+
+def gen_calculate_h(f):
+    f.hw('''\
+#include "collections.h"
+#include "curves.h"
+#include "input.h"
+#include "random.h"
+#include "stat.h"
+
+typedef void (*summarise_collection_t)(const input_t * restrict pinput,
+                                       collection_t * restrict pcoll,
+                                       unsigned c);
+
+typedef void (*calculate_permtest_t)(const input_t * restrict pinput,
+                                     const rng_state_t * restrict rng_state_init,
+                                     const collection_t * restrict pcoll,
+                                     const yxstat_t * restrict pyxstat,
+                                     unsigned part);
+
+typedef void (*calculate_curves_t)(const input_t * restrict pinput,
+                                   const rng_state_t * restrict rng_state_init,
+                                   const grid_t * restrict pgrid,
+                                   const yxstat_t * restrict pyxstat,
+                                   unsigned part);
+
+typedef struct {
+    summarise_collection_t summarise_collection;
+    calculate_permtest_t calculate_permtest;
+    calculate_curves_t calculate_curves;
+    const char *msg1;
+    const char *msg2;
+} algv_t;
+
+typedef struct {
+    unsigned requirements;
+    yxbool_t outputs;
+} alg_t;
+
+''')
+    f.hw('''\
+extern const alg_t ALG[];
+extern const algv_t ALG_SPARSE[];
+extern const algv_t ALG_DENSE[];
+
+''')
+
+def gen_calculate_c(f):
+    f.cw('''\
+#include "alg.h"
+#include "calcutil.h"
+#include "plan.h"
+#include "malloc.h"
+#include <assert.h>
+
+''')
+    for var in VARIANTS:
+        gen_summarise_collection_var(f, var)
+    for var in VARIANTS:
+        gen_calculate_permtest_one(f, var)
+    for var in VARIANTS:
+        gen_calculate_curves_one(f, var)
+    for var in VARIANTS:
+        gen_calculate_permtest_var(f, var)
+    for var in VARIANTS:
+        gen_calculate_curves_var(f, var)
+    gen_array(f)
+    f.close()
+
+class Indexed:
+    def put_to_list(self, l):
+        self.set_index(len(l))
+        l.append(self)
+    
+    def set_index(self, index):
+        self.index = index
+        self.d["index"] = index
+
+class Class(Indexed):
+    def __init__(self, key):
+        self.key = key
+        self.d = {
+            "class": self.key,
+            "CLASS": self.key.upper(),
+        }
+
+class Y(Indexed):
+    def __init__(self, key, nondecreasing):
+        self.key = key
+        self.nondecreasing = nondecreasing
+        self.d = {
+            "y": self.key,
+            "Y": self.key.upper(),
+        }
+
+class X(Indexed):
+    def __init__(self, key, features):
+        self.key = key
+        self.features = features
+        self.d = {
+            "x": self.key,
+            "X": self.key.upper(),
+        }
+
+class YX(Indexed):
+    def __init__(self, y, x):
+        self.y = y
+        self.x = x
+        self.d = dd(y, x)
+
+class YY:
+    def __init__(self, y, key, temp, features):
+        self.y = y
+        self.key = key
+        self.temp = temp
+        self.features = features
+
+class XX:
+    def __init__(self, x, suffix, interleaved):
+        self.x = x
+        self.suffix = suffix
+        self.interleaved = interleaved
+        self.features = []
+        for x_ in x:
+            self.features.extend(x_.features)
+        if interleaved:
+            self.features.append("WITH_INTERLEAVING")
+        
+    def get_samples(self, x):
+        if self.interleaved:
+            return "pinput->samples_word_token[id].%s" % x.key
+        else:
+            return "pinput->SAMPLES_%s[id]" % x.key.upper()
+
+class V:
+    def __init__(self, key):
+        self.key = key
+
+class Algorithm(Indexed):
+    def __init__(self, yy, xx, has_variants):
+        self.xx = xx
+        self.yy = yy
+        self.has_variants = has_variants
+        self.features = xx.features + yy.features
+        self.yx_set = set()
+        for y in yy.y:
+            for x in xx.x:
+                yx = YX_MAP[(y.key, x.key)]
+                self.yx_set.add(yx)
+        self.yx_outputs = [ yx in self.yx_set for yx in YX_LIST ]
+        self.d = {
+            "yy": yy.key,
+            "xx": xx.suffix,
+            "YY": yy.key.upper(),
+            "XX": xx.suffix.upper(),
+            "temp": yy.temp,
+            "maybetemp": (", temp" if yy.temp is not None else ""),
+            "yaccumlist": ", ".join(["&yaccum_%s" % y.key for y in yy.y]),
+            "featurelist": " | ".join(self.features),
+            "outputlist": ", ".join(["true" if a else "false" for a in self.yx_outputs]),
+            "zeros": ", ".join(["0" for x in xx.x] + ["0" for y in yy.y]),
+        }
+
+class Variant(Indexed):
+    def __init__(self, alg, v):
+        self.alg = alg
+        self.v = v
+        self.d = dict(alg.d)
+        self.d["maybev"] = "" if v.key is None else "_%s" % v.key
+
+class Header:
+    def __init__(self, prefix):
+        self.d = { "n": prefix, "N": prefix.upper() }
+        self.h = open("%s/%s.h" % (DIR, prefix), "w")
+        self.hw = self.h.write
+        self.hw('''\
+#ifndef TYPES_%(N)s_H
+#define TYPES_%(N)s_H
+
+// This file is machine-generated.
+
+''' % self.d)
+
+    def close(self):
+        self.hw('''\
+#endif
+''')
+        self.h.close()
+
+class Source:
+    def __init__(self, prefix):
+        self.d = { "n": prefix, "N": prefix.upper() }
+        self.c = open("%s/%s.c" % (DIR, prefix), "w")
+        self.cw = self.c.write
+        self.cw('''\
+// This file is machine-generated.
+
+#include "%(n)s.h"
+''' % self.d)
+
+    def close(self):
+        self.c.close()
+
+CLASS_LIST = []
+Y_LIST = []
+X_LIST = []
+YX_LIST = []
+YX_MAP = dict()
+ALGORITHMS = []
+VARIANTS = []
+
+def setup_variants(yy, xx, vlist):
+    has_variants = len(vlist) > 1
+    alg = Algorithm(yy, xx, has_variants)
+    alg.put_to_list(ALGORITHMS)
+    for v in vlist:
+        var = Variant(alg, v)
+        var.put_to_list(VARIANTS)
+
+def setup_class(c):
+    c.put_to_list(CLASS_LIST)
+
+def setup_y(y):
+    y.put_to_list(Y_LIST)
+
+def setup_x(x):
+    x.put_to_list(X_LIST)
+
+def setup_yx(y, x):
+    yx = YX(y, x)
+    yx.put_to_list(YX_LIST)
+    YX_MAP[(y.key, x.key)] = yx
+
+def gen(what):
+    l = what.split("/")
+    assert len(l) == 2, l
+    assert l[0] == DIR, l
+    what = l[1]
+    if what == "alg.h":
+        f = Header("alg")
+        gen_alg_h(f)
+        f.close()
+    elif what == "calculate.h":
+        f = Header("calculate")
+        gen_calculate_h(f)
+        f.close()
+    elif what == "calculate.c":
+        f = Source("calculate")
+        gen_calculate_c(f)
+        f.close()
+    elif what == "jump.h":
+        import JumpTable
+        f = Header("jump")
+        gen_jump_h(f)
+        f.close()
+    elif what == "jump.c":
+        import JumpTable
+        f = Source("jump")
+        gen_jump_c(f)
+        f.close()
+    elif what == "seed.h":
+        f = Header("seed")
+        gen_seed_h(f)
+        f.close()
+    elif what == "seed.c":
+        f = Source("seed")
+        gen_seed_c(f)
+        f.close()
+    elif what == "yx.h":
+        f = Header("yx")
+        gen_yx_h(f)
+        f.close()
+    elif what == "yx.c":
+        f = Source("yx")
+        gen_yx_c(f)
+        f.close()
+    else:
+        raise ValueError(what)
+    
+setup_all()
+for what in sys.argv[1:]:
+    gen(what)

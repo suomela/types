@@ -1,0 +1,6 @@
+etc/config.inc
+bin
+build
+debug
+dep
+tmp

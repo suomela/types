@@ -1,0 +1,257 @@
+from collections import defaultdict
+import optparse
+import cPickle
+import os
+import os.path
+import sys
+import numpy as np
+sys.path.append('lib')
+import TypesDatabase
+import TypesParallel
+import TypesPlot
+
+TOOL = 'types-plot'
+
+PLOT_DIR = 'plot'
+HTML_DIR = 'html'
+BIN_DIR = 'bin'
+DATA_FILE = 'types-plot.pickle'
+
+def msg(msg):
+    sys.stderr.write("%s: %s\n" % (TOOL, msg))
+
+def get_args():
+    parser = optparse.OptionParser(description='Update all plots.')
+    parser.add_option('--db', metavar='FILE', dest='db',
+                      help='which database to read [default: %default]',
+                      default=TypesDatabase.DEFAULT_FILENAME)
+    TypesParallel.add_options(parser)
+    parser.add_option('--plotdir', metavar='DIRECTORY', dest='plotdir',
+                      help='where to store PDF plots [default: %default]',
+                      default=PLOT_DIR)
+    parser.add_option('--htmldir', metavar='DIRECTORY', dest='htmldir',
+                      help='where to store SVG plots and HTML files [default: %default]',
+                      default=HTML_DIR)
+    (options, args) = parser.parse_args()
+    return options
+
+class AllCurves:
+    def __init__(self):
+        self.curves = []
+        self.by_corpus = defaultdict(list)
+        self.by_dataset = defaultdict(list)
+        self.by_stat = defaultdict(list)
+        self.by_corpus_dataset = defaultdict(list)
+        self.by_corpus_stat = defaultdict(list)
+        self.by_dataset_stat = defaultdict(list)
+        self.by_dataset_stat_fallback = dict()
+        self.by_corpus_dataset_stat = dict()
+
+    def read_curves(self, args, conn):
+        sys.stderr.write('%s: read:' % TOOL)
+
+        dirdict = {
+            "pdf": args.plotdir,
+            "svg": args.htmldir,
+            "html": args.htmldir,
+        }
+
+        ### log
+    
+        timestamp_by_logid = dict()
+        def get_timestamp(logid):
+            if logid not in timestamp_by_logid:
+                ts = [ r[0] for r in conn.execute("SELECT STRFTIME('%s', timestamp) FROM log WHERE id = ?", (logid,)) ]
+                assert len(ts) == 1
+                timestamp_by_logid[logid] = int(ts[0])
+            return timestamp_by_logid[logid]
+
+        ### stat
+
+        statcode_label = dict()
+        sys.stderr.write(' stat')
+        r = conn.execute('SELECT statcode, xlabel, ylabel FROM stat')
+        for statcode, xlabel, ylabel in r:
+            statcode_label[statcode] = (xlabel, ylabel)
+
+        ### corpus
+
+        corpus_descr = dict()
+        sys.stderr.write(' corpus')
+        r = conn.execute('SELECT corpuscode, description FROM corpus')
+        for corpuscode, description in r:
+            corpus_descr[corpuscode] = description
+
+        ### dataset
+
+        dataset_descr = dict()
+        sys.stderr.write(' dataset')
+        r = conn.execute('SELECT corpuscode, datasetcode, description FROM dataset')
+        for corpuscode, datasetcode, description in r:
+            dataset_descr[(corpuscode, datasetcode)] = description
+
+        ### result_curve
+
+        sys.stderr.write(' result_curve')
+        r = conn.execute('''
+            SELECT corpuscode, statcode, datasetcode, id, level, side, logid
+            FROM result_curve
+            ORDER BY corpuscode, statcode, datasetcode
+        ''')
+        for corpuscode, statcode, datasetcode, curveid, level, side, logid in r:
+            k = (corpuscode, datasetcode, statcode)
+            if k not in self.by_corpus_dataset_stat:
+                c = TypesPlot.Curve(dirdict,
+                                    corpuscode, corpus_descr[corpuscode],
+                                    statcode, statcode_label[statcode][0], statcode_label[statcode][1],
+                                    datasetcode, dataset_descr[(corpuscode, datasetcode)])
+                c.levels = defaultdict(dict)
+                self.curves.append(c)
+                self.by_corpus[corpuscode].append(c)
+                self.by_dataset[datasetcode].append(c)
+                self.by_stat[statcode].append(c)
+                self.by_corpus_stat[(corpuscode, statcode)].append(c)
+                self.by_corpus_dataset[(corpuscode, datasetcode)].append(c)
+                self.by_dataset_stat[(datasetcode, statcode)].append(c)
+                self.by_corpus_dataset_stat[k] = c
+            else:
+                c = self.by_corpus_dataset_stat[k]
+            c.add_timestamp(get_timestamp(logid))
+            c.levels[level][side] = curveid
+
+
+        ### result_curve_point
+
+        sys.stderr.write(' result_curve_point')
+        def get_one_path(curveid):
+            return np.array(list(conn.execute('''
+                SELECT x, y
+                FROM result_curve_point
+                WHERE curveid = ?
+                ORDER BY x
+            ''', (curveid,))), dtype=np.int32)
+
+        for c in self.curves:
+            for level in sorted(c.levels.keys()):
+                d = c.levels[level]
+                if 'upper' in d and 'lower' in d:
+                    upper = get_one_path(d['upper'])
+                    lower = get_one_path(d['lower'])
+                    c.add_poly(level, upper, lower)
+
+        ### collection
+
+        sys.stderr.write(' collection')
+        r = conn.execute('''
+            SELECT corpuscode, groupcode, collectioncode, description
+            FROM collection
+            ORDER BY corpuscode, groupcode, collectioncode
+        ''')
+        for corpuscode, groupcode, collectioncode, description in r:
+            for c in self.by_corpus[corpuscode]:
+                c.add_collection(groupcode, collectioncode, description)
+
+        ### result_p
+
+        pvalues = dict()
+        sys.stderr.write(' result_p')
+        r = conn.execute('''
+            SELECT corpuscode, collectioncode, datasetcode, statcode, above, below, total, logid
+            FROM result_p
+        ''')
+        for corpuscode, collectioncode, datasetcode, statcode, above, below, total, logid in r:
+            pvalues[(corpuscode, collectioncode, datasetcode, statcode)] = (above, below, total, logid)
+        def add_point(corpuscode, collectioncode, datasetcode, statcode, y, x):
+            k1 = (corpuscode, datasetcode, statcode)
+            k2 = (corpuscode, collectioncode, datasetcode, statcode)
+            if k1 in self.by_corpus_dataset_stat and k2 in pvalues:
+                above, below, total, logid = pvalues[k2]
+                p = TypesPlot.Point(collectioncode, y, x, above, below, total)
+                self.by_corpus_dataset_stat[k1].add_point(p, get_timestamp(logid))
+
+        ### token / sample / sample_collection
+
+        sys.stderr.write(' view_collection_dataset_full')
+        r = conn.execute('''
+            SELECT corpuscode, collectioncode, datasetcode, tokencount, typecount, wordcount
+            FROM view_collection_dataset_full
+        ''')
+        for corpuscode, collectioncode, datasetcode, tokencount, typecount, wordcount in r:
+            add_point(corpuscode, collectioncode, datasetcode, 'type-token', typecount,  tokencount)
+            add_point(corpuscode, collectioncode, datasetcode, 'type-word',  typecount,  wordcount)
+            add_point(corpuscode, collectioncode, datasetcode, 'token-word', tokencount, wordcount)
+
+        sys.stderr.write('\n')
+
+        ### fallbacks
+
+        for datasetcode, statcode in self.by_dataset_stat.keys():
+            l = []
+            for corpuscode in sorted(self.by_corpus.keys()):
+                if (corpuscode, datasetcode, statcode) in self.by_corpus_dataset_stat:
+                    c = self.by_corpus_dataset_stat[(corpuscode, datasetcode, statcode)]
+                elif (corpuscode, statcode) in self.by_corpus_stat:
+                    c = self.by_corpus_stat[(corpuscode, statcode)][0]
+                elif (corpuscode, datasetcode) in self.by_corpus_dataset:
+                    c = self.by_corpus_dataset[(corpuscode, datasetcode)][0]
+                else:
+                    c = self.by_corpus[corpuscode][0]
+                l.append(c)
+            self.by_dataset_stat_fallback[(datasetcode, statcode)] = l
+
+
+    def create_directories(self):
+        directories = set()
+        for c in self.curves:
+            directories.update(c.get_directories())
+        for d in directories:
+            if not os.path.exists(d):
+                os.makedirs(d)
+
+    def generate_html(self):
+        for c in self.curves:
+            c.generate_html(self)
+
+    def find_outdated(self):
+        redraw = []
+        for c in self.curves:
+            for outdated in c.get_outdated():
+                redraw.append((c, outdated))
+        return redraw
+
+def get_datafile(args):
+    return os.path.join(args.tmpdir, DATA_FILE)
+
+def write_data(args, redraw):
+    with open(get_datafile(args), 'w') as f:
+        cPickle.dump(redraw, f, -1)
+
+def run(args, nredraw):
+    cmds = []
+    for j in range(args.parts):
+        cmd = [ get_datafile(args), nredraw, args.parts, j+1 ]
+        cmds.append(cmd)
+    TypesParallel.Parallel(TOOL, 'types-draw-curves', cmds, args).run()
+
+def main():
+    args = get_args()
+    if not os.path.exists(args.tmpdir):
+        os.makedirs(args.tmpdir)
+    conn = TypesDatabase.open_db(args.db)
+    ac = AllCurves()
+    ac.read_curves(args, conn)
+    conn.commit()
+    ac.create_directories()
+    ac.generate_html()
+    redraw = ac.find_outdated()
+    nredraw = len(redraw)
+    if nredraw == 0:
+        msg('all files up to date')
+    else:
+        msg('outdated: %d files' % nredraw)
+        write_data(args, redraw)
+        run(args, nredraw)
+        os.remove(get_datafile(args))
+        msg('all done')
+
+main()

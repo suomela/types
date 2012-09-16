@@ -1,0 +1,65 @@
+#!/bin/sh
+
+dir="$1"
+wrapper="$2"
+
+for a in types-comp types-convert types-draw-curves types-query types-rng types-store; do
+    if "$dir/$a" > /dev/null; then
+        printf "."
+    else
+        echo "$dir/$a returned an error"
+        exit 1
+    fi
+done
+echo
+
+mkdir -p tmp
+rm -f tmp/types.sqlite*
+cp check/types.sqlite tmp/types.sqlite || exit 1
+
+echo '5/:' > tmp/loginfile
+
+for prefix in a b c d e f g h; do
+    $wrapper $dir/types-query P tmp/types.sqlite check-$prefix example tmp/input || exit 1
+    for variant in "sparse" "dense"; do
+        cmd="$dir/types-comp --$variant --progress --rng-state-file $dir/rng-state --raw-input tmp/input --iterations 10000 --x 10000 --y 100 --p-type-word --p-type-token --p-hapax-word --p-hapax-token --p-token-word --type-word --type-token --hapax-word --hapax-token --token-word"
+        $wrapper $cmd --raw-output tmp/output || exit 1
+        check/clear $prefix || exit 1
+        $wrapper $dir/types-store P tmp/types.sqlite check-$prefix example tmp/output || exit 1
+        check/verify $prefix || exit 1
+        $wrapper $dir/types-store P tmp/types.sqlite check-$prefix example tmp/output || exit 1
+        check/verify $prefix || exit 1
+
+        $cmd --id 1 --processes 2 --raw-output tmp/output-1 || exit 1
+        $cmd --id 2 --processes 2 --raw-output tmp/output-2 || exit 1
+        check/clear $prefix || exit 1
+        $wrapper $dir/types-store P tmp/types.sqlite check-$prefix example tmp/output-1 tmp/output-2 || exit 1
+        check/verify $prefix || exit 1
+
+        $cmd --id 1 --processes 3 --raw-output tmp/output-1 || exit 1
+        $cmd --id 2 --processes 3 --raw-output tmp/output-2 || exit 1
+        $cmd --id 3 --processes 3 --raw-output tmp/output-3 || exit 1
+        check/clear $prefix || exit 1
+        $wrapper $dir/types-store P tmp/types.sqlite check-$prefix example tmp/output-1 tmp/output-2 tmp/output-3 || exit 1
+        check/verify $prefix || exit 1
+        $wrapper $dir/types-store P - check-$prefix example tmp/output-1 tmp/output-2 tmp/output-3 || exit 1
+    done
+    echo
+done
+
+rcmd="$dir/types-run --bindir=$dir --db=tmp/types.sqlite --citer 10000 --piter 10000 --x 10000 --y 100"
+check/clear-all || exit 1
+$rcmd --local || exit 1
+check/verify-all || exit 1
+check/clear-all || exit 1
+$rcmd --parts 3 --loginfile tmp/loginfile || exit 1
+check/verify-all || exit 1
+
+pcmd="$dir/types-plot --bindir=$dir --plotdir=tmp/plot --htmldir=tmp/html --db=tmp/types.sqlite"
+rm -rf tmp/plot tmp/html
+$pcmd --local || exit 1
+rm -rf tmp/plot tmp/html
+$pcmd --parts 3 --loginfile tmp/loginfile || exit 1
+
+$rcmd --local || exit 1
+$pcmd --local || exit 1
