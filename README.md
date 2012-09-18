@@ -39,22 +39,22 @@ Open a terminal and run:
 
 These instructions should work on OS X 10.7.4 and OS X 10.8.1:
 
-- Open *App Store*. Find *Xcode*. Install. Close App Store.
+  - Open *App Store*. Find *Xcode*. Install. Close App Store.
 
-- Open *Xcode*. Select Preferences, Downloads, Components.
-  Install *Command Line Tools*. Close Xcode.
+  - Open *Xcode*. Select Preferences, Downloads, Components.
+    Install *Command Line Tools*. Close Xcode.
 
-- Download and install XQuartz: https://xquartz.macosforge.org
+  - Download and install XQuartz: https://xquartz.macosforge.org
 
-- Log out and log on again.
+  - Log out and log on again.
 
-- Open Terminal. To install *Homebrew*, run this command and
-  follow the instructions:
+  - Open Terminal. To install *Homebrew*, run this command and
+    follow the instructions:
 
         ruby <(curl -fsSkL raw.github.com/mxcl/homebrew/go)
 
-- Run the following commands to install recent versions of *GCC*,
-  *Python*, and the Python modules that we need:
+  - Run the following commands to install recent versions of *GCC*,
+    *Python*, and the Python modules that we need:
 
         brew doctor
         brew tap homebrew/dupes
@@ -74,29 +74,29 @@ These instructions should work on OS X 10.7.4 and OS X 10.8.1:
 
 Remarks:
 
-- Once you have followed the above instructions, `./config` should
-  finish successfully. In particular, it should find the following
-  tools:
+  - Once you have followed the above instructions, `./config` should
+    finish successfully. In particular, it should find the following
+    tools:
 
         PYTHON = /usr/local/bin/python
         CC = /usr/local/bin/gcc-4.7
 
-- For more information on Homebrew, see http://mxcl.github.com/homebrew/
+  - For more information on Homebrew, see http://mxcl.github.com/homebrew/
 
-- The installation of GCC takes long (1-2 hours).
+  - The installation of GCC takes long (1-2 hours).
 
-- The `brew link` commands are required on OS X 10.7. On OS X 10.8
-  they are not needed; you will just get a harmless warning.
+  - The `brew link` commands are required on OS X 10.7. On OS X 10.8
+    they are not needed; you will just get a harmless warning.
 
-- The `pip install` comnads will print *lots* of warnings. This is
-  normal. If you see the following messages after each installation,
-  you should be fine:
+  - The `pip install` comnads will print *lots* of warnings. This is
+    normal. If you see the following messages after each installation,
+    you should be fine:
 
         Successfully installed numpy
         Successfully installed matplotlib
         Successfully installed lxml
 
-- For cluster environments, you can also install *Gnu Parallel*:
+  - For cluster environments, you can also install *Gnu Parallel*:
 
         brew install parallel
 
