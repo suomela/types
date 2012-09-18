@@ -70,13 +70,16 @@ These instructions should work on OS X 10.7.4 and OS X 10.8.1:
         /usr/local/share/python/pip install matplotlib
         /usr/local/share/python/pip install lxml
 
-Now `./config` should be happy. In particular, it should find the following
-tools:
-
-    PYTHON = /usr/local/bin/python
-    CC = /usr/local/bin/gcc-4.7
+---
 
 Remarks:
+
+- Once you have followed the above instructions, `./config` should
+  finish successfully. In particular, it should find the following
+  tools:
+
+        PYTHON = /usr/local/bin/python
+        CC = /usr/local/bin/gcc-4.7
 
 - For more information on Homebrew, see http://mxcl.github.com/homebrew/
 
