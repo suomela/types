@@ -35,67 +35,40 @@ Open a terminal and run:
     sudo apt-get install git-core python-lxml python-matplotlib sqlite3 libsqlite3-dev
 
 
-### OS X 10.8.1
+### OS X Lion and OS X Mountain Lion
 
-Install Xcode command line tools:
+These instructions should work on OS X 10.7.4 and OS X 10.8.1:
 
 - Open *App Store*. Find *Xcode*. Install. Close App Store.
 
 - Open *Xcode*. Select Preferences, Downloads, Components.
   Install *Command Line Tools*. Close Xcode.
 
-- Open Terminal. Make sure that everything looks good:
-
-        gcc --version
-
-
-Install Homebrew:
-
-- Open Terminal. Run:
-
-        ruby <(curl -fsSkL raw.github.com/mxcl/homebrew/go)
-        brew doctor
-
-- See http://mxcl.github.com/homebrew/ for more details.
-
-
-Install a recent version of GCC:
-
-- Open Terminal. Run:
-    
-        brew tap homebrew/dupes
-        brew install gcc
-    
-- Make sure that everything looks good:
-    
-        gcc-4.7 --version
-
-
-Install a recent version of Python:
-
 - Download and install XQuartz: https://xquartz.macosforge.org
 
 - Log out and log on again.
 
-- Open Terminal. Run:
-    
+- Open Terminal. To install *Homebrew*, run this command and
+  follow the instructions:
+
+        ruby <(curl -fsSkL raw.github.com/mxcl/homebrew/go)
+
+- Run the following commands to install recent versions of *GCC*,
+  *Python*, and the Python modules that we need:
+
+        brew doctor
+        brew tap homebrew/dupes
+        brew update
+        brew upgrade
+        brew install gcc
         brew install python
-
-- Make sure that everything looks good:
-    
-        /usr/local/bin/python --version
-
-
-Install the required Python modules and their dependencies:
-
-- Open Terminal. Run:
-    
         brew install freetype
         brew install libpng
+        brew link freetype
+        brew link libpng
         /usr/local/share/python/pip install numpy
         /usr/local/share/python/pip install matplotlib
         /usr/local/share/python/pip install lxml
-
 
 Now `./config` should be happy. In particular, it should find the following
 tools:
@@ -103,10 +76,26 @@ tools:
     PYTHON = /usr/local/bin/python
     CC = /usr/local/bin/gcc-4.7
 
+Remarks:
 
-For cluster environments, you can also install *Gnu Parallel*:
+- For more information on Homebrew, see http://mxcl.github.com/homebrew/
 
-    brew install parallel
+- The installation of GCC takes long (1-2 hours).
+
+- The `brew link` commands are required on OS X 10.7. On OS X 10.8
+  they are not needed; you will just get a harmless warning.
+
+- The `pip install` comnads will print *lots* of warnings. This is
+  normal. If you see the following messages after each installation,
+  you should be fine:
+
+        Successfully installed numpy
+        Successfully installed matplotlib
+        Successfully installed lxml
+
+- For cluster environments, you can also install *Gnu Parallel*:
+
+        brew install parallel
 
 
 License
