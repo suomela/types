@@ -11,6 +11,7 @@ print_head(input_t * restrict pinput);
 
 void
 print_permtest_one(input_t * restrict pinput,
+                   const collection_t * restrict pcoll,
                    const stat_t * restrict pstat,
                    unsigned yx);
 

@@ -183,6 +183,15 @@ read_permtest(store_t * restrict s)
         myerror("expected %u collections, got %u collections", s->ncoll, ncoll);
     }
 
+    // Read summary
+
+    unsigned x[ncoll];
+    unsigned y[ncoll];
+    for (unsigned c = 0; c < ncoll; c++) {
+        x[c] = read_common_uint(s);
+        y[c] = read_common_uint(s);
+    }
+
     // Read data
 
     stat_t stat[ncoll];
@@ -202,8 +211,8 @@ read_permtest(store_t * restrict s)
 
         db_create_cache(
             "INSERT INTO result_p "
-            "(corpuscode, datasetcode, collectioncode, statcode, below, above, total, logid) "
-            "SELECT ?, ?, collectioncode, ?, ?, ?, ?, ? "
+            "(corpuscode, datasetcode, collectioncode, statcode, x, y, below, above, total, logid) "
+            "SELECT ?, ?, collectioncode, ?, ?, ?, ?, ?, ?, ? "
             "FROM tmp_collection "
             "WHERE rowid = ?"
         );
@@ -218,7 +227,8 @@ read_permtest(store_t * restrict s)
             }
             db_exec_cache(BIND(
                 STRING(s->corpuscode), STRING(s->datasetcode), STRING(YX[yx].label),
-                INT(below), INT(above), INT(iterations), INT(s->logid), INT(c+1)
+                INT(x[c]), INT(y[c]), INT(below), INT(above), INT(iterations),
+                INT(s->logid), INT(c+1)
             ));
         }
         db_close_cache();

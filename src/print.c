@@ -70,6 +70,7 @@ print_head(input_t * restrict pinput)
 
 void
 print_permtest_one(input_t * restrict pinput,
+                   const collection_t * restrict pcoll,
                    const stat_t * restrict pstat,
                    unsigned yx)
 {
@@ -80,6 +81,9 @@ print_permtest_one(input_t * restrict pinput,
         return;
     }
 
+    const unsigned y = YX[yx].y;
+    const unsigned x = YX[yx].x;
+
     assert(is_open(F));
 
     // Header
@@ -88,6 +92,13 @@ print_permtest_one(input_t * restrict pinput,
     myfwrite_uint(F, yx);
     myfwrite_uint(F, pinput->iterations);
     myfwrite_uint(F, pinput->collections.ncol);
+
+    // Summary
+    
+    for (size_t i = 0; i < pinput->collections.ncol; i++) {
+        myfwrite_uint(F, pcoll[i].x.x[x]);
+        myfwrite_uint(F, pcoll[i].y.y[y]);
+    }
 
     // Data
 

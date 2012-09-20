@@ -86,7 +86,9 @@ merge_all(yxstat_t **ppyxstat_head,
 // -------- Permutation testing --------
 
 static void
-summarise_collections(const input_t * restrict pinput, collection_t * restrict pcoll, const algv_t * restrict algv)
+summarise_collections(const input_t * restrict pinput,
+                      collection_t * restrict pcoll,
+                      const algv_t * restrict algv)
 {
     #pragma omp parallel for
     for (unsigned c = 0; c < pinput->collections.ncol; c++) {
@@ -137,10 +139,12 @@ calculate_permtest(const input_t * restrict pinput,
 }
 
 static void
-print_permtest(input_t * restrict pinput, const yxstat_t * restrict pyxstat)
+print_permtest(input_t * restrict pinput,
+               const collection_t * restrict pcoll,
+               const yxstat_t * restrict pyxstat)
 {
     for (unsigned i = 0; i < NYX; i++) {
-        print_permtest_one(pinput, pyxstat->yx[i], i);
+        print_permtest_one(pinput, pcoll, pyxstat->yx[i], i);
     }
 }
 
@@ -154,7 +158,7 @@ calculate_and_print_permtest(input_t * restrict pinput,
     MYMALLOCZ(pcoll, collection_t, pinput->collections.ncol, COLLECTION_NULL_C);
     summarise_collections(pinput, pcoll, algv);
     yxstat_t yxstat = calculate_permtest(pinput, rng_state_init, pcoll, alg, algv);
-    print_permtest(pinput, &yxstat);
+    print_permtest(pinput, pcoll, &yxstat);
     free_stat(&yxstat);
     free(pcoll);
     if (pinput->progress) {

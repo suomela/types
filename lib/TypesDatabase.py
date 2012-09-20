@@ -111,6 +111,8 @@ def create_if_needed(conn):
             datasetcode TEXT NOT NULL,
             collectioncode TEXT NOT NULL,
             statcode TEXT NOT NULL REFERENCES stat(statcode),
+            x INTEGER NOT NULL,
+            y INTEGER NOT NULL,
             total INTEGER NOT NULL,
             below INTEGER NOT NULL,
             above INTEGER NOT NULL,
