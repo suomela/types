@@ -2,9 +2,9 @@
 
 prefix="$1"
 
-sqlite3 tmp/types.sqlite "SELECT collectioncode,statcode,total,below,above FROM check_expected_p WHERE corpuscode='check-$prefix' AND datasetcode='example' ORDER BY collectioncode,statcode,total" > tmp/expected || exit 1
+sqlite3 tmp/types.sqlite "SELECT collectioncode,statcode,x,y,total,below,above FROM check_expected_p WHERE corpuscode='check-$prefix' AND datasetcode='example' ORDER BY collectioncode,statcode,total" > tmp/expected || exit 1
 
-sqlite3 tmp/types.sqlite "SELECT collectioncode,statcode,total,below,above FROM result_p WHERE corpuscode='check-$prefix' AND datasetcode='example' ORDER BY collectioncode,statcode,total" > tmp/got || exit 1
+sqlite3 tmp/types.sqlite "SELECT collectioncode,statcode,x,y,total,below,above FROM result_p WHERE corpuscode='check-$prefix' AND datasetcode='example' ORDER BY collectioncode,statcode,total" > tmp/got || exit 1
 
 cmp tmp/expected tmp/got || exit 1
 
