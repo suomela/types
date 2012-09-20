@@ -37,6 +37,10 @@ def add_sep(l, sep=SEP):
     # [1,2,3] -> [1,sep,2,sep,3]
     return [x for y in l for x in (y, sep)][:-1]
 
+def write_html(f, doc):
+    f.write('<!DOCTYPE html>\n')
+    f.write(etree.tostring(doc, method='html', pretty_print=True))
+
 
 class LabelPlacement:
     def __init__(self):
@@ -204,16 +208,24 @@ class Curve:
         n = n + "." + suffix
         return n
 
+    def get_pointname_from_root(self, suffix, groupcode, p=None):
+        return fixname(self.corpuscode) + "/" + self.get_pointname(suffix, groupcode, p)
+
     def get_pointname_relative(self, other, suffix, groupcode, collectioncode=None):
-        if groupcode not in self.group_set:
+        changed = False
+        if groupcode is not None and groupcode not in self.group_set:
             groupcode = None
-        if groupcode is None:
+            changed = True
+        if groupcode is None and collectioncode is not None:
             collectioncode = None
-        if collectioncode not in self.point_by_collection:
+            changed = True
+        if collectioncode is not None and collectioncode not in self.point_by_collection:
             collectioncode = None
+            changed = True
         if collectioncode is not None:
             exp = self.group_by_collection[collectioncode]
             if exp != groupcode:
+                changed = True
                 collectioncode = None
         if collectioncode is not None:
             p = self.point_by_collection[collectioncode]
@@ -221,9 +233,10 @@ class Curve:
             p = None
         name = self.get_pointname(suffix, groupcode, p)
         if self.corpuscode == other.corpuscode:
-            return name
+            full = name
         else:
-            return "../" + fixname(self.corpuscode) + "/" + name
+            full = "../" + fixname(self.corpuscode) + "/" + name
+        return full, changed
 
     def get_directory(self, suffix):
         return os.path.join(self.dirdict[suffix], fixname(self.corpuscode))
@@ -257,7 +270,7 @@ class Curve:
 
     def plot_group(self, matplotlib, groupcode):
         points = sorted(self.points_by_group[groupcode], key=lambda p: p.x, reverse=True)
-        SPP = matplotlib.figure.SubplotParams(left=0.1, right=0.85, bottom=0.1, top=0.99)
+        SPP = matplotlib.figure.SubplotParams(left=0.1, right=0.85, bottom=0.1, top=0.98)
         fig = matplotlib.pyplot.figure(figsize=(9,6), subplotpars=SPP)
         ax = fig.add_subplot(111, xlim=lim(self.maxx), ylim=lim(self.maxy))
         self.plot_polys(ax)
@@ -348,39 +361,46 @@ class Curve:
         t = [ self.corpuscode, self.datasetcode, groupcode, collectioncode, self.statcode ]
         t = u" — ".join([a for a in t if a is not None])
         headblocks.append(E.title(t))
+        headblocks.append(E.link(rel="stylesheet", href="../types.css", type="text/css"))
 
-        def add_menu(title, cl, gl, labelhook):
+        menublocks = []
+
+        def add_menu(title, cl, gl, labelhook, titlelink=None):
             result = []
             for c in cl:
                 for g in gl:
                     label = labelhook(c, g)
                     if c == self and g is groupcode:
-                        e = label
+                        cl = "menuitem menusel"
+                        e = E.span(label, **{"class": cl})
                     else:
-                        e = E.a(label, href=c.get_pointname_relative(self, 'html', g, collectioncode))
+                        href, changed = c.get_pointname_relative(self, 'html', g, collectioncode)
+                        cl = "menuitem menuother" if changed else "menuitem menusame"
+                        e = E.a(label, href=href, **{"class": cl})
                     result.append(e)
-            t = E.strong("%s: " % title)
-            menu = E.p(t, *add_sep(result))
-            bodyblocks.append(menu)
+            t = title + ":"
+            if titlelink is None:
+                t = E.span(t, **{"class": "menutitle"})
+            else:
+                t = E.a(t, href=titlelink, **{"class": "menutitle"})
+            menu = E.p(*add_sep([t] + result, " "), **{"class": "menurow"})
+            menublocks.append(menu)
 
         add_menu(
             "Corpus",
             ac.by_dataset_stat_fallback[(self.datasetcode, self.statcode)],
             [ groupcode ],
-            lambda c, g: c.corpuscode
+            lambda c, g: c.corpuscode,
+            titlelink="../index.html"
         )
-        bodyblocks.append(E.p(
-            E.small(self.corpus_descr)
-        ))
+        menublocks.append(E.p(self.corpus_descr, **{"class": "menudesc"}))
         add_menu(
             "Dataset",
             ac.by_corpus_stat[(self.corpuscode, self.statcode)],
             [ groupcode ],
             lambda c, g: c.datasetcode
         )
-        bodyblocks.append(E.p(
-            E.small(self.dataset_descr)
-        ))
+        menublocks.append(E.p(self.dataset_descr, **{"class": "menudesc"}))
         add_menu(
             "Points",
             [ self ],
@@ -394,21 +414,27 @@ class Curve:
             lambda c, g: c.statcode
         )
 
-        fig = E.p(E.object(data=self.get_pointname('svg', groupcode), type="image/svg+xml"))
+        bodyblocks.append(E.div(*menublocks, **{"class": "menu"}))
+
+        fig = E.p(E.object(data=self.get_pointname('svg', groupcode), type="image/svg+xml"), **{"class": "plot"})
         bodyblocks.append(fig)
 
         if collectioncode is not None:
-            bodyblocks.append(E.p(
-                E.strong(collectioncode),
-                ": ",
-                E.small(self.collection_descr[collectioncode] or ""),
-            ))
-            bodyblocks.append(E.p(
-                u"%s: %d, " % (self.xlabel.lower(), p.x),
-                u"%s: %d, " % (self.ylabel.lower(), p.y),
-                u"%s: %f" % (p.side, p.pvalue),
+            bodyblocks.append(E.div(
+                E.p(
+                    E.span(collectioncode + ":", **{"class": "pointtitle"}),
+                    " ",
+                    E.span(self.collection_descr[collectioncode] or "", **{"class": "pointdesc"}),
+                ),
+                E.p(
+                    u"%s: %d, " % (self.xlabel.lower(), p.x),
+                    u"%s: %d, " % (self.ylabel.lower(), p.y),
+                    u"%s: %f" % (p.side, p.pvalue),
+                    **{"class": "pointstat"}
+                ),
+                **{"class": "point"}
             ))
 
         doc = E.html(E.head(*headblocks), E.body(*bodyblocks))
-        f.write('<!DOCTYPE html>\n')
-        f.write(etree.tostring(doc, method='html', pretty_print=True))
+        write_html(f, doc)
+

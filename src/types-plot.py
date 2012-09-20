@@ -1,3 +1,5 @@
+# coding=utf-8
+
 from collections import defaultdict
 import optparse
 import cPickle
@@ -9,6 +11,7 @@ sys.path.append('lib')
 import TypesDatabase
 import TypesParallel
 import TypesPlot
+from lxml.builder import E
 
 TOOL = 'types-plot'
 
@@ -212,6 +215,25 @@ class AllCurves:
         for c in self.curves:
             c.generate_html(self)
 
+    def generate_index(self, htmldir):
+        headblocks = []
+        bodyblocks = []
+        headblocks.append(E.title("Corpus menu"))
+        headblocks.append(E.link(rel="stylesheet", href="types.css", type="text/css"))
+        menublocks = []
+        for corpuscode in sorted(self.by_corpus.keys()):
+            c = self.by_corpus[corpuscode][0]
+            link = E.a(corpuscode, href=c.get_pointname_from_root('html', None), **{"class": "menuitem"})
+            desc = E.span(c.corpus_descr, **{"class": "menudesc"})
+            menu = E.p(link, u" · ", desc, **{"class": "menurow"})
+            menublocks.append(menu)
+        bodyblocks = [ E.div(*menublocks, **{"class": "menu mainmenu"}) ]
+        doc = E.html(E.head(*headblocks), E.body(*bodyblocks))
+        with open(os.path.join(htmldir, "index.html"), 'w') as f:
+            TypesPlot.write_html(f, doc)
+        with open(os.path.join(htmldir, "types.css"), 'w') as f:
+            f.write(CSS)
+
     def find_outdated(self):
         redraw = []
         for c in self.curves:
@@ -243,6 +265,7 @@ def main():
     conn.commit()
     ac.create_directories()
     ac.generate_html()
+    ac.generate_index(args.htmldir)
     redraw = ac.find_outdated()
     nredraw = len(redraw)
     if nredraw == 0:
@@ -253,5 +276,99 @@ def main():
         run(args, nredraw)
         os.remove(get_datafile(args))
         msg('all done')
+
+CSS = """
+BODY {
+    color: #000;
+    background-color: #fff;
+    font-family: Verdana, sans-serif;
+    padding: 0px;
+    margin: 1em;
+}
+
+A:link {
+    color: #00f;
+	text-decoration: none;
+}
+
+A:visited {
+    color: #008;
+	text-decoration: none;
+}
+
+A:hover, A:active {
+	text-decoration: underline;
+}
+    
+P {
+    margin: 0px;
+    margin-bottom: 5px;
+    padding: 0px;
+}
+
+.plot {
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+P.menudesc {
+    margin-left: 25px;
+}
+
+DIV.point {
+    margin-left: 3px;
+}
+
+.menudesc, .pointdesc {
+    display: inline-block;
+    font-size: 80%;
+    padding: 3px;
+}
+
+.menuitem {
+    font-size: 95%;
+}
+
+.menutitle, .pointtitle {
+    font-weight: bold;
+}
+
+.menuitem, .menutitle  {
+    display: inline-block;
+    white-space: nowrap;
+    padding: 3px;
+    border: 1px solid #fff;
+    margin-top: 1px;
+    margin-bottom: 1px;
+    margin-left: 0px;
+    margin-right: 0px;
+}
+
+.menu A:hover, .menu A:link, .menu A:visited {
+    text-decoration: none;
+}
+
+.menusel {
+    border: 1px solid #aaa;
+    background-color: #fff;
+}
+
+A.menuitem:hover, A.menutitle:hover {
+    border: 1px dotted #000;
+    background-color: #eee;
+}
+
+.menusel {
+    color: #a00;
+}
+
+A.menusame, A.menutitle {
+    color: #008;
+}
+
+A.menuother {
+    color: #888;
+}
+"""
 
 main()
