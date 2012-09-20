@@ -159,30 +159,13 @@ class AllCurves:
         pvalues = dict()
         sys.stderr.write(' result_p')
         r = conn.execute('''
-            SELECT corpuscode, collectioncode, datasetcode, statcode, above, below, total, logid
+            SELECT corpuscode, collectioncode, datasetcode, statcode, y, x, above, below, total, logid
             FROM result_p
         ''')
-        for corpuscode, collectioncode, datasetcode, statcode, above, below, total, logid in r:
-            pvalues[(corpuscode, collectioncode, datasetcode, statcode)] = (above, below, total, logid)
-        def add_point(corpuscode, collectioncode, datasetcode, statcode, y, x):
+        for corpuscode, collectioncode, datasetcode, statcode, y, x, above, below, total, logid in r:
             k1 = (corpuscode, datasetcode, statcode)
-            k2 = (corpuscode, collectioncode, datasetcode, statcode)
-            if k1 in self.by_corpus_dataset_stat and k2 in pvalues:
-                above, below, total, logid = pvalues[k2]
-                p = TypesPlot.Point(collectioncode, y, x, above, below, total)
-                self.by_corpus_dataset_stat[k1].add_point(p, get_timestamp(logid))
-
-        ### token / sample / sample_collection
-
-        sys.stderr.write(' view_collection_dataset_full')
-        r = conn.execute('''
-            SELECT corpuscode, collectioncode, datasetcode, tokencount, typecount, wordcount
-            FROM view_collection_dataset_full
-        ''')
-        for corpuscode, collectioncode, datasetcode, tokencount, typecount, wordcount in r:
-            add_point(corpuscode, collectioncode, datasetcode, 'type-token', typecount,  tokencount)
-            add_point(corpuscode, collectioncode, datasetcode, 'type-word',  typecount,  wordcount)
-            add_point(corpuscode, collectioncode, datasetcode, 'token-word', tokencount, wordcount)
+            p = TypesPlot.Point(collectioncode, y, x, above, below, total)
+            self.by_corpus_dataset_stat[k1].add_point(p, get_timestamp(logid))
 
         sys.stderr.write('\n')
 
