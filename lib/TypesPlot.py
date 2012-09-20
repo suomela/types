@@ -17,7 +17,7 @@ THRESHOLD = 0.005
 
 DEFAULT_GROUP = "default"
 
-OKCHAR = re.compile('[-+.a-zA-Z0-9]+')
+OKCHAR = re.compile(r'[-+.a-zA-Z0-9]+')
 
 def lim(maxval):
     return (-AXIS_PAD * maxval, (1.0 + AXIS_PAD) * maxval)
