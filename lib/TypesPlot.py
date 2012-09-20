@@ -369,14 +369,17 @@ class Curve:
             result = []
             for c in cl:
                 for g in gl:
-                    label = labelhook(c, g)
+                    label, desc = labelhook(c, g)
+                    attr = dict()
                     if c == self and g is groupcode:
-                        cl = "menuitem menusel"
-                        e = E.span(label, **{"class": cl})
+                        attr["class"] = "menuitem menusel"
+                        e = E.span(label, **attr)
                     else:
                         href, changed = c.get_pointname_relative(self, 'html', g, collectioncode)
-                        cl = "menuitem menuother" if changed else "menuitem menusame"
-                        e = E.a(label, href=href, **{"class": cl})
+                        if desc is not None:
+                            attr["title"] = desc
+                        attr["class"] = "menuitem menuother" if changed else "menuitem menusame"
+                        e = E.a(label, href=href, **attr)
                     result.append(e)
             t = title + ":"
             if titlelink is None:
@@ -390,7 +393,7 @@ class Curve:
             "Corpus",
             ac.by_dataset_stat_fallback[(self.datasetcode, self.statcode)],
             [ groupcode ],
-            lambda c, g: c.corpuscode,
+            lambda c, g: (c.corpuscode, c.corpus_descr),
             titlelink="../index.html"
         )
         menublocks.append(E.p(self.corpus_descr, **{"class": "menudesc"}))
@@ -398,20 +401,20 @@ class Curve:
             "Dataset",
             ac.by_corpus_stat[(self.corpuscode, self.statcode)],
             [ groupcode ],
-            lambda c, g: c.datasetcode
+            lambda c, g: (c.datasetcode, c.dataset_descr)
         )
         menublocks.append(E.p(self.dataset_descr, **{"class": "menudesc"}))
         add_menu(
             "Points",
             [ self ],
             self.groups,
-            lambda c, g: "none" if g is None else g
+            lambda c, g: ("none", None) if g is None else (g, None)
         )
         add_menu(
             "Axes",
             ac.by_corpus_dataset[(self.corpuscode, self.datasetcode)],
             [ groupcode ],
-            lambda c, g: c.statcode
+            lambda c, g: (c.statcode, "y = %s, x = %s" % (c.ylabel.lower(), c.xlabel.lower()))
         )
 
         bodyblocks.append(E.div(*menublocks, **{"class": "menu"}))
