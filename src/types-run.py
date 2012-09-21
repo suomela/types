@@ -214,6 +214,11 @@ def run_store(args, task):
     for f in all_files:
         os.remove(f)
 
+def postprocess(args):
+    conn = TypesDatabase.open_db(args.db)
+    TypesDatabase.refresh_result(conn)
+    conn.commit()
+
 def main():
     args = get_args()
     task = get_task(args)
@@ -227,6 +232,7 @@ def main():
         run_query(args, task)
         run_comp(args, task)
         run_store(args, task)
+        postprocess(args)
         msg('all done')
 
 main()

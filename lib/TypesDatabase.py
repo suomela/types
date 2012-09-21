@@ -122,6 +122,21 @@ def create_if_needed(conn):
             FOREIGN KEY (corpuscode, collectioncode) REFERENCES collection(corpuscode, collectioncode)
         );
 
+        CREATE TABLE IF NOT EXISTS result_q (
+            i INTEGER PRIMARY KEY NOT NULL,
+            n INTEGER NOT NULL,
+            corpuscode TEXT NOT NULL,
+            datasetcode TEXT NOT NULL,
+            collectioncode TEXT NOT NULL,
+            statcode TEXT NOT NULL REFERENCES stat(statcode),
+            side TEXT NOT NULL,
+            p REAL,
+            q REAL,
+            UNIQUE (corpuscode, datasetcode, collectioncode, statcode, side),
+            FOREIGN KEY (corpuscode, datasetcode) REFERENCES dataset(corpuscode, datasetcode),
+            FOREIGN KEY (corpuscode, collectioncode) REFERENCES collection(corpuscode, collectioncode)
+        );
+
         CREATE TABLE IF NOT EXISTS result_curve (
             id INTEGER PRIMARY KEY NOT NULL,
             corpuscode TEXT NOT NULL,
@@ -143,27 +158,6 @@ def create_if_needed(conn):
             y INTEGER NOT NULL,
             PRIMARY KEY (curveid, x)
         );
-
-        CREATE VIEW IF NOT EXISTS view_p AS
-        SELECT corpuscode, datasetcode, collectioncode, statcode,
-            'below' AS side, CAST(below AS REAL)/total AS p
-        FROM result_p
-        UNION
-        SELECT corpuscode, datasetcode, collectioncode, statcode,
-            'above' AS side, CAST(above AS REAL)/total AS p
-        FROM result_p;
-
-        CREATE VIEW IF NOT EXISTS view_p2 AS
-        SELECT *,
-            (SELECT COUNT(0) FROM view_p AS x WHERE x.p <= y.p) AS i,
-            (SELECT COUNT(0) FROM view_p) AS n
-        FROM view_p AS y ORDER BY p;
-
-        CREATE VIEW IF NOT EXISTS view_q AS
-        SELECT *,
-            CAST(i AS REAL)/CAST(n AS REAL) AS expected,
-            p / (CAST(i AS REAL)/CAST(n AS REAL)) AS q
-        FROM view_p2;
 
         CREATE VIEW IF NOT EXISTS view_corpus AS
         SELECT corpuscode, COUNT(0) AS samplecount
@@ -251,6 +245,8 @@ def drop_views(conn):
         DROP VIEW IF EXISTS view_dataset_full;
         DROP VIEW IF EXISTS view_dataset;
         DROP VIEW IF EXISTS view_corpus;
+        DROP VIEW IF EXISTS view_q;
+        DROP VIEW IF EXISTS view_p2;
         DROP VIEW IF EXISTS view_p;
     ''')
 
@@ -282,3 +278,28 @@ def create_collection(conn, corpuscode, groupcode, collectioncode, description):
         'INSERT INTO collection (corpuscode, groupcode, collectioncode, description) VALUES (?, ?, ?, ?)',
         (corpuscode, groupcode, collectioncode, description)
     )
+
+def refresh_result(conn):
+    conn.execute('''
+        CREATE TEMPORARY TABLE tmp_r AS
+        SELECT corpuscode, datasetcode, collectioncode, statcode,
+            'below' AS side, CAST(below AS REAL)/CAST(total AS REAL) AS p
+        FROM result_p
+        UNION
+        SELECT corpuscode, datasetcode, collectioncode, statcode,
+            'above' AS side, CAST(above AS REAL)/CAST(total AS REAL) AS p
+        FROM result_p
+        ORDER BY p
+    ''')
+
+    r = conn.execute('SELECT COUNT(0) FROM tmp_r')
+    n = [ i[0] for i in r ][0]
+
+    conn.execute('DELETE FROM result_q')
+    conn.execute('''
+        INSERT INTO result_q (i, n, corpuscode, datasetcode, collectioncode, statcode, side, p, q)
+        SELECT rowid, ?, corpuscode, datasetcode, collectioncode, statcode, side, p,
+            p / (CAST(rowid AS REAL)/CAST(? AS REAL)) AS q
+        FROM tmp_r
+        ORDER BY rowid
+    ''', (n, n))
