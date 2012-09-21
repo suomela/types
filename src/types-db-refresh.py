@@ -1,5 +1,4 @@
 import sys
-sys.path.append('lib')
 import TypesDatabase
 
 def db_init(filename=TypesDatabase.DEFAULT_FILENAME):

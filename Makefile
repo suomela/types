@@ -18,6 +18,7 @@ sfmt = external/SFMT-src-1.4
 prog_py = types-db-init types-db-refresh types-draw-curves types-plot types-run
 prog_db = types-convert types-query types-store
 prog_other = types-comp types-rng 
+mod_py = TypesDatabase TypesParallel TypesPlot
 mod_comp = types-comp array calculate collections curves driver input io malloc matrix plan print random read stat util vector version yx SFMT
 mod_rng = types-rng io jump malloc random seed util version SFMT SFMT-jump
 mod_convert = types-convert db db2 io util version
@@ -37,12 +38,14 @@ gen = alg.h calculate.c calculate.h yx.c yx.h $(jump) $(seed)
 
 bin_py = $(prog_py:%=bin/%)
 bin_py_debug = $(prog_py:%=debug/%)
+lib_py = $(mod_py:%=bin/%.py)
+lib_py_debug = $(mod_py:%=debug/%.py)
 bin_other = build/unittest $(prog_other:%=bin/%)
 bin_other_debug = debug/unittest $(prog_other:%=debug/%)
 bin_db = $(prog_db:%=bin/%)
 bin_db_debug = $(prog_db:%=debug/%)
-bin = $(bin_py) $(bin_other) $(bin_db)
-bin_debug = $(bin_py_debug) $(bin_other_debug) $(bin_db_debug)
+bin = $(bin_py) $(lib_py) $(bin_other) $(bin_db)
+bin_debug = $(bin_py_debug) $(lib_py_debug) $(bin_other_debug) $(bin_db_debug)
 
 mod = $(sort $(mod_comp) $(mod_rng) $(mod_convert) $(mod_query) $(mod_store) $(mod_unittest))
 dep = $(mod:%=dep/%.d)
@@ -108,6 +111,14 @@ $(bin_py_debug): debug/%: src/%.py
 	echo "#!$(PYTHON)" > $@
 	cat $< >> $@
 	chmod +x $@
+
+$(lib_py): bin/%.py: src/%.py
+	mkdir -p $(@D)
+	cp $< $@
+
+$(lib_py_debug): debug/%.py: src/%.py
+	mkdir -p $(@D)
+	cp $< $@
 
 $(bin_other):
 	mkdir -p $(@D)

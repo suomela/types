@@ -9,7 +9,6 @@ import multiprocessing
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot
-sys.path.append('lib')
 import TypesPlot
 
 if len(sys.argv) == 1:

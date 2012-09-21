@@ -4,7 +4,6 @@ import os
 import os.path
 import subprocess
 import sys
-sys.path.append('lib')
 import TypesDatabase
 import TypesParallel
 

@@ -7,7 +7,6 @@ import os
 import os.path
 import sys
 import numpy as np
-sys.path.append('lib')
 import TypesDatabase
 import TypesParallel
 import TypesPlot
