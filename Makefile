@@ -15,7 +15,7 @@ sfmt = external/SFMT-src-1.4
 
 #--- Programs
 
-prog_py = types-db-force-init types-db-init types-draw-curves types-plot types-run
+prog_py = types-db-init types-db-refresh types-draw-curves types-plot types-run
 prog_db = types-convert types-query types-store
 prog_other = types-comp types-rng 
 mod_comp = types-comp array calculate collections curves driver input io malloc matrix plan print random read stat util vector version yx SFMT
