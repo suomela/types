@@ -1,5 +1,0 @@
-#!/bin/sh
-
-for prefix in a b c d e f g h; do
-    check/clear $prefix || exit 1
-done
