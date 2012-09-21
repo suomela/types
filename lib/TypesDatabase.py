@@ -170,37 +170,37 @@ def create_if_needed(conn):
         FROM sample
         GROUP BY corpuscode;
 
-        CREATE VIEW view_result_type_word AS
+        CREATE VIEW IF NOT EXISTS view_result_type_word AS
         SELECT corpuscode, datasetcode, collectioncode, y AS typecount, x AS wordcount
         FROM result_p
         WHERE statcode = 'type-word'
         ORDER BY corpuscode, datasetcode, collectioncode;
 
-        CREATE VIEW view_result_type_token AS
+        CREATE VIEW IF NOT EXISTS view_result_type_token AS
         SELECT corpuscode, datasetcode, collectioncode, y AS typecount, x AS tokencount
         FROM result_p
         WHERE statcode = 'type-token'
         ORDER BY corpuscode, datasetcode, collectioncode;
 
-        CREATE VIEW view_result_hapax_word AS
+        CREATE VIEW IF NOT EXISTS view_result_hapax_word AS
         SELECT corpuscode, datasetcode, collectioncode, y AS hapaxcount, x AS wordcount
         FROM result_p
         WHERE statcode = 'hapax-word'
         ORDER BY corpuscode, datasetcode, collectioncode;
 
-        CREATE VIEW view_result_hapax_token AS
+        CREATE VIEW IF NOT EXISTS view_result_hapax_token AS
         SELECT corpuscode, datasetcode, collectioncode, y AS hapaxcount, x AS tokencount
         FROM result_p
         WHERE statcode = 'hapax-token'
         ORDER BY corpuscode, datasetcode, collectioncode;
 
-        CREATE VIEW view_result_token_word AS
+        CREATE VIEW IF NOT EXISTS view_result_token_word AS
         SELECT corpuscode, datasetcode, collectioncode, y AS tokencount, x AS wordcount
         FROM result_p
         WHERE statcode = 'token-word'
         ORDER BY corpuscode, datasetcode, collectioncode;
 
-        CREATE VIEW view_result AS
+        CREATE VIEW IF NOT EXISTS view_result AS
         SELECT corpuscode, datasetcode, collectioncode, 
             COALESCE(yw.wordcount, hw.wordcount, tw.wordcount) AS wordcount,
             COALESCE(yt.tokencount, ht.tokencount, tw.tokencount) AS tokencount,
