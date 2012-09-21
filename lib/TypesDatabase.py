@@ -166,36 +166,53 @@ def create_if_needed(conn):
         FROM view_p2;
 
         CREATE VIEW IF NOT EXISTS view_corpus AS
-        SELECT corpuscode,
-            SUM(sample.wordcount) AS wordcount, COUNT(0) AS samplecount
+        SELECT corpuscode, COUNT(0) AS samplecount
         FROM sample
         GROUP BY corpuscode;
 
-        CREATE VIEW IF NOT EXISTS view_dataset AS
-        SELECT corpuscode, datasetcode,
-            SUM(tokencount) AS tokencount, COUNT(DISTINCT tokencode) AS typecount
-        FROM token
-        GROUP BY corpuscode, datasetcode;
+        CREATE VIEW view_result_type_word AS
+        SELECT corpuscode, datasetcode, collectioncode, y AS typecount, x AS wordcount
+        FROM result_p
+        WHERE statcode = 'type-word'
+        ORDER BY corpuscode, datasetcode, collectioncode;
 
-        CREATE VIEW IF NOT EXISTS view_dataset_full AS
-        SELECT corpuscode, datasetcode, tokencount, typecount, wordcount, samplecount
-        FROM view_dataset JOIN view_corpus USING(corpuscode);
+        CREATE VIEW view_result_type_token AS
+        SELECT corpuscode, datasetcode, collectioncode, y AS typecount, x AS tokencount
+        FROM result_p
+        WHERE statcode = 'type-token'
+        ORDER BY corpuscode, datasetcode, collectioncode;
 
-        CREATE VIEW IF NOT EXISTS view_collection AS
-        SELECT corpuscode, collectioncode,
-            SUM(sample.wordcount) AS wordcount, COUNT(0) AS samplecount
-        FROM sample JOIN sample_collection USING(corpuscode, samplecode)
-        GROUP BY corpuscode, collectioncode;
+        CREATE VIEW view_result_hapax_word AS
+        SELECT corpuscode, datasetcode, collectioncode, y AS hapaxcount, x AS wordcount
+        FROM result_p
+        WHERE statcode = 'hapax-word'
+        ORDER BY corpuscode, datasetcode, collectioncode;
 
-        CREATE VIEW IF NOT EXISTS view_collection_dataset AS
-        SELECT corpuscode, collectioncode, datasetcode,
-            SUM(tokencount) AS tokencount, COUNT(DISTINCT tokencode) AS typecount
-        FROM token JOIN sample_collection USING(corpuscode, samplecode)
-        GROUP BY corpuscode, collectioncode, datasetcode;
+        CREATE VIEW view_result_hapax_token AS
+        SELECT corpuscode, datasetcode, collectioncode, y AS hapaxcount, x AS tokencount
+        FROM result_p
+        WHERE statcode = 'hapax-token'
+        ORDER BY corpuscode, datasetcode, collectioncode;
 
-        CREATE VIEW IF NOT EXISTS view_collection_dataset_full AS
-        SELECT corpuscode, collectioncode, datasetcode, tokencount, typecount, wordcount, samplecount
-        FROM view_collection_dataset JOIN view_collection USING(corpuscode, collectioncode);
+        CREATE VIEW view_result_token_word AS
+        SELECT corpuscode, datasetcode, collectioncode, y AS tokencount, x AS wordcount
+        FROM result_p
+        WHERE statcode = 'token-word'
+        ORDER BY corpuscode, datasetcode, collectioncode;
+
+        CREATE VIEW view_result AS
+        SELECT corpuscode, datasetcode, collectioncode, 
+            COALESCE(yw.wordcount, hw.wordcount, tw.wordcount) AS wordcount,
+            COALESCE(yt.tokencount, ht.tokencount, tw.tokencount) AS tokencount,
+            COALESCE(yw.typecount, yt.typecount) AS typecount,
+            COALESCE(hw.hapaxcount, ht.hapaxcount) AS hapaxcount
+        FROM dataset JOIN collection USING (corpuscode)
+        LEFT JOIN view_result_type_word AS yw USING (datasetcode, collectioncode, corpuscode)
+        LEFT JOIN view_result_type_token AS yt USING (datasetcode, collectioncode, corpuscode)
+        LEFT JOIN view_result_hapax_word AS hw USING (datasetcode, collectioncode, corpuscode)
+        LEFT JOIN view_result_hapax_token AS ht USING (datasetcode, collectioncode, corpuscode)
+        LEFT JOIN view_result_token_word AS tw USING (datasetcode, collectioncode, corpuscode)
+        ORDER BY corpuscode, datasetcode, collectioncode;
 
         CREATE VIEW IF NOT EXISTS view_missing_curve AS
         SELECT corpuscode, datasetcode, statcode, level, side
@@ -220,6 +237,12 @@ def create_if_needed(conn):
 
 def drop_views(conn):
     conn.executescript('''
+        DROP VIEW IF EXISTS view_result;
+        DROP VIEW IF EXISTS view_result_type_word;
+        DROP VIEW IF EXISTS view_result_type_token;
+        DROP VIEW IF EXISTS view_result_hapax_word;
+        DROP VIEW IF EXISTS view_result_hapax_token;
+        DROP VIEW IF EXISTS view_result_token_word;
         DROP VIEW IF EXISTS view_missing_p;
         DROP VIEW IF EXISTS view_missing_curve;
         DROP VIEW IF EXISTS view_collection_dataset_full;
