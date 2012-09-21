@@ -19,13 +19,13 @@ def msg(msg):
     sys.stderr.write("%s: %s\n" % (TOOL, msg))
 
 def get_args():
-    parser = optparse.OptionParser(description='Calculate all statistics.')
+    parser = optparse.OptionParser(description='Initialise the database and calculate all statistics.')
     parser.add_option('--db', metavar='FILE', dest='db',
                       help='which database to read [default: %default]',
                       default=TypesDatabase.DEFAULT_FILENAME)
     TypesParallel.add_options(parser)
     parser.add_option('--dry-run', dest='dryrun', action='store_true',
-                      help='just tell what would happen',
+                      help='initialise the database if needed, but do not run calculation; just tell what would happen',
                       default=False)
     parser.add_option('--recalc', dest='recalc', action='store_true',
                       help='recalculate even if results already exist',
@@ -116,8 +116,9 @@ def find_missing(conn, args, task):
         for corpuscode, datasetcode, statcode, samplecount in r:
             task.add_p(corpuscode, datasetcode, statcode, samplecount)
 
-def get_task(args):
+def init_and_get_task(args):
     conn = TypesDatabase.open_db(args.db)
+    TypesDatabase.create_if_needed(conn)
     task = Task()
     if args.recalc:
         find_all(conn, args, task)
@@ -221,7 +222,7 @@ def postprocess(args):
 
 def main():
     args = get_args()
-    task = get_task(args)
+    task = init_and_get_task(args)
     if len(task.inputs) == 0:
         msg('database up to date')
     elif args.dryrun:

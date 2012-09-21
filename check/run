@@ -16,6 +16,7 @@ echo
 mkdir -p tmp
 rm -f tmp/types.sqlite*
 cp check/types.sqlite tmp/types.sqlite || exit 1
+$dir/types-db-init tmp/types.sqlite || exit 1
 
 echo '5/:' > tmp/loginfile
 
@@ -48,10 +49,10 @@ for prefix in a b c d e f g h; do
 done
 
 rcmd="$dir/types-run --bindir=$dir --db=tmp/types.sqlite --citer 10000 --piter 10000 --x 10000 --y 100"
-check/clear-all || exit 1
+cp check/types.sqlite tmp/types.sqlite || exit 1
 $rcmd --local || exit 1
 check/verify-all || exit 1
-check/clear-all || exit 1
+cp check/types.sqlite tmp/types.sqlite || exit 1
 $rcmd --parts 3 --loginfile tmp/loginfile || exit 1
 check/verify-all || exit 1
 
