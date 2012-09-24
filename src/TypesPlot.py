@@ -80,6 +80,14 @@ class LabelPlacement:
             self.freelist.add((y3, y4))
         return bestplace
 
+class CPoint:
+    def __init__(self, ec, fc, lw):
+        self.ec = ec
+        self.fc = fc
+        self.lw = lw
+
+SEL   = CPoint( (0.0, 0.0, 0.0), (1.0, 1.0, 1.0), 1.5 )
+UNSEL = CPoint( (0.6, 0.6, 0.6), (1.0, 1.0, 1.0), 0.5 )
 
 class Point:
     def __init__(self, collectioncode, y, x, above, below, total):
@@ -109,6 +117,7 @@ class Point:
 
         self.ec = (0.0, 0.0, 0.0)
         self.fc = (1.0, 1.0, 1.0)
+        self.lw = 1.0
 
         if self.pvalue is None:
             pass
@@ -192,8 +201,11 @@ class Curve:
         self.points_by_group[groupcode].append(p)
         self.add_timestamp_group(timestamp, groupcode)
 
-    def get_suffixes(self):
-        return ['pdf', 'svg']
+    def get_suffixes(self, p=None):
+        if p is None:
+            return ['pdf', 'svg']
+        else:
+            return ['svg']
 
     def get_basename(self, groupcode):
         b = [self.statcode, self.datasetcode]
@@ -247,8 +259,8 @@ class Curve:
     def get_directories(self):
         return [ self.get_directory(suffix) for suffix in self.get_suffixes() ]
 
-    def get_filenames(self, groupcode):
-        return [ self.get_filename(suffix, groupcode) for suffix in self.get_suffixes() ]
+    def get_filenames(self, groupcode, p=None):
+        return [ self.get_filename(suffix, groupcode, p) for suffix in self.get_suffixes(p) ]
 
     def is_outdated(self, groupcode):
         for filename in self.get_filenames(groupcode):
@@ -269,16 +281,23 @@ class Curve:
         return outdated
 
     def plot_group(self, matplotlib, groupcode):
+        self.plot_group_points(matplotlib, groupcode, None)
+        for point in self.points_by_group[groupcode]:
+            self.plot_group_points(matplotlib, groupcode, point)
+
+    def plot_group_points(self, matplotlib, groupcode, point):
         points = sorted(self.points_by_group[groupcode], key=lambda p: p.x, reverse=True)
         SPP = matplotlib.figure.SubplotParams(left=0.1, right=0.85, bottom=0.1, top=0.98)
         fig = matplotlib.pyplot.figure(figsize=(9,6), subplotpars=SPP)
         ax = fig.add_subplot(111, xlim=lim(self.maxx), ylim=lim(self.maxy))
         self.plot_polys(ax)
-        self.plot_points(ax, points, groupcode)
+        self.plot_points(ax, points, groupcode, point)
         self.plot_labels(ax)
-        for filename in self.get_filenames(groupcode):
+        for suffix in self.get_suffixes(point):
+            filename = self.get_filename(suffix, groupcode, point)
             fig.savefig(filename)
-        self.fix_svg(groupcode)
+            if suffix == 'svg':
+                self.fix_svg(filename)
 
     def plot_polys(self, ax):
         for i, poly in enumerate(self.polys):
@@ -287,33 +306,36 @@ class Curve:
             fill = (1.0-0.35*f, 1.0-0.25*f, 1.0)
             ax.fill(poly[:,0], poly[:,1], fc=fill, ec=edge, linewidth=0.4, zorder=100 + f)
 
-    def plot_points(self, ax, points, groupcode):
+    def plot_points(self, ax, points, groupcode, point):
         placement = LabelPlacement()
         for i, p in enumerate(points):
             scx, scy = float(p.x)/self.maxx, float(p.y)/self.maxy
-            if scx < THRESHOLD or scy < THRESHOLD:
-                continue
             stx = scx + XSEP
             sty = placement.place(scy)
-            lw = 1.0
             url = self.get_pointname('html', groupcode, p)
+            if point is None:
+                cp = p
+            elif point == p:
+                cp = SEL
+            else:
+                cp = UNSEL
             if sty is not None:
                 tx = stx * self.maxx
                 ty = sty * self.maxy
                 ax.plot(
                     [p.x, p.x, tx],
                     [p.y, ty,  ty],
-                    color=p.ec,
-                    linewidth=lw,
+                    color=cp.ec,
+                    linewidth=cp.lw,
                     clip_on=False,
                     zorder=200
                 )
             ax.scatter(
                 p.x, p.y,
                 marker=p.marker,
-                edgecolor=p.ec,
-                facecolor=p.fc,
-                linewidth=lw,
+                edgecolor=cp.ec,
+                facecolor=cp.fc,
+                linewidth=cp.lw,
                 s=p.ms**2,
                 zorder=202,
                 urls=[url],
@@ -322,13 +344,13 @@ class Curve:
                 ax.text(
                     tx, ty,
                     p.collectioncode,
-                    color=p.ec,
+                    color=cp.ec,
                     va='center',
                     bbox=dict(
                         boxstyle="round,pad=0.3",
-                        fc=p.fc,
-                        ec=p.ec,
-                        linewidth=0.6,
+                        fc=cp.fc,
+                        ec=cp.ec,
+                        linewidth=cp.lw,
                     ),
                     zorder=201,
                 )
@@ -337,8 +359,7 @@ class Curve:
         ax.set_xlabel(self.xlabel, labelpad=10)
         ax.set_ylabel(self.ylabel, labelpad=15)
 
-    def fix_svg(self, groupcode):
-        filename = self.get_filename('svg', groupcode)
+    def fix_svg(self, filename):
         with open(filename) as f:
             data = f.read()
         data = data.replace('<a xlink:href=', '<a target="_top" xlink:href=')
@@ -422,7 +443,10 @@ class Curve:
         )
         bodyblocks.append(E.div(*menublocks, **{"class": "menu"}))
 
-        fig = E.p(E.object(data=self.get_pointname('svg', groupcode), type="image/svg+xml"), **{"class": "plot"})
+        fig = E.p(E.object(
+            data=self.get_pointname('svg', groupcode, point),
+            type="image/svg+xml"
+        ), **{"class": "plot"})
         bodyblocks.append(fig)
 
         menublocks = []
@@ -434,7 +458,8 @@ class Curve:
             lambda c, g, x: ("none", None) if x is None else (x, self.collection_descr[x])
         )
         if collectioncode is not None:
-            menublocks.append(E.p(self.collection_descr[collectioncode], **{"class": "menudesc"}))
+            if self.collection_descr[collectioncode] is not None:
+                menublocks.append(E.p(self.collection_descr[collectioncode], **{"class": "menudesc"}))
             stat = [
                 u"%s %s" % (point.x, self.xlabel.lower()),
                 u"%d %s" % (point.y, self.ylabel.lower()),
