@@ -289,6 +289,11 @@ P {
     padding: 0px;
 }
 
+.mainmenu P {
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
 .plot {
     margin-top: 35px;
     margin-bottom: 15px;
@@ -296,11 +301,6 @@ P {
 
 .menudesc {
     margin-left: 30px;
-}
-
-.menudescinline {
-    display: inline-block;
-    padding: 3px;
 }
 
 .menudesc, .menudescinline {
@@ -315,15 +315,18 @@ P {
     font-weight: bold;
 }
 
-.menuitem, .menutitle  {
+.menuitem, .menutitle, .menudescinline {
     display: inline-block;
-    white-space: nowrap;
     padding: 3px;
     border: 1px solid #fff;
     margin-top: 1px;
     margin-bottom: 1px;
     margin-left: 4px;
     margin-right: 4px;
+}
+
+.menuitem, .menutitle {
+    white-space: nowrap;
 }
 
 .menu A:hover, .menu A:link, .menu A:visited {
