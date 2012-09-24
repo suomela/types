@@ -352,8 +352,8 @@ class Curve:
                 with open(filename, 'w') as f:
                     self.generate_html_one(f, groupcode, p, ac)
 
-    def generate_html_one(self, f, groupcode, p, ac):
-        collectioncode = p.collectioncode if p is not None else None
+    def generate_html_one(self, f, groupcode, point, ac):
+        collectioncode = point.collectioncode if point is not None else None
 
         headblocks = []
         bodyblocks = []
@@ -363,24 +363,23 @@ class Curve:
         headblocks.append(E.title(t))
         headblocks.append(E.link(rel="stylesheet", href="../types.css", type="text/css"))
 
-        menublocks = []
-
-        def add_menu(title, cl, gl, labelhook, titlelink=None):
+        def add_menu(title, cl, gl, xl, labelhook, titlelink=None):
             result = []
             for c in cl:
                 for g in gl:
-                    label, desc = labelhook(c, g)
-                    attr = dict()
-                    if c == self and g is groupcode:
-                        attr["class"] = "menuitem menusel"
-                        e = E.span(label, **attr)
-                    else:
-                        href, changed = c.get_pointname_relative(self, 'html', g, collectioncode)
-                        if desc is not None:
-                            attr["title"] = desc
-                        attr["class"] = "menuitem menuother" if changed else "menuitem menusame"
-                        e = E.a(label, href=href, **attr)
-                    result.append(e)
+                    for x in xl:
+                        label, desc = labelhook(c, g, x)
+                        attr = dict()
+                        if c == self and g is groupcode and x is collectioncode:
+                            attr["class"] = "menuitem menusel"
+                            e = E.span(label, **attr)
+                        else:
+                            href, changed = c.get_pointname_relative(self, 'html', g, x)
+                            if desc is not None:
+                                attr["title"] = desc
+                            attr["class"] = "menuitem menuother" if changed else "menuitem menusame"
+                            e = E.a(label, href=href, **attr)
+                        result.append(e)
             t = title + ":"
             if titlelink is None:
                 t = E.span(t, **{"class": "menutitle"})
@@ -389,11 +388,13 @@ class Curve:
             menu = E.p(*add_sep([t] + result, " "), **{"class": "menurow"})
             menublocks.append(menu)
 
+        menublocks = []
         add_menu(
             "Corpus",
             ac.by_dataset_stat_fallback[(self.datasetcode, self.statcode)],
             [ groupcode ],
-            lambda c, g: (c.corpuscode, c.corpus_descr),
+            [ collectioncode ],
+            lambda c, g, x: (c.corpuscode, c.corpus_descr),
             titlelink="../index.html"
         )
         menublocks.append(E.p(self.corpus_descr, **{"class": "menudesc"}))
@@ -401,42 +402,49 @@ class Curve:
             "Dataset",
             ac.by_corpus_stat[(self.corpuscode, self.statcode)],
             [ groupcode ],
-            lambda c, g: (c.datasetcode, c.dataset_descr)
+            [ collectioncode ],
+            lambda c, g, x: (c.datasetcode, c.dataset_descr)
         )
         menublocks.append(E.p(self.dataset_descr, **{"class": "menudesc"}))
         add_menu(
             "Points",
             [ self ],
             self.groups,
-            lambda c, g: ("none", None) if g is None else (g, None)
+            [ collectioncode ],
+            lambda c, g, x: ("none", None) if g is None else (g, None)
         )
         add_menu(
             "Axes",
             ac.by_corpus_dataset[(self.corpuscode, self.datasetcode)],
             [ groupcode ],
-            lambda c, g: (c.statcode, "y = %s, x = %s" % (c.ylabel.lower(), c.xlabel.lower()))
+            [ collectioncode ],
+            lambda c, g, x: (c.statcode, "y = %s, x = %s" % (c.ylabel.lower(), c.xlabel.lower()))
         )
-
         bodyblocks.append(E.div(*menublocks, **{"class": "menu"}))
 
         fig = E.p(E.object(data=self.get_pointname('svg', groupcode), type="image/svg+xml"), **{"class": "plot"})
         bodyblocks.append(fig)
 
+        menublocks = []
+        add_menu(
+            "Collection",
+            [ self ],
+            [ groupcode ],
+            [ None ] + [ p.collectioncode for p in self.points_by_group[groupcode] ],
+            lambda c, g, x: ("none", None) if x is None else (x, self.collection_descr[x])
+        )
         if collectioncode is not None:
-            bodyblocks.append(E.div(
-                E.p(
-                    E.span(collectioncode + ":", **{"class": "pointtitle"}),
-                    " ",
-                    E.span(self.collection_descr[collectioncode] or "", **{"class": "pointdesc"}),
-                ),
-                E.p(
-                    u"%s: %d, " % (self.xlabel.lower(), p.x),
-                    u"%s: %d, " % (self.ylabel.lower(), p.y),
-                    u"%s: %f" % (p.side, p.pvalue),
-                    **{"class": "pointstat"}
-                ),
-                **{"class": "point"}
-            ))
+            menublocks.append(E.p(self.collection_descr[collectioncode], **{"class": "menudesc"}))
+            stat = [
+                u"%s %s" % (point.x, self.xlabel.lower()),
+                u"%d %s" % (point.y, self.ylabel.lower()),
+                u"%f %s" % (point.pvalue, point.side),
+            ]
+            t = E.span("Statistics:", **{"class": "menutitle"})
+            stat = [ E.span(v, **{"class": "menuitem"}) for v in stat ]
+            menu = E.p(*add_sep([t] + stat, " "), **{"class": "menurow"})
+            menublocks.append(menu)
+        bodyblocks.append(E.div(*menublocks, **{"class": "menu"}))            
 
         doc = E.html(E.head(*headblocks), E.body(*bodyblocks))
         write_html(f, doc)

@@ -206,7 +206,7 @@ class AllCurves:
         for corpuscode in sorted(self.by_corpus.keys()):
             c = self.by_corpus[corpuscode][0]
             link = E.a(corpuscode, href=c.get_pointname_from_root('html', None), **{"class": "menuitem"})
-            desc = E.span(c.corpus_descr, **{"class": "menudesc"})
+            desc = E.span(c.corpus_descr, **{"class": "menudescinline"})
             menu = E.p(link, u" · ", desc, **{"class": "menurow"})
             menublocks.append(menu)
         bodyblocks = [ E.div(*menublocks, **{"class": "menu mainmenu"}) ]
@@ -284,34 +284,34 @@ A:hover, A:active {
     
 P {
     margin: 0px;
-    margin-bottom: 5px;
+    margin-top: 12px;
+    margin-bottom: 12px;
     padding: 0px;
 }
 
 .plot {
-    margin-top: 20px;
-    margin-bottom: 10px;
+    margin-top: 35px;
+    margin-bottom: 15px;
 }
 
-P.menudesc {
-    margin-left: 25px;
+.menudesc {
+    margin-left: 30px;
 }
 
-DIV.point {
-    margin-left: 3px;
-}
-
-.menudesc, .pointdesc {
+.menudescinline {
     display: inline-block;
-    font-size: 80%;
     padding: 3px;
+}
+
+.menudesc, .menudescinline {
+    font-size: 80%;
 }
 
 .menuitem {
     font-size: 95%;
 }
 
-.menutitle, .pointtitle {
+.menutitle {
     font-weight: bold;
 }
 
@@ -322,8 +322,8 @@ DIV.point {
     border: 1px solid #fff;
     margin-top: 1px;
     margin-bottom: 1px;
-    margin-left: 0px;
-    margin-right: 0px;
+    margin-left: 4px;
+    margin-right: 4px;
 }
 
 .menu A:hover, .menu A:link, .menu A:visited {
