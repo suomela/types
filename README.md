@@ -30,7 +30,8 @@ You can experiment with the data set as follows:
     bin/types-plot
 
 Now you can open the file `example/html/index.html` in your web browser
-and explore the results.
+and explore the results. The output should be similar to
+http://www.cs.helsinki.fi/jukka.suomela/types2/example/
 
 The computation will take a while, typically *several hours* unless you
 are using a high-performance computing cluster. If you are impatient,
