@@ -1,7 +1,8 @@
 *.pyc
 etc/config.inc
-bin
-build
-debug
-dep
-tmp
+bin/
+build/
+debug/
+dep/
+tmp/
+example/tmp/
