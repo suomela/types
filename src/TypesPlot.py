@@ -41,6 +41,11 @@ def write_html(f, doc):
     f.write('<!DOCTYPE html>\n')
     f.write(etree.tostring(doc, method='html', pretty_print=True))
 
+def longest_common_prefix(a, b):
+    i = 0
+    while i < len(a) and i < len(b) and a[i] == b[i]:
+        i += 1
+    return i
 
 class LabelPlacement:
     def __init__(self):
@@ -384,14 +389,34 @@ class Curve:
         headblocks.append(E.title(t))
         headblocks.append(E.link(rel="stylesheet", href="../types.css", type="text/css"))
 
-        def add_menu(title, cl, gl, xl, labelhook, titlelink=None):
+        def add_menu(title, cl, gl, xl, labelhook, titlelink=None, groupby=None):
+            prev = []
+            prevj = 0
             result = []
             for c in cl:
                 for g in gl:
                     for x in xl:
+                        addbreak = False
                         label, desc = labelhook(c, g, x)
+                        selected = c == self and g is groupcode and x is collectioncode
+                        if groupby is not None:
+                            cur = label.split(groupby)
+                            # A heuristic rule that tries to produce reasonable abbreviations
+                            j = longest_common_prefix(prev, cur)
+                            if j == len(prev):
+                                j -= 1
+                            if j < prevj:
+                                j = 0
+                            if 0 < prevj < j:
+                                j = prevj
+                            if j > 0:
+                                label = u"…" + groupby.join(cur[j:])
+                            if j == 0 and prevj > 0:
+                                addbreak = True
+                            prev = cur
+                            prevj = j
                         attr = dict()
-                        if c == self and g is groupcode and x is collectioncode:
+                        if selected:
                             attr["class"] = "menuitem menusel"
                             e = E.span(label, **attr)
                         else:
@@ -400,6 +425,8 @@ class Curve:
                                 attr["title"] = desc
                             attr["class"] = "menuitem menuother" if changed else "menuitem menusame"
                             e = E.a(label, href=href, **attr)
+                        if addbreak:
+                            result.append(E.br())
                         result.append(e)
             t = title + ":"
             if titlelink is None:
@@ -416,9 +443,10 @@ class Curve:
             [ groupcode ],
             [ collectioncode ],
             lambda c, g, x: (c.corpuscode, c.corpus_descr),
-            titlelink="../index.html"
+            titlelink="../index.html",
+            groupby='-'
         )
-        menublocks.append(E.p(self.corpus_descr, **{"class": "menudesc"}))
+        menublocks.append(E.p(self.corpuscode, u" · ", self.corpus_descr, **{"class": "menudesc"}))
         add_menu(
             "Dataset",
             ac.by_corpus_stat[(self.corpuscode, self.statcode)],
