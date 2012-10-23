@@ -8,7 +8,8 @@ http://www.cs.helsinki.fi/jukka.suomela/types/
 Downloading and compilation
 ---------------------------
 
-Open a terminal and run:
+See the section *Installing dependencies* below for information on how
+to set the compilation environment. Then open a terminal and run:
 
     git clone git://github.com/suomela/types.git
     cd types
@@ -16,6 +17,29 @@ Open a terminal and run:
     ./config
     make
     make check
+
+
+Examples
+--------
+
+There is a sample data set available in the subdirectory `example`.
+You can experiment with the data set as follows:
+
+    cd example
+    bin/types-run
+    bin/types-plot
+
+Now you can open the file `example/html/index.html` in your web browser
+and explore the results.
+
+The computation will take a while, typically *several hours* unless you
+are using a high-performance computing cluster. If you are impatient,
+you can try the following commands that will finish in a couple of
+minutes (however, the results are of a much worse quality):
+
+    cd example
+    bin/types-run --citer=100000 --piter=100000
+    bin/types-plot
 
 
 Installing dependencies
