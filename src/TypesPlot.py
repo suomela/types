@@ -342,10 +342,12 @@ class Curve:
             stx = scx + XSEP
             sty = placement.place(scy)
             url = self.get_pointname('html', groupcode, p)
+            zbase = 201.0 - p.pvalue
             if point is None:
                 cp = p
             elif point == p:
                 cp = SEL
+                zbase += 100
             else:
                 cp = UNSEL
             if sty is not None:
@@ -357,7 +359,7 @@ class Curve:
                     color=cp.ec,
                     linewidth=cp.lw,
                     clip_on=False,
-                    zorder=200
+                    zorder=zbase
                 )
             ax.scatter(
                 p.x, p.y,
@@ -366,7 +368,7 @@ class Curve:
                 facecolor=cp.fc,
                 linewidth=cp.lw,
                 s=p.ms**2,
-                zorder=202,
+                zorder=zbase + 2,
                 urls=[url],
             )
             if sty is not None:
@@ -381,7 +383,7 @@ class Curve:
                         ec=cp.ec,
                         linewidth=cp.lw,
                     ),
-                    zorder=201,
+                    zorder=zbase + 1,
                 )
 
     def plot_labels(self, ax):
