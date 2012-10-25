@@ -19,6 +19,21 @@ DEFAULT_GROUP = "default"
 
 OKCHAR = re.compile(r'[-+.a-zA-Z0-9]+')
 
+def colour(c):
+    return tuple([ int(c[2*i:2*i+2], 16)/float(255) for i in range(3) ])
+
+def colours(l):
+    return [ colour(c) for c in l ]
+
+BLUE   = colours(('95a8c9','acbbd5','c2cddf','d7deeb','e7ebf2'))
+ORANGE = colours(('e5af5a','ebc07f','f0d1a1','f5e0c3','f9eddc'))
+RED    = colours(('c99eb1','d4b3c1','dfc7d2','eadae1','f2e9ed'))
+WHITE  = colour('ffffff')
+GREY   = colour('999999')
+DARK   = colour('333333')
+BLACK  = colour('000000')
+BLUE2  = colour('3f4f6c')
+
 def lim(maxval):
     return (-AXIS_PAD * maxval, (1.0 + AXIS_PAD) * maxval)
 
@@ -91,8 +106,8 @@ class CPoint:
         self.fc = fc
         self.lw = lw
 
-SEL   = CPoint( (0.0, 0.0, 0.0), (1.0, 1.0, 1.0), 1.5 )
-UNSEL = CPoint( (0.6, 0.6, 0.6), (1.0, 1.0, 1.0), 0.5 )
+SEL   = CPoint( BLACK, WHITE, 1.5 )
+UNSEL = CPoint( GREY,  WHITE, 0.5 )
 
 class Point:
     def __init__(self, collectioncode, y, x, above, below, total):
@@ -122,24 +137,26 @@ class Point:
             self.ms = 10
             self.marker = 'v'
 
-        self.ec = (0.0, 0.0, 0.0)
-        self.fc = (1.0, 1.0, 1.0)
+        self.ec = BLACK
+        self.fc = WHITE
         self.lw = 1.0
+
+        palette = ORANGE if is_above else RED
 
         if self.pvalue is None:
             pass
         elif self.pvalue < 0.000001:
-            self.fc = (0.75, 1.00, 0.75) if is_above else (1.00, 0.75, 0.75)
+            self.fc = palette[0]
         elif self.pvalue < 0.00001:
-            self.fc = (0.80, 1.00, 0.80) if is_above else (1.00, 0.80, 0.80)
+            self.fc = palette[1]
         elif self.pvalue < 0.0001:
-            self.fc = (0.85, 1.00, 0.85) if is_above else (1.00, 0.85, 0.85)
+            self.fc = palette[2]
         elif self.pvalue < 0.001:
-            self.fc = (0.90, 1.00, 0.90) if is_above else (1.00, 0.90, 0.90)
+            self.fc = palette[3]
         elif self.pvalue < 0.01:
-            self.fc = (0.95, 1.00, 0.95) if is_above else (1.00, 0.95, 0.95)
+            self.fc = palette[4]
         else:
-            self.ec = (0.20, 0.20, 0.20)
+            self.ec = DARK
 
 
 class Curve:
@@ -313,8 +330,9 @@ class Curve:
     def plot_polys(self, ax):
         for i, poly in enumerate(self.polys):
             f = i/(len(self.polys)-1.0)
-            edge = (0.0, 0.0, 1.0)
-            fill = (1.0-0.35*f, 1.0-0.25*f, 1.0)
+            j = min(i, len(BLUE)-1)
+            edge = BLUE2
+            fill = BLUE[-(j+1)]
             ax.fill(poly[:,0], poly[:,1], fc=fill, ec=edge, linewidth=0.4, zorder=100 + f)
 
     def plot_points(self, ax, points, groupcode, point):
