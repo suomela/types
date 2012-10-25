@@ -207,11 +207,12 @@ class AllCurves:
         headblocks.append(E.link(rel="stylesheet", href="types.css", type="text/css"))
         menublocks = []
         for corpuscode in sorted(self.by_corpus.keys()):
-            c = self.by_corpus[corpuscode][0]
-            link = E.a(corpuscode, href=c.get_pointname_from_root('html', None), **{"class": "menuitem"})
-            desc = E.span(c.corpus_descr, **{"class": "menudescinline"})
-            menu = E.p(link, u" · ", desc, **{"class": "menurow"})
-            menublocks.append(menu)
+            if len(self.by_corpus[corpuscode]) > 0:
+                c = self.by_corpus[corpuscode][0]
+                link = E.a(corpuscode, href=c.get_pointname_from_root('html', None), **{"class": "menuitem"})
+                desc = E.span(c.corpus_descr, **{"class": "menudescinline"})
+                menu = E.p(link, u" · ", desc, **{"class": "menurow"})
+                menublocks.append(menu)
         bodyblocks = [ E.div(*menublocks, **{"class": "menu mainmenu"}) ]
         doc = E.html(E.head(*headblocks), E.body(*bodyblocks))
         with open(os.path.join(htmldir, "index.html"), 'w') as f:
@@ -248,6 +249,9 @@ def main():
     ac = AllCurves()
     ac.read_curves(args, conn)
     conn.commit()
+    if len(ac.curves) == 0:
+        msg('there are no results in the database')
+        return
     ac.create_directories()
     ac.generate_html()
     ac.generate_index(args.htmldir)
