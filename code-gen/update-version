@@ -1,16 +1,12 @@
 #!/usr/bin/python
 
-import subprocess
+import datetime
 
 description = "Type and hapax accumulation curves"
 author = "Jukka Suomela"
-
-gitver = subprocess.check_output(['git', 'describe', '--abbrev=0']).rstrip()
-gitdate = subprocess.check_output(['git', 'show', '-s', '--format=%ci']).rstrip()
-gitdate = gitdate.split(' ')[0]
-year = gitdate.split('-')[0]
-version = "%s (%s)" % (gitver, gitdate)
-print version
+now = datetime.date.today()
+version = now.isoformat()
+year = now.year
 
 with open('src/version.c', 'w') as f:
     f.write('''\
@@ -19,7 +15,7 @@ with open('src/version.c', 'w') as f:
 const char * const DESCRIPTION = "%s";
 const char * const AUTHOR = "%s";
 const char * const VERSION = "%s";
-const char * const YEAR = "%s";
+const char * const YEAR = "%d";
 ''' % (description, author, version, year))
 
 with open('src/TypesVersion.py', 'w') as f:
@@ -27,5 +23,5 @@ with open('src/TypesVersion.py', 'w') as f:
 DESCRIPTION = "%s"
 AUTHOR = "%s"
 VERSION = "%s"
-YEAR = "%s"
+YEAR = "%d"
 ''' % (description, author, version, year))

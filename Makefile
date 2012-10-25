@@ -64,7 +64,7 @@ state_debug = debug/rng-state
 
 ### Targets
 
-.PHONY: build debug bin check debug-check valgrind-check unittest debug-unittest valgrind-unittest jumptable clean veryclean
+.PHONY: build debug bin check debug-check valgrind-check unittest debug-unittest valgrind-unittest jumptable version clean veryclean
 
 all: build
 
@@ -186,6 +186,9 @@ $(calcjump):
 
 $(characteristic):
 	cp -p $(sfmt)/jump/characteristic.$(MEXP).txt $@
+
+version:
+	code-gen/update-version
 
 ### Directory generation
 
