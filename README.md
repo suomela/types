@@ -165,6 +165,17 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+### Sample data
+
+By Tanja Säily.
+
+Derived from *CEEC*, the Corpus of Early English Correspondence:
+http://www.helsinki.fi/varieng/CoRD/corpora/CEEC/
+
+To contact the author, see
+http://www.helsinki.fi/varieng/people/varieng_saily.html
+
+
 ### Other parts
 
 Copyright (c) 2012, Jukka Suomela.
