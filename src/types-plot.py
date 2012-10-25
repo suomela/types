@@ -153,8 +153,9 @@ class AllCurves:
             ORDER BY corpuscode, groupcode, collectioncode
         ''')
         for corpuscode, groupcode, collectioncode, description in r:
-            for c in self.by_corpus[corpuscode]:
-                c.add_collection(groupcode, collectioncode, description)
+            if corpuscode in self.by_corpus:
+                for c in self.by_corpus[corpuscode]:
+                    c.add_collection(groupcode, collectioncode, description)
 
         ### result_p
 
@@ -207,12 +208,11 @@ class AllCurves:
         headblocks.append(E.link(rel="stylesheet", href="types.css", type="text/css"))
         menublocks = []
         for corpuscode in sorted(self.by_corpus.keys()):
-            if len(self.by_corpus[corpuscode]) > 0:
-                c = self.by_corpus[corpuscode][0]
-                link = E.a(corpuscode, href=c.get_pointname_from_root('html', None), **{"class": "menuitem"})
-                desc = E.span(c.corpus_descr, **{"class": "menudescinline"})
-                menu = E.p(link, u" · ", desc, **{"class": "menurow"})
-                menublocks.append(menu)
+            c = self.by_corpus[corpuscode][0]
+            link = E.a(corpuscode, href=c.get_pointname_from_root('html', None), **{"class": "menuitem"})
+            desc = E.span(c.corpus_descr, **{"class": "menudescinline"})
+            menu = E.p(link, u" · ", desc, **{"class": "menurow"})
+            menublocks.append(menu)
         bodyblocks = [ E.div(*menublocks, **{"class": "menu mainmenu"}) ]
         doc = E.html(E.head(*headblocks), E.body(*bodyblocks))
         with open(os.path.join(htmldir, "index.html"), 'w') as f:
