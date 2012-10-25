@@ -5,8 +5,8 @@ import subprocess
 description = "Type and hapax accumulation curves"
 author = "Jukka Suomela"
 
-gitver = subprocess.check_output(['git', 'describe']).rstrip()
-gitdate = subprocess.check_output(['git', 'show', '-s', '--format=%ci', gitver]).rstrip()
+gitver = subprocess.check_output(['git', 'describe', '--abbrev=0']).rstrip()
+gitdate = subprocess.check_output(['git', 'show', '-s', '--format=%ci']).rstrip()
 gitdate = gitdate.split(' ')[0]
 year = gitdate.split('-')[0]
 version = "%s (%s)" % (gitver, gitdate)
