@@ -100,9 +100,11 @@ class Point:
         self.y = y
         self.x = x
         if above < below:
+            is_above = True
             self.side = 'above'
             self.pvalue = float(above)/float(total)
         else:
+            is_above = False
             self.side = 'below'
             self.pvalue = float(below)/float(total)
 
@@ -113,10 +115,10 @@ class Point:
             pass
         elif self.pvalue > 0.1:
             pass
-        elif self.side == 'above':
+        elif is_above:
             self.ms = 10
             self.marker = '^'
-        elif self.side == 'below':
+        else:
             self.ms = 10
             self.marker = 'v'
 
@@ -127,17 +129,17 @@ class Point:
         if self.pvalue is None:
             pass
         elif self.pvalue < 0.000001:
-            self.fc = (1.0,  0.75, 0.75)
+            self.fc = (0.75, 1.00, 0.75) if is_above else (1.00, 0.75, 0.75)
         elif self.pvalue < 0.00001:
-            self.fc = (1.0,  0.8,  0.8)
+            self.fc = (0.80, 1.00, 0.80) if is_above else (1.00, 0.80, 0.80)
         elif self.pvalue < 0.0001:
-            self.fc = (1.0,  0.85, 0.85)
+            self.fc = (0.85, 1.00, 0.85) if is_above else (1.00, 0.85, 0.85)
         elif self.pvalue < 0.001:
-            self.fc = (1.0,  0.90, 0.90)
+            self.fc = (0.90, 1.00, 0.90) if is_above else (1.00, 0.90, 0.90)
         elif self.pvalue < 0.01:
-            self.fc = (1.0,  0.95, 0.95)
+            self.fc = (0.95, 1.00, 0.95) if is_above else (1.00, 0.95, 0.95)
         else:
-            self.ec = (0.2,  0.2,  0.2)
+            self.ec = (0.20, 0.20, 0.20)
 
 
 class Curve:
@@ -501,7 +503,7 @@ class Curve:
             stat = [ E.span(v, **{"class": "menuitem"}) for v in stat ]
             menu = E.p(*add_sep([t] + stat, " "), **{"class": "menurow"})
             menublocks.append(menu)
-        bodyblocks.append(E.div(*menublocks, **{"class": "menu"}))            
+        bodyblocks.append(E.div(*menublocks, **{"class": "menu"}))
 
         doc = E.html(E.head(*headblocks), E.body(*bodyblocks))
         write_html(f, doc)
