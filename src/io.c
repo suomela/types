@@ -1,5 +1,6 @@
 #include "io.h"
 #include "config.h"
+#include "version.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdarg.h>
@@ -210,4 +211,15 @@ myfwrite(const myfile_t * restrict f, const void * restrict ptr, size_t size, si
     if (result < nitems) {
         myioerror(f, errno, "write");
     }
+}
+
+void
+version(void)
+{
+    printf(
+        "%s (%s)\n"
+        "version %s\n"
+        "Copyright (C) %s  %s\n",
+        TOOL, DESCRIPTION, VERSION, YEAR, AUTHOR
+    );
 }

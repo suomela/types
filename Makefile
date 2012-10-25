@@ -18,13 +18,13 @@ sfmt = external/SFMT-src-1.4
 prog_py = types-db-init types-db-refresh types-draw-curves types-plot types-run
 prog_db = types-convert types-query types-store
 prog_other = types-comp types-rng 
-mod_py = TypesDatabase TypesParallel TypesPlot
+mod_py = TypesDatabase TypesParallel TypesPlot TypesVersion
 mod_comp = types-comp array calculate collections curves driver input io malloc matrix plan print random read stat util vector version yx SFMT
 mod_rng = types-rng io jump malloc random seed util version SFMT SFMT-jump
 mod_convert = types-convert db db2 io util version
 mod_query = types-query db db2 io util version
 mod_store = types-store db db2 io malloc util version yx
-mod_unittest = unittest io malloc random util SFMT
+mod_unittest = unittest io malloc random util SFMT version
 
 #--- All modules
 

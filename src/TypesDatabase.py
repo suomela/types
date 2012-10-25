@@ -1,6 +1,14 @@
 import sqlite3
+import TypesVersion
 
 DEFAULT_FILENAME = 'db/types.sqlite'
+
+def version_string(tool):
+    return "%s (%s)\nversion %s\nCopyright (C) %s  %s" % (
+        tool,
+        TypesVersion.DESCRIPTION, TypesVersion.VERSION,
+        TypesVersion.YEAR, TypesVersion.AUTHOR
+    )
 
 def open_db(filename=DEFAULT_FILENAME):
     conn = sqlite3.connect(filename)

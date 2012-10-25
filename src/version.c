@@ -1,17 +1,6 @@
 #include "version.h"
-#include "config.h"
-#include <stdio.h>
 
-const char *VERSION = "2012-09-16";
-const char *YEAR = "2012";
-
-void
-version(void)
-{
-    printf(
-        "%s (Type and hapax accumulation curves), version %s\n"
-        "Copyright (C) %s  Jukka Suomela\n",
-        TOOL, VERSION, YEAR
-    );
-}
-
+const char * const DESCRIPTION = "Type and hapax accumulation curves";
+const char * const AUTHOR = "Jukka Suomela";
+const char * const VERSION = "v2-alpha-29-g7caf0eb (2012-10-24)";
+const char * const YEAR = "2012";

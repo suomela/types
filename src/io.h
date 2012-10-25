@@ -117,4 +117,7 @@ myfread_uchar(const myfile_t * restrict f)
         myfread(f, target, sizeof(type), my_count); \
     } while (0)
 
+void
+version(void);
+
 #endif

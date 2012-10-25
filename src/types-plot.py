@@ -23,7 +23,10 @@ def msg(msg):
     sys.stderr.write("%s: %s\n" % (TOOL, msg))
 
 def get_args():
-    parser = optparse.OptionParser(description='Update all plots.')
+    parser = optparse.OptionParser(
+        description='Update all plots.',
+        version=TypesDatabase.version_string(TOOL),
+    )
     parser.add_option('--db', metavar='FILE', dest='db',
                       help='which database to read [default: %default]',
                       default=TypesDatabase.DEFAULT_FILENAME)
