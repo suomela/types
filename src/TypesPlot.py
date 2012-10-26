@@ -62,9 +62,11 @@ def longest_common_prefix(a, b):
         i += 1
     return i
 
-def wrap_svg_link(el, url):
+def wrap_svg_link(el, url, title=None):
     link = etree.Element("a")
     link.set('{http://www.w3.org/1999/xlink}href', url)
+    if title is not None:
+        link.set('{http://www.w3.org/1999/xlink}title', title)
     link.set('target', '_top')
     parent = el.getparent()
     assert parent is not None
@@ -408,12 +410,15 @@ class Curve:
                 url = self.get_pointname('html', groupcode)
             else:
                 url = self.get_pointname('html', groupcode, p)
+            title = self.collection_descr[p.collectioncode]
+            if title is None:
+                title = p.collectioncode
             for what in ['pl', 'pm', 'pt']:
                 gid = 'types_%s_%d' % (what, i)
                 path = ".//{http://www.w3.org/2000/svg}g[@id='%s']" % gid
                 el = svg.find(path)
                 if el is not None:
-                    wrap_svg_link(el, url)
+                    wrap_svg_link(el, url, title)
         with open(filename, 'w') as f:
             svg.write(f)
 
