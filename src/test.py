@@ -10,5 +10,5 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot
 
-assert sys.version_info >= (2,6) 
+assert sys.version_info >= (2,6)
 print "OK"

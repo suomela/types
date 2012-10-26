@@ -205,7 +205,7 @@ def create_if_needed(conn):
         CREATE VIEW IF NOT EXISTS view_result AS
         SELECT dataset.corpuscode AS corpuscode,
             dataset.datasetcode AS datasetcode,
-            collection.collectioncode AS collectioncode, 
+            collection.collectioncode AS collectioncode,
             COALESCE(yw.wordcount, hw.wordcount, tw.wordcount) AS wordcount,
             COALESCE(yt.tokencount, ht.tokencount, tw.tokencount) AS tokencount,
             COALESCE(yw.typecount, yt.typecount) AS typecount,

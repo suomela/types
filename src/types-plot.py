@@ -62,8 +62,9 @@ class AllCurves:
         }
 
         ### log
-    
+
         timestamp_by_logid = dict()
+
         def get_timestamp(logid):
             if logid not in timestamp_by_logid:
                 ts = [ r[0] for r in conn.execute("SELECT STRFTIME('%s', timestamp) FROM log WHERE id = ?", (logid,)) ]
@@ -124,10 +125,10 @@ class AllCurves:
             c.add_timestamp(get_timestamp(logid))
             c.levels[level][side] = curveid
 
-
         ### result_curve_point
 
         sys.stderr.write(' result_curve_point')
+
         def get_one_path(curveid):
             return np.array(list(conn.execute('''
                 SELECT x, y
@@ -159,7 +160,6 @@ class AllCurves:
 
         ### result_p
 
-        pvalues = dict()
         sys.stderr.write(' result_p')
         r = conn.execute('''
             SELECT corpuscode, collectioncode, datasetcode, statcode, y, x, above, below, total, logid
@@ -187,7 +187,6 @@ class AllCurves:
                     c = self.by_corpus[corpuscode][0]
                 l.append(c)
             self.by_dataset_stat_fallback[(datasetcode, statcode)] = l
-
 
     def create_directories(self):
         directories = set()
@@ -277,18 +276,18 @@ BODY {
 
 A:link {
     color: #00f;
-	text-decoration: none;
+    text-decoration: none;
 }
 
 A:visited {
     color: #008;
-	text-decoration: none;
+    text-decoration: none;
 }
 
 A:hover, A:active {
-	text-decoration: underline;
+    text-decoration: underline;
 }
-    
+
 P {
     margin: 0px;
     margin-top: 12px;

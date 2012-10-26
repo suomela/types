@@ -44,10 +44,10 @@ def get_args():
     parser.add_option('--piter', metavar='N', dest='piter', type=int,
                       help='number of iterations for permutation testing [default: %default]',
                       default=PITER)
-    parser.add_option('--x', metavar='N', dest='x', 
+    parser.add_option('--x', metavar='N', dest='x',
                       help='maximum x resolution (number of slots) [default: %default]',
                       default=X_DEF)
-    parser.add_option('--y', metavar='N', dest='y', 
+    parser.add_option('--y', metavar='N', dest='y',
                       help='maximum y resolution (number of slots) [default: %default]',
                       default=Y_DEF)
     (options, args) = parser.parse_args()

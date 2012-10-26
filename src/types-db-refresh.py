@@ -1,6 +1,7 @@
 import sys
 import TypesDatabase
 
+
 def db_init(filename=TypesDatabase.DEFAULT_FILENAME):
     conn = TypesDatabase.open_db(filename)
     TypesDatabase.drop_views(conn)

@@ -1,10 +1,8 @@
 # coding=utf-8
 
-from collections import defaultdict
 import os
 import os.path
 import re
-import sys
 import numpy as np
 from lxml.builder import E
 from lxml import etree
@@ -46,9 +44,7 @@ def fixname(s):
     else:
         return '-'.join(r)
 
-SEP = u" · "
-
-def add_sep(l, sep=SEP):
+def add_sep(l, sep):
     # [1,2,3] -> [1,sep,2,sep,3]
     return [x for y in l for x in (y, sep)][:-1]
 
@@ -383,7 +379,7 @@ class Curve:
                 gid='types_pm_%d' % i,
             )
             if sty is not None:
-                t = ax.text(
+                ax.text(
                     tx, ty,
                     p.collectioncode,
                     color=cp.ec,
@@ -552,4 +548,3 @@ class Curve:
 
         doc = E.html(E.head(*headblocks), E.body(*bodyblocks))
         write_html(f, doc)
-
