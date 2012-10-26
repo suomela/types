@@ -62,6 +62,15 @@ def longest_common_prefix(a, b):
         i += 1
     return i
 
+def wrap_svg_link(el, url):
+    link = etree.Element("a")
+    link.set('{http://www.w3.org/1999/xlink}href', url)
+    link.set('target', '_top')
+    parent = el.getparent()
+    assert parent is not None
+    parent.replace(el, link)
+    link.append(el)
+
 class LabelPlacement:
     def __init__(self):
         self.freelist = set()
@@ -325,7 +334,7 @@ class Curve:
             filename = self.get_filename(suffix, groupcode, point)
             fig.savefig(filename)
             if suffix == 'svg':
-                self.fix_svg(filename)
+                self.add_svg_links(filename, points, groupcode, point)
 
     def plot_polys(self, ax):
         for i, poly in enumerate(self.polys):
@@ -341,7 +350,6 @@ class Curve:
             scx, scy = float(p.x)/self.maxx, float(p.y)/self.maxy
             stx = scx + XSEP
             sty = placement.place(scy)
-            url = self.get_pointname('html', groupcode, p)
             zbase = 201.0 - p.pvalue
             if point is None:
                 cp = p
@@ -359,20 +367,21 @@ class Curve:
                     color=cp.ec,
                     linewidth=cp.lw,
                     clip_on=False,
-                    zorder=zbase
+                    zorder=zbase,
+                    gid='types_pl_%d' % i,
                 )
-            ax.scatter(
+            ax.plot(
                 p.x, p.y,
                 marker=p.marker,
-                edgecolor=cp.ec,
-                facecolor=cp.fc,
-                linewidth=cp.lw,
-                s=p.ms**2,
+                mec=cp.ec,
+                mfc=cp.fc,
+                mew=cp.lw,
+                ms=p.ms,
                 zorder=zbase + 2,
-                urls=[url],
+                gid='types_pm_%d' % i,
             )
             if sty is not None:
-                ax.text(
+                t = ax.text(
                     tx, ty,
                     p.collectioncode,
                     color=cp.ec,
@@ -384,18 +393,29 @@ class Curve:
                         linewidth=cp.lw,
                     ),
                     zorder=zbase + 1,
+                    gid='types_pt_%d' % i,
                 )
 
     def plot_labels(self, ax):
         ax.set_xlabel(self.xlabel, labelpad=10)
         ax.set_ylabel(self.ylabel, labelpad=15)
 
-    def fix_svg(self, filename):
+    def add_svg_links(self, filename, points, groupcode, point):
         with open(filename) as f:
-            data = f.read()
-        data = data.replace('<a xlink:href=', '<a target="_top" xlink:href=')
+            svg = etree.parse(f)
+        for i, p in enumerate(points):
+            if point is not None and point == p:
+                url = self.get_pointname('html', groupcode)
+            else:
+                url = self.get_pointname('html', groupcode, p)
+            for what in ['pl', 'pm', 'pt']:
+                gid = 'types_%s_%d' % (what, i)
+                path = ".//{http://www.w3.org/2000/svg}g[@id='%s']" % gid
+                el = svg.find(path)
+                if el is not None:
+                    wrap_svg_link(el, url)
         with open(filename, 'w') as f:
-            f.write(data)
+            svg.write(f)
 
     def generate_html(self, ac):
         for groupcode in sorted(self.points_by_group.keys()):
