@@ -7,6 +7,10 @@ import numpy as np
 from lxml.builder import E
 from lxml import etree
 
+WIDTH = 9
+HEIGHT = 6
+DPI = 96
+
 LABEL_SEP = 0.06
 LABEL_AREA = (0.03, 0.97)
 AXIS_PAD = 0.02
@@ -319,7 +323,7 @@ class Curve:
     def plot_group_points(self, matplotlib, groupcode, point):
         points = sorted(self.points_by_group[groupcode], key=lambda p: p.x, reverse=True)
         SPP = matplotlib.figure.SubplotParams(left=0.1, right=0.85, bottom=0.1, top=0.98)
-        fig = matplotlib.pyplot.figure(figsize=(9,6), subplotpars=SPP)
+        fig = matplotlib.pyplot.figure(figsize=(WIDTH, HEIGHT), subplotpars=SPP)
         ax = fig.add_subplot(111)
         ax.set_autoscalex_on(False)
         ax.set_autoscaley_on(False)
@@ -520,7 +524,9 @@ class Curve:
 
         fig = E.p(E.object(
             data=self.get_pointname('svg', groupcode, point),
-            type="image/svg+xml"
+            type="image/svg+xml",
+            width=str(WIDTH*DPI),
+            height=str(HEIGHT*DPI),
         ), **{"class": "plot"})
         bodyblocks.append(fig)
 
