@@ -263,6 +263,7 @@ def drop_views(conn):
 def delete_corpus(conn, corpuscode):
     conn.execute('DELETE FROM result_curve_point WHERE curveid IN (SELECT id FROM result_curve WHERE corpuscode = ?)', (corpuscode,))
     conn.execute('DELETE FROM result_curve WHERE corpuscode = ?', (corpuscode,))
+    conn.execute('DELETE FROM result_q WHERE corpuscode = ?', (corpuscode,))
     conn.execute('DELETE FROM result_p WHERE corpuscode = ?', (corpuscode,))
     conn.execute('DELETE FROM log WHERE corpuscode = ?', (corpuscode,))
     conn.execute('DELETE FROM token WHERE corpuscode = ?', (corpuscode,))
