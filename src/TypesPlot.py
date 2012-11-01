@@ -518,7 +518,10 @@ class Curve:
             ac.by_corpus_dataset[(self.corpuscode, self.datasetcode)],
             [ groupcode ],
             [ collectioncode ],
-            lambda c, g, x: (c.statcode, "y = %s, x = %s" % (c.ylabel.lower(), c.xlabel.lower()))
+            lambda c, g, x: (
+                "%s/%s" % (c.ylabel.lower(), c.xlabel.lower()),
+                "y = %s, x = %s" % (c.ylabel.lower(), c.xlabel.lower())
+            )
         )
         bodyblocks.append(E.div(*menublocks, **{"class": "menu"}))
 
