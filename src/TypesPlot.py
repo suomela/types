@@ -509,7 +509,7 @@ class Curve:
         add_menu(
             "Points",
             [ self ],
-            self.groups,
+            sorted(self.groups),
             [ collectioncode ],
             lambda c, g, x: ("none", None) if g is None else (g, None)
         )
