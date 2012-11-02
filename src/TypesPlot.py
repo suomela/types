@@ -39,6 +39,12 @@ BLUE2  = colour('3f4f6c')
 def lim(maxval):
     return (-AXIS_PAD * maxval, (1.0 + AXIS_PAD) * maxval)
 
+def ucfirst(s):
+    if s == '':
+        return s
+    else:
+        return s[0].upper() + s[1:]
+
 def fixname(s):
     r = []
     for ok in OKCHAR.finditer(s):
@@ -399,8 +405,8 @@ class Curve:
                 )
 
     def plot_labels(self, ax):
-        ax.set_xlabel(self.xlabel, labelpad=10)
-        ax.set_ylabel(self.ylabel, labelpad=15)
+        ax.set_xlabel(ucfirst(self.xlabel), labelpad=10)
+        ax.set_ylabel(ucfirst(self.ylabel), labelpad=15)
 
     def add_svg_links(self, filename, points, groupcode, point):
         with open(filename) as f:
@@ -519,8 +525,8 @@ class Curve:
             [ groupcode ],
             [ collectioncode ],
             lambda c, g, x: (
-                "%s/%s" % (c.ylabel.lower(), c.xlabel.lower()),
-                "y = %s, x = %s" % (c.ylabel.lower(), c.xlabel.lower())
+                "%s/%s" % (c.ylabel, c.xlabel),
+                "y = %s, x = %s" % (c.ylabel, c.xlabel)
             )
         )
         bodyblocks.append(E.div(*menublocks, **{"class": "menu"}))
@@ -545,8 +551,8 @@ class Curve:
             if self.collection_descr[collectioncode] is not None:
                 menublocks.append(E.p(self.collection_descr[collectioncode], **{"class": "menudesc"}))
             stat = [
-                u"%s %s" % (point.x, self.xlabel.lower()),
-                u"%d %s" % (point.y, self.ylabel.lower()),
+                u"%s %s" % (point.x, self.xlabel),
+                u"%d %s" % (point.y, self.ylabel),
                 u"%f %s" % (point.pvalue, point.side),
             ]
             t = E.span("Statistics:", **{"class": "menutitle"})

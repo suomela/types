@@ -18,27 +18,27 @@ def open_db(filename=DEFAULT_FILENAME):
 def create_if_needed(conn):
     conn.executescript('''
 
-        CREATE TABLE IF NOT EXISTS stat (
-            statcode TEXT NOT NULL PRIMARY KEY,
-            description TEXT,
-            ylabel TEXT,
-            xlabel TEXT
+        CREATE TABLE IF NOT EXISTS label (
+            labelcode TEXT NOT NULL PRIMARY KEY,
+            labeltext TEXT NOT NULL
         );
 
-        INSERT OR IGNORE INTO stat (statcode, description, ylabel, xlabel)
-        VALUES ('type-word', 'Types vs. running words', 'Types', 'Running words');
+        INSERT OR IGNORE INTO label (labelcode, labeltext) VALUES ('type', 'types');
+        INSERT OR IGNORE INTO label (labelcode, labeltext) VALUES ('hapax', 'hapaxes');
+        INSERT OR IGNORE INTO label (labelcode, labeltext) VALUES ('token', 'tokens');
+        INSERT OR IGNORE INTO label (labelcode, labeltext) VALUES ('word', 'running words');
 
-        INSERT OR IGNORE INTO stat (statcode, description, ylabel, xlabel)
-        VALUES ('type-token', 'Types vs. tokens', 'Types', 'Tokens');
+        CREATE TABLE IF NOT EXISTS stat (
+            statcode TEXT NOT NULL PRIMARY KEY,
+            y TEXT NOT NULL REFERENCES label(labelcode),
+            x TEXT NOT NULL REFERENCES label(labelcode)
+        );
 
-        INSERT OR IGNORE INTO stat (statcode, description, ylabel, xlabel)
-        VALUES ('hapax-word', 'Hapaxes vs. running words', 'Hapaxes', 'Running words');
-
-        INSERT OR IGNORE INTO stat (statcode, description, ylabel, xlabel)
-        VALUES ('hapax-token', 'Hapaxes vs. tokens', 'Hapaxes', 'Tokens');
-
-        INSERT OR IGNORE INTO stat (statcode, description, ylabel, xlabel)
-        VALUES ('token-word', 'Tokens vs. running words', 'Tokens', 'Running words');
+        INSERT OR IGNORE INTO stat (statcode, y, x) VALUES ('type-word',   'type',  'word');
+        INSERT OR IGNORE INTO stat (statcode, y, x) VALUES ('type-token',  'type',  'token');
+        INSERT OR IGNORE INTO stat (statcode, y, x) VALUES ('hapax-word',  'hapax', 'word');
+        INSERT OR IGNORE INTO stat (statcode, y, x) VALUES ('hapax-token', 'hapax', 'token');
+        INSERT OR IGNORE INTO stat (statcode, y, x) VALUES ('token-word',  'token', 'word');
 
         CREATE TABLE IF NOT EXISTS defaultstat (
             statcode TEXT NOT NULL PRIMARY KEY REFERENCES stat(statcode)

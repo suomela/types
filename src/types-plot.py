@@ -76,7 +76,12 @@ class AllCurves:
 
         statcode_label = dict()
         sys.stderr.write(' stat')
-        r = conn.execute('SELECT statcode, xlabel, ylabel FROM stat')
+        r = conn.execute('''
+            SELECT statcode, xlabel.labeltext, ylabel.labeltext
+            FROM stat
+            JOIN label AS ylabel ON stat.y = ylabel.labelcode
+            JOIN label AS xlabel ON stat.x = xlabel.labelcode
+        ''')
         for statcode, xlabel, ylabel in r:
             statcode_label[statcode] = (xlabel, ylabel)
 
