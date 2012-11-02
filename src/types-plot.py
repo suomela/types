@@ -19,8 +19,21 @@ HTML_DIR = 'html'
 BIN_DIR = 'bin'
 DATA_FILE = 'types-plot.pickle'
 
+FDR = [0.001, 0.01, 0.1]
+
 def msg(msg):
     sys.stderr.write("%s: %s\n" % (TOOL, msg))
+
+def classes(l):
+    return { "class": " ".join(l) }
+
+def firstlast(i, rowlist):
+    l = []
+    if i == 0:
+        l.append('first')
+    if i == len(rowlist) - 1:
+        l.append('last')
+    return classes(l)
 
 def get_args():
     parser = optparse.OptionParser(
@@ -43,6 +56,7 @@ def get_args():
 class AllCurves:
     def __init__(self):
         self.curves = []
+        self.statcode_label = dict()
         self.by_corpus = defaultdict(list)
         self.by_dataset = defaultdict(list)
         self.by_stat = defaultdict(list)
@@ -51,6 +65,7 @@ class AllCurves:
         self.by_dataset_stat = defaultdict(list)
         self.by_dataset_stat_fallback = dict()
         self.by_corpus_dataset_stat = dict()
+        self.result_q = []
 
     def read_curves(self, args, conn):
         sys.stderr.write('%s: read:' % TOOL)
@@ -74,7 +89,6 @@ class AllCurves:
 
         ### stat
 
-        statcode_label = dict()
         sys.stderr.write(' stat')
         r = conn.execute('''
             SELECT statcode, xlabel.labeltext, ylabel.labeltext
@@ -83,7 +97,7 @@ class AllCurves:
             JOIN label AS xlabel ON stat.x = xlabel.labelcode
         ''')
         for statcode, xlabel, ylabel in r:
-            statcode_label[statcode] = (xlabel, ylabel)
+            self.statcode_label[statcode] = (xlabel, ylabel)
 
         ### corpus
 
@@ -114,7 +128,7 @@ class AllCurves:
             if k not in self.by_corpus_dataset_stat:
                 c = TypesPlot.Curve(dirdict,
                                     corpuscode, corpus_descr[corpuscode],
-                                    statcode, statcode_label[statcode][0], statcode_label[statcode][1],
+                                    statcode, self.statcode_label[statcode][0], self.statcode_label[statcode][1],
                                     datasetcode, dataset_descr[(corpuscode, datasetcode)])
                 c.levels = defaultdict(dict)
                 self.curves.append(c)
@@ -175,6 +189,17 @@ class AllCurves:
             p = TypesPlot.Point(collectioncode, y, x, above, below, total)
             self.by_corpus_dataset_stat[k1].add_point(p, get_timestamp(logid))
 
+        ### result_q
+
+        sys.stderr.write(' result_q')
+        r = conn.execute('''
+            SELECT corpuscode, collectioncode, datasetcode, statcode, side, p, q
+            FROM result_q
+            ORDER BY i
+        ''')
+        for row in r:
+            self.result_q.append(row)
+
         sys.stderr.write('\n')
 
         ### fallbacks
@@ -205,19 +230,78 @@ class AllCurves:
         for c in self.curves:
             c.generate_html(self)
 
+    def generate_corpus_menu(self):
+        tablerows = []
+        cell = E.td("Corpora", colspan="2")
+        tablerows.append(E.tr(cell, **classes(['head'])))
+        corpuslist = sorted(self.by_corpus.keys())
+        for i, corpuscode in enumerate(corpuslist):
+            c = self.by_corpus[corpuscode][0]
+            cells = [
+                E.td(E.a(corpuscode, href=c.get_pointname_from_root('html', None))),
+                E.td(c.corpus_descr, **classes(['wrap', 'small'])),
+            ]
+            tablerows.append(E.tr(*cells, **firstlast(i, corpuslist)))
+        return tablerows
+
+    def generate_fdr_table(self):
+        blocks = []
+        current = None
+        fdri = 0
+        for row in self.result_q:
+            corpuscode, collectioncode, datasetcode, statcode, side, p, q = row
+            while fdri < len(FDR) and q > FDR[fdri]:
+                fdri += 1
+                current = None
+            if fdri == len(FDR):
+                break
+            if current is None:
+                current = []
+                blocks.append((fdri, current))
+            current.append(row)
+
+        small = classes(['small'])
+        tablerows = []
+        for fdri, block in blocks:
+            text = u"Findings — false discovery rate %s" % FDR[fdri]
+            cell = E.td(text, colspan="6")
+            l = ['head']
+            if len(tablerows) > 0:
+                l.append('sep')
+            tablerows.append(E.tr(cell, **classes(l)))
+            for i, row in enumerate(block):
+                corpuscode, collectioncode, datasetcode, statcode, side, p, q = row
+                c = self.by_corpus_dataset_stat[(corpuscode, datasetcode, statcode)]
+                groupcode = c.group_by_collection[collectioncode]
+                point = c.point_by_collection[collectioncode]
+                desc = c.collection_descr[collectioncode]
+                lh = u"−" if side == "below" else "+"
+                x, y = self.statcode_label[statcode]
+                attr = dict()
+                if desc is not None:
+                    attr["title"] = desc
+                attr["href"] = c.get_pointname_from_root('html', groupcode, point)
+                cells = [
+                    E.td(E.a(collectioncode, **attr)),
+                    E.td(lh),
+                    E.td("%s/%s" % (y,x), **small),
+                    E.td(datasetcode, **small),
+                    E.td(corpuscode, **small),
+                    E.td("%.5f" % p, **small),
+                ]
+                tablerows.append(E.tr(*cells, **firstlast(i, block)))
+        return tablerows
+
     def generate_index(self, htmldir):
         headblocks = []
         bodyblocks = []
         headblocks.append(E.title("Corpus menu"))
         headblocks.append(E.link(rel="stylesheet", href="types.css", type="text/css"))
-        menublocks = []
-        for corpuscode in sorted(self.by_corpus.keys()):
-            c = self.by_corpus[corpuscode][0]
-            link = E.a(corpuscode, href=c.get_pointname_from_root('html', None), **{"class": "menuitem"})
-            desc = E.span(c.corpus_descr, **{"class": "menudescinline"})
-            menu = E.p(link, u" · ", desc, **{"class": "menurow"})
-            menublocks.append(menu)
-        bodyblocks = [ E.div(*menublocks, **{"class": "menu mainmenu"}) ]
+        tablerows = self.generate_corpus_menu()
+        bodyblocks.append(E.table(*tablerows))
+        tablerows = self.generate_fdr_table()
+        if len(tablerows) > 0:
+            bodyblocks.append(E.table(*tablerows))
         doc = E.html(E.head(*headblocks), E.body(*bodyblocks))
         with open(os.path.join(htmldir, "index.html"), 'w') as f:
             TypesPlot.write_html(f, doc)
@@ -276,7 +360,7 @@ BODY {
     background-color: #fff;
     font-family: Verdana, sans-serif;
     padding: 0px;
-    margin: 1em;
+    margin: 15px;
 }
 
 A:link {
@@ -293,16 +377,58 @@ A:hover, A:active {
     text-decoration: underline;
 }
 
+TABLE {
+    border-collapse: collapse;
+    margin-bottom: 30px;
+}
+
+TD {
+    padding: 0px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    text-align: left;
+    vertical-align: baseline;
+    white-space: nowrap;
+    font-size: 95%;
+}
+
+TD+TD {
+    padding-left: 15px;
+}
+
+TD.wrap {
+    white-space: normal;
+}
+
+TD.small {
+    font-size: 80%;
+}
+
+TR.head TD {
+    padding-top: 7px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid #000;
+    font-size: 100%;
+}
+
+TR.head.sep TD {
+    padding-top: 30px;
+}
+
+TR.first TD {
+    padding-top: 7px;
+}
+
+TR.last TD {
+    padding-bottom: 7px;
+    border-bottom: 1px solid #000;
+}
+
 P {
     margin: 0px;
     margin-top: 12px;
     margin-bottom: 12px;
     padding: 0px;
-}
-
-.mainmenu P {
-    margin-top: 2px;
-    margin-bottom: 2px;
 }
 
 .plot {
