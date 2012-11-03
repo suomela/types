@@ -22,25 +22,38 @@ to set the compilation environment. Then open a terminal and run:
 Examples
 --------
 
-There is a sample data set available in the subdirectory `example`.
-You can experiment with the data set as follows:
+There is a sample data set available in the subdirectories `example1`
+and `example2`. You can experiment with the data sets as follows:
 
-    cd example
+    cd example1
     bin/types-run
     bin/types-plot
+    cd ..
 
-Now you can open the file `example/html/index.html` in your web browser
-and explore the results. The output should be similar to
-http://www.cs.helsinki.fi/jukka.suomela/types2/example/
+    cd example2
+    bin/types-run
+    bin/types-plot
+    cd ..
+
+To explore the results, open the following files in your web browser:
+
+    example1/html/index.html
+    example2/html/index.html
+
+The output should be similar to these pages:
+
+  - http://www.cs.helsinki.fi/jukka.suomela/types2/example1/
+  - http://www.cs.helsinki.fi/jukka.suomela/types2/example2/
 
 The computation will take a while, typically *several hours* unless you
 are using a high-performance computing cluster. If you are impatient,
 you can try the following commands that will finish in a couple of
 minutes (however, the results are of a much worse quality):
 
-    cd example
+    cd example1
     bin/types-run --citer=100000 --piter=100000
     bin/types-plot
+    cd ..
 
 
 Installing dependencies
@@ -165,15 +178,28 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-### Sample data
+### Example 1
 
-By Tanja Säily.
+Sample data by Tanja Säily.
 
 Derived from *CEEC*, the Corpus of Early English Correspondence:
 http://www.helsinki.fi/varieng/CoRD/corpora/CEEC/
 
 To contact the author, see
 http://www.helsinki.fi/varieng/people/varieng_saily.html
+
+
+### Example 2
+
+Sample data derived from the *DBLP Computer Science Bibliography*:
+http://www.informatik.uni-trier.de/~ley/db/
+(source data timestamp 2012-10-29, downloaded 2012-10-30)
+
+DBLP is Copyright (c) 1993-2011 by Michael Ley (University of Trier,
+Informatik) and Schloss Dagstuhl - Leibniz-Zentrum für Informatik GmbH.
+
+DBLP data is released under the ODC-BY 1.0 license:
+http://opendatacommons.org/licenses/by/summary/
 
 
 ### Other parts
