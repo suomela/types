@@ -1,5 +1,16 @@
 #!/usr/bin/env python
 
+#
+# File "db/source.sqlite" contains the raw input data that was
+# extracted from DBLP.
+#
+# You can use this script to convert the raw input into a format
+# that can be directly used by our tools:
+#
+#     cp db/source.sqlite db/types.sqlite
+#     tools/create-corpus
+#
+
 import sys
 sys.path.append('bin')
 import TypesDatabase as TD
