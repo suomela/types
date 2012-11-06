@@ -5,4 +5,4 @@ build/
 debug/
 dep/
 tmp/
-example/tmp/
+example*/config/
