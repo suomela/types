@@ -202,6 +202,23 @@ DBLP data is released under the ODC-BY 1.0 license:
 http://opendatacommons.org/licenses/by/summary/
 
 
+### Example 3
+
+Sample data derived from the following Stack Exchange sites:
+
+  - http://english.stackexchange.com/  (English Language and Usage)
+  - http://math.stackexchange.com/     (Mathematics)
+  - http://cstheory.stackexchange.com/ (Theoretical Computer Science)
+  - http://physics.stackexchange.com/  (Physics)
+
+The data is extracted using the StackExchange Data Explorer:
+http://data.stackexchange.com/
+(source data timestamp 2012-06-27, downloaded 2012-11-06)
+
+The data is licensed under cc-wiki with attribution required:
+http://creativecommons.org/licenses/by-sa/3.0/
+
+
 ### Other parts
 
 Copyright (c) 2012, Jukka Suomela.
