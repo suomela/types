@@ -22,28 +22,28 @@ to set the compilation environment. Then open a terminal and run:
 Examples
 --------
 
-There is a sample data set available in the subdirectories `example1`
-and `example2`. You can experiment with the data sets as follows:
+There are sample data set available in the following subdirectories:
+
+    example1
+    example2
+    example3
+
+You can experiment with the data sets as follows:
 
     cd example1
     bin/types-run
     bin/types-plot
     cd ..
 
-    cd example2
-    bin/types-run
-    bin/types-plot
-    cd ..
-
-To explore the results, open the following files in your web browser:
+Then open following file in your web browser:
 
     example1/html/index.html
-    example2/html/index.html
 
 The output should be similar to these pages:
 
   - http://www.cs.helsinki.fi/jukka.suomela/types2/example1/
   - http://www.cs.helsinki.fi/jukka.suomela/types2/example2/
+  - http://www.cs.helsinki.fi/jukka.suomela/types2/example3/
 
 The computation will take a while, typically *several hours* unless you
 are using a high-performance computing cluster. If you are impatient,
