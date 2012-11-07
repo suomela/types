@@ -5,6 +5,8 @@ import optparse
 import cPickle
 import os
 import os.path
+import re
+import string
 import sys
 import numpy as np
 import TypesDatabase
@@ -18,6 +20,8 @@ PLOT_DIR = 'plot'
 HTML_DIR = 'html'
 BIN_DIR = 'bin'
 DATA_FILE = 'types-plot.pickle'
+
+DEFAULT_GROUP = "default"
 
 FDR = [0.001, 0.01, 0.1]
 
@@ -53,6 +57,59 @@ def get_args():
     (options, args) = parser.parse_args()
     return options
 
+# seq() is a generator that produces
+# a, b, ..., z, aa, ab, ..., zz, aaa, aab, ...
+
+C = string.ascii_lowercase
+
+def seqd(depth, prefix):
+    if depth <= 0:
+        yield prefix
+    else:
+        for c in C:
+            for s in seqd(depth - 1, prefix + c):
+                yield s
+
+def seq():
+    depth = 1
+    while True:
+        for s in seqd(depth, ''):
+            yield s
+        depth += 1
+
+
+# Convert arbitrary strings to safe, unique filenames
+
+OKCHAR = re.compile(r'[a-zA-Z0-9]+')
+
+class Filenames:
+    def __init__(self):
+        self.map = dict()
+        self.used = set()
+
+    def generate(self, s):
+        if s in self.map:
+            return
+
+        suffixes = seq()
+        prefix = []
+        for ok in OKCHAR.finditer(s):
+            prefix.append(ok.group().lower())
+        if len(prefix) == 0:
+            suffix = [ suffixes.next() ]
+        else:
+            suffix = []
+        while True:
+            candidate = '-'.join(prefix + suffix)
+            assert len(candidate) > 0
+            if candidate not in self.used:
+                break
+            suffix = [ suffixes.next() ]
+
+        self.used.add(candidate)
+        self.map[s] = candidate
+
+
 class AllCurves:
     def __init__(self):
         self.curves = []
@@ -76,6 +133,12 @@ class AllCurves:
             "html": args.htmldir,
         }
 
+        file_corpus = Filenames()
+        file_stat = Filenames()
+        file_dataset = Filenames()
+        file_group = Filenames()
+        file_collection = Filenames()
+
         ### log
 
         timestamp_by_logid = dict()
@@ -95,24 +158,36 @@ class AllCurves:
             FROM stat
             JOIN label AS ylabel ON stat.y = ylabel.labelcode
             JOIN label AS xlabel ON stat.x = xlabel.labelcode
+            ORDER BY statcode
         ''')
         for statcode, xlabel, ylabel in r:
+            file_stat.generate(statcode)
             self.statcode_label[statcode] = (xlabel, ylabel)
 
         ### corpus
 
         corpus_descr = dict()
         sys.stderr.write(' corpus')
-        r = conn.execute('SELECT corpuscode, description FROM corpus')
+        r = conn.execute('''
+            SELECT corpuscode, description
+            FROM corpus
+            ORDER BY corpuscode
+        ''')
         for corpuscode, description in r:
+            file_corpus.generate(corpuscode)
             corpus_descr[corpuscode] = description
 
         ### dataset
 
         dataset_descr = dict()
         sys.stderr.write(' dataset')
-        r = conn.execute('SELECT corpuscode, datasetcode, description FROM dataset')
+        r = conn.execute('''
+            SELECT corpuscode, datasetcode, description
+            FROM dataset
+            ORDER BY corpuscode, datasetcode
+        ''')
         for corpuscode, datasetcode, description in r:
+            file_dataset.generate(datasetcode)
             dataset_descr[(corpuscode, datasetcode)] = description
 
         ### result_curve
@@ -126,10 +201,16 @@ class AllCurves:
         for corpuscode, statcode, datasetcode, curveid, level, side, logid in r:
             k = (corpuscode, datasetcode, statcode)
             if k not in self.by_corpus_dataset_stat:
-                c = TypesPlot.Curve(dirdict,
-                                    corpuscode, corpus_descr[corpuscode],
-                                    statcode, self.statcode_label[statcode][0], self.statcode_label[statcode][1],
-                                    datasetcode, dataset_descr[(corpuscode, datasetcode)])
+                c = TypesPlot.Curve(
+                        dirdict,
+                        corpuscode, file_corpus.map[corpuscode],
+                        corpus_descr[corpuscode],
+                        statcode, file_stat.map[statcode],
+                        self.statcode_label[statcode][0],
+                        self.statcode_label[statcode][1],
+                        datasetcode, file_dataset.map[datasetcode],
+                        dataset_descr[(corpuscode, datasetcode)]
+                )
                 c.levels = defaultdict(dict)
                 self.curves.append(c)
                 self.by_corpus[corpuscode].append(c)
@@ -173,9 +254,17 @@ class AllCurves:
             ORDER BY corpuscode, groupcode, collectioncode
         ''')
         for corpuscode, groupcode, collectioncode, description in r:
+            if groupcode is None:
+                groupcode = DEFAULT_GROUP
+            file_group.generate(groupcode)
+            file_collection.generate(collectioncode)
             if corpuscode in self.by_corpus:
                 for c in self.by_corpus[corpuscode]:
-                    c.add_collection(groupcode, collectioncode, description)
+                    c.add_collection(
+                        groupcode, file_group.map[groupcode],
+                        collectioncode, file_collection.map[collectioncode],
+                        description
+                    )
 
         ### result_p
 

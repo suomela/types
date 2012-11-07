@@ -1,8 +1,6 @@
 # coding=utf-8
 
-import os
 import os.path
-import re
 import numpy as np
 from lxml.builder import E
 from lxml import etree
@@ -16,10 +14,6 @@ LABEL_AREA = (0.03, 0.97)
 AXIS_PAD = 0.02
 XSEP = 0.04
 THRESHOLD = 0.005
-
-DEFAULT_GROUP = "default"
-
-OKCHAR = re.compile(r'[-+.a-zA-Z0-9]+')
 
 def colour(c):
     return tuple([ int(c[2*i:2*i+2], 16)/float(255) for i in range(3) ])
@@ -44,15 +38,6 @@ def ucfirst(s):
         return s
     else:
         return s[0].upper() + s[1:]
-
-def fixname(s):
-    r = []
-    for ok in OKCHAR.finditer(s):
-        r.append(ok.group().lower())
-    if r == '':
-        return 'x'
-    else:
-        return '-'.join(r)
 
 def add_sep(l, sep):
     # [1,2,3] -> [1,sep,2,sep,3]
@@ -178,20 +163,25 @@ class Point:
 
 class Curve:
     def __init__(self, dirdict,
-                 corpuscode, corpus_descr,
-                 statcode, xlabel, ylabel,
-                 datasetcode, dataset_descr):
+                 corpuscode, corpus_filename, corpus_descr,
+                 statcode, stat_filename, xlabel, ylabel,
+                 datasetcode, dataset_filename, dataset_descr):
         self.dirdict = dirdict
         self.corpuscode = corpuscode
+        self.corpus_filename = corpus_filename
         self.corpus_descr = corpus_descr
         self.statcode = statcode
+        self.stat_filename = stat_filename
         self.xlabel = xlabel
         self.ylabel = ylabel
         self.datasetcode = datasetcode
+        self.dataset_filename = dataset_filename
         self.dataset_descr = dataset_descr
         self.timestamp = None
         self.collection_descr = dict()
+        self.collection_filenames = dict()
         self.group_by_collection = dict()
+        self.group_filenames = dict()
         self.point_by_collection = dict()
         self.points_by_group = dict()
         self.groups = []
@@ -228,10 +218,11 @@ class Curve:
         self.maxx = max(self.maxx, maxs[0])
         self.maxy = max(self.maxy, maxs[1])
 
-    def add_collection(self, groupcode, collectioncode, description):
-        if groupcode is None:
-            groupcode = DEFAULT_GROUP
+    def add_collection(self, groupcode, group_filename,
+                       collectioncode, collection_filename, description):
+        self.group_filenames[groupcode] = group_filename
         self.group_by_collection[collectioncode] = groupcode
+        self.collection_filenames[collectioncode] = collection_filename
         self.collection_descr[collectioncode] = description
 
     def add_point(self, p, timestamp):
@@ -248,21 +239,17 @@ class Curve:
         else:
             return ['svg']
 
-    def get_basename(self, groupcode):
-        b = [self.statcode, self.datasetcode]
-        if groupcode is not None:
-            b.append(groupcode)
-        return "-".join([fixname(n) for n in b])
-
     def get_pointname(self, suffix, groupcode, p=None):
-        n = self.get_basename(groupcode)
+        b = [self.stat_filename, self.dataset_filename]
+        if groupcode is not None:
+            b.append(self.group_filenames[groupcode])
         if p is not None:
-            n = n + "--" + fixname(p.collectioncode)
-        n = n + "." + suffix
-        return n
+            b.append('')
+            b.append(self.collection_filenames[p.collectioncode])
+        return '_'.join(b) + '.' + suffix
 
     def get_pointname_from_root(self, suffix, groupcode, p=None):
-        return fixname(self.corpuscode) + "/" + self.get_pointname(suffix, groupcode, p)
+        return self.corpus_filename + "/" + self.get_pointname(suffix, groupcode, p)
 
     def get_pointname_relative(self, other, suffix, groupcode, collectioncode=None):
         changed = False
@@ -288,11 +275,11 @@ class Curve:
         if self.corpuscode == other.corpuscode:
             full = name
         else:
-            full = "../" + fixname(self.corpuscode) + "/" + name
+            full = "../" + self.corpus_filename + "/" + name
         return full, changed
 
     def get_directory(self, suffix):
-        return os.path.join(self.dirdict[suffix], fixname(self.corpuscode))
+        return os.path.join(self.dirdict[suffix], self.corpus_filename)
 
     def get_filename(self, suffix, groupcode, p=None):
         return os.path.join(self.get_directory(suffix), self.get_pointname(suffix, groupcode, p))
