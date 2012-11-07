@@ -62,13 +62,16 @@ characteristic = code-gen/characteristic.$(MEXP).txt
 state = bin/rng-state
 state_debug = debug/rng-state
 
+template_db = template/types.sqlite
+template_dump = template/types.sql
+
 ### Targets
 
 .PHONY: build debug bin check debug-check valgrind-check unittest debug-unittest valgrind-unittest jumptable version clean veryclean
 
 all: build
 
-build: $(bin) $(state)
+build: $(bin) $(state) $(template_db) $(template_dump)
 
 bin: $(bin)
 
@@ -81,6 +84,16 @@ $(state): bin/types-rng
 
 $(state_debug): debug/types-rng
 	$< $@
+
+### Templates
+
+$(template_db): bin/types-db-init
+	mkdir -p $(@D)
+	$< $@
+
+$(template_dump): $(template_db)
+	mkdir -p $(@D)
+	sqlite3 $< .dump > $@
 
 ### Binaries
 

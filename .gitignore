@@ -4,5 +4,6 @@ bin/
 build/
 debug/
 dep/
+template/
 tmp/
 example*/config/
