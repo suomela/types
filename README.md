@@ -126,7 +126,7 @@ Remarks:
   - The `brew link` commands are required on OS X 10.7. On OS X 10.8
     they are not needed; you will just get a harmless warning.
 
-  - The `pip install` comnads will print *lots* of warnings. This is
+  - The `pip install` commands will print *lots* of warnings. This is
     normal. If you see the following messages after each installation,
     you should be fine:
 
