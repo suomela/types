@@ -89,6 +89,7 @@ $(state_debug): debug/types-rng
 
 $(template_db): bin/types-db-init
 	mkdir -p $(@D)
+	rm -f $@
 	$< $@
 
 $(template_dump): $(template_db)
