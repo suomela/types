@@ -1,8 +1,11 @@
 Type and hapax accumulation curves
 ==================================
 
-This is a new version of the tool that is available at
-http://www.cs.helsinki.fi/jukka.suomela/types/
+This is a tool for analysing textual diversity, richness, and
+productivity in text corpora and other data sets.
+
+For more information, see
+http://www.cs.helsinki.fi/jukka.suomela/types2/
 
 
 Downloading and compilation
