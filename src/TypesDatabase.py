@@ -15,6 +15,11 @@ def open_db(filename=DEFAULT_FILENAME):
     conn.execute('''PRAGMA foreign_keys = ON''')
     return conn
 
+def table_is_empty(conn, table):
+    r = conn.execute('SELECT COUNT(0) FROM %s' % table)
+    n = [ i[0] for i in r ][0]
+    return n == 0
+
 def create_if_needed(conn):
     conn.executescript('''
 
@@ -44,17 +49,9 @@ def create_if_needed(conn):
             statcode TEXT NOT NULL PRIMARY KEY REFERENCES stat(statcode)
         );
 
-        INSERT OR IGNORE INTO defaultstat (statcode) VALUES ('type-word');
-        INSERT OR IGNORE INTO defaultstat (statcode) VALUES ('type-token');
-
         CREATE TABLE IF NOT EXISTS defaultlevel (
             level REAL NOT NULL PRIMARY KEY
         );
-
-        INSERT OR IGNORE INTO defaultlevel (level) VALUES (0.0001);
-        INSERT OR IGNORE INTO defaultlevel (level) VALUES (0.001);
-        INSERT OR IGNORE INTO defaultlevel (level) VALUES (0.01);
-        INSERT OR IGNORE INTO defaultlevel (level) VALUES (0.1);
 
         CREATE TABLE IF NOT EXISTS corpus (
             corpuscode TEXT NOT NULL PRIMARY KEY,
@@ -238,6 +235,18 @@ def create_if_needed(conn):
         FROM result_p;
 
     ''')
+    if (table_is_empty(conn, 'defaultstat')):
+        conn.executescript('''
+            INSERT OR IGNORE INTO defaultstat (statcode) VALUES ('type-word');
+            INSERT OR IGNORE INTO defaultstat (statcode) VALUES ('type-token');
+        ''')
+    if (table_is_empty(conn, 'defaultlevel')):
+        conn.executescript('''
+            INSERT OR IGNORE INTO defaultlevel (level) VALUES (0.0001);
+            INSERT OR IGNORE INTO defaultlevel (level) VALUES (0.001);
+            INSERT OR IGNORE INTO defaultlevel (level) VALUES (0.01);
+            INSERT OR IGNORE INTO defaultlevel (level) VALUES (0.1);
+        ''')
 
 def drop_views(conn):
     conn.executescript('''
