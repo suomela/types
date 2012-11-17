@@ -142,6 +142,83 @@ Remarks:
         brew install parallel
 
 
+### Windows 7
+
+Download the Cygwin installation program (setup.exe): http://cygwin.com/
+
+Run setup.exe. The default settings are usually fine:
+
+  - "Install from Internet"
+  - Root directory: C:\cygwin
+  - Local Package Directory: for example, C:\cygwinpkg
+  - "Direct Connection"
+  - Select a mirror site that is near you
+  - Do not select any packages yet
+  - "Create icon on Desktop", "Add icon to Start Menu"
+
+If everything goes fine, you should have a "Cygwin Terminal" icon on
+your desktop.
+
+Next, we will install some packages. Run setup.exe again.
+It should remember all settings that you have selected so far;
+just hit "next" until you get the "Select Packages" dialog.
+Then select the latest versions of the following packages:
+
+    git
+    gcc4
+    make
+    python
+    python-numpy
+    pkg-config
+    sqlite3
+    wget
+    libsqlite3-devel
+    libxslt-devel
+    libfreetype-devel
+    libpng-devel
+
+Next, open Cygwin Terminal.
+
+Run `python --version` to find your Python version. Go to
+http://pypi.python.org/pypi/setuptools and download and install
+the right version of setuptools ("Python Egg"). For example, if your
+Python version is 2.6, then you can use the following commands:
+
+    wget http://pypi.python.org/packages/2.6/s/setuptools/setuptools-0.6c11-py2.6.egg
+    sh setuptools-0.6c11-py2.6.egg
+
+Once you have installed setuptools, you can use easy_install to install
+the remaining Python modules that we need:
+
+    easy_install lxml
+    easy_install matplotlib
+
+If all goes fine, you are now ready to follow the usual installation
+procedure: use `git` to download the software, run `./config`, etc.
+Just keep in mind that you must do everything in Cygwin Terminal.
+However, once the software finishes, you can of course browse the
+results with more user-friendly tools.
+
+---
+
+If you see any error messages that suggest "... try running rebaseall",
+follow the instructions here: http://cygwin.wikia.com/wiki/Rebaseall
+
+In brief, you will need do the following and try again:
+
+  - Exit Cygwin terminal
+  - Run C:\cygwin\bin\ash.exe
+  - In ash.exe, enter the following commands:
+
+        /bin/rebaseall
+        exit
+
+  - Re-open Cygwin terminal
+
+In our experiments, we encountered this issue during the installation
+of matplotlib on Windows XP, but not on Windows 7.
+
+
 License
 -------
 
