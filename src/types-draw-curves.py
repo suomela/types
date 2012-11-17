@@ -52,12 +52,20 @@ if fro == to:
 redraw = load()
 sys.stderr.write('!')
 
-pool = multiprocessing.Pool()
-results = []
-for i in range(fro, to):
-    results.append(pool.apply_async(do_plot, [i]))
-pool.close()
-pool.join()
-for r in results:
-    assert r.get()
+if sys.platform.startswith('cygwin'):
+    # Multiprocessing causes are DLL address conflicts
+    # that cannot be solved with "rebaseall".
+    # Workaround: disable parallelism on cygwin platforms
+    for i in range(fro, to):
+        assert do_plot(i)
+else:
+    pool = multiprocessing.Pool()
+    results = []
+    for i in range(fro, to):
+        results.append(pool.apply_async(do_plot, [i]))
+    pool.close()
+    pool.join()
+    for r in results:
+        assert r.get()
+
 sys.stderr.write(')')
