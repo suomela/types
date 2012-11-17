@@ -193,6 +193,8 @@ class Config:
         elif sys.platform.startswith('linux'):
             print "This seems to be a Linux system."
             self.linux = True
+        elif sys.platform.startswith('cygwin'):
+            print "This seems to be a Windows / Cygwin system."
         else:
             print "I do not recognise platform '%s'." % sys.platform
             print "I will try to use reasonable default values."
