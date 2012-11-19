@@ -5,7 +5,7 @@ import sys
 
 BIN_DIR = 'bin'
 TMP_DIR = 'tmp'
-LOGIN_FILE = 'config/loginfile'
+LOGIN_FILE = 'loginfile'
 PARTS=1
 
 PARALLEL = 'parallel'
