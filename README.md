@@ -78,7 +78,7 @@ Open a terminal and run:
 
 ### OS X Lion and OS X Mountain Lion
 
-These instructions should work on OS X 10.7.4 and OS X 10.8.1:
+These instructions should work on OS X 10.7.5 and OS X 10.8.2:
 
   - Open *App Store*. Find *Xcode*. Install. Close App Store.
 
@@ -107,9 +107,9 @@ These instructions should work on OS X 10.7.4 and OS X 10.8.1:
         brew install libpng
         brew link freetype
         brew link libpng
-        /usr/local/share/python/pip install numpy
-        /usr/local/share/python/pip install matplotlib
-        /usr/local/share/python/pip install lxml
+        pip install numpy
+        pip install matplotlib
+        pip install lxml
 
 ---
 
