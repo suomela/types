@@ -56,6 +56,7 @@ def test_cc(cc):
     return (version, ok)
 
 PYTHON_TEST = 'src/test.py'
+PYTHON_OK = 'OK\n'
 
 def test_python(python):
     BAD = (None, False)
@@ -70,7 +71,20 @@ def test_python(python):
         if not v.isdigit():
             return BAD
     version = [ int(v) for v in version ]
-    ok = tryrun([python, PYTHON_TEST]) == 'OK\n'
+    r = tryrun2([python, PYTHON_TEST])
+    if r is None:
+        ok = False
+    else:
+        output, error = r
+        if output != PYTHON_OK:
+            ok = False
+        elif error == '':
+            ok = True
+        else:
+            # Both OK and error messages?
+            # Might be first-time initialisation related to matplotlib:
+            # try again...
+            ok = tryrun([python, PYTHON_TEST]) == PYTHON_OK
     return (version, ok)
 
 class Tool:
