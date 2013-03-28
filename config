@@ -263,7 +263,7 @@ class Config:
             self.openmp = False
         elif self.osx and self.ccversion < [4,3,0]:
             print "- most likely this compiler does not work reliably with OpenMP"
-            print "  (consider installing gcc-4.7 from Homebrew)"
+            print "  (consider installing gcc-4.8 from Homebrew)"
             print
             self.openmp = False
         elif self.ccversion < [4,2,0]:
@@ -320,6 +320,8 @@ class Config:
                                "-Wredundant-decls", "-Wnested-externs", "-Wdisabled-optimization",
                                "-Wno-maybe-uninitialized", "-Wno-sign-compare"))
             self.cflags_prod.append("-Wno-unused")
+            if self.ccversion >= [4,8,0]:
+                self.cflags_prod.append("-Wno-unused-parameter")
             self.cflags_debug.append("-Wunused-macros")
         else:
             for cflags in (self.cflags_prod, self.cflags_debug, self.cflags_dep):
