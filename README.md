@@ -92,16 +92,16 @@ These instructions should work on OS X 10.7.5 and OS X 10.8.2:
   - Open Terminal. To install *Homebrew*, run this command and
     follow the instructions:
 
-        ruby <(curl -fsSkL raw.github.com/mxcl/homebrew/go)
+        ruby -e "$(curl -fsSL https://raw.github.com/mxcl/homebrew/go)"
 
   - Run the following commands to install recent versions of *GCC*,
     *Python*, and the Python modules that we need:
 
         brew doctor
-        brew tap homebrew/dupes
+        brew tap homebrew/versions
         brew update
         brew upgrade
-        brew install gcc
+        brew install gcc48
         brew install python
         brew install freetype
         brew install libpng
@@ -120,7 +120,7 @@ Remarks:
     tools:
 
         PYTHON = /usr/local/bin/python
-        CC = /usr/local/bin/gcc-4.7
+        CC = /usr/local/bin/gcc-4.8
 
   - For more information on Homebrew, see http://mxcl.github.com/homebrew/
 
