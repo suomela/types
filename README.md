@@ -78,38 +78,31 @@ Open a terminal and run:
 
 ### OS X Lion and OS X Mountain Lion
 
-These instructions should work on OS X 10.7.5 and OS X 10.8.2:
+These instructions should work on OS X 10.9:
 
-  - Open *App Store*. Find *Xcode*. Install. Close App Store.
+  - Open Terminal.
 
-  - Open *Xcode*. Select Preferences, Downloads, Components.
-    Install *Command Line Tools*. Close Xcode.
+  - Install Homebrew: http://brew.sh/
 
-  - Download and install XQuartz: https://xquartz.macosforge.org
-
-  - Log out and log on again.
-
-  - Open Terminal. To install *Homebrew*, run this command and
-    follow the instructions:
-
-        ruby -e "$(curl -fsSL https://raw.github.com/mxcl/homebrew/go)"
+        ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
+        brew doctor
+        brew update
 
   - Run the following commands to install recent versions of *GCC*,
     *Python*, and the Python modules that we need:
 
-        brew doctor
-        brew tap homebrew/versions
-        brew update
-        brew upgrade
-        brew install gcc48
         brew install python
         brew install freetype
-        brew install libpng
-        brew link freetype
-        brew link libpng
+        pip install --upgrade setuptools
+        pip install --upgrade pip
         pip install numpy
         pip install matplotlib
         pip install lxml
+
+        brew tap homebrew/versions
+        brew install gcc48
+        brew link freetype
+        brew link libpng
 
 ---
 
@@ -120,14 +113,7 @@ Remarks:
     tools:
 
         PYTHON = /usr/local/bin/python
-        CC = /usr/local/bin/gcc-4.8
-
-  - For more information on Homebrew, see http://mxcl.github.com/homebrew/
-
-  - The installation of GCC takes long (1-2 hours).
-
-  - The `brew link` commands are required on OS X 10.7. On OS X 10.8
-    they are not needed; you will just get a harmless warning.
+        CC = /usr/bin/gcc
 
   - The `pip install` commands will print *lots* of warnings. This is
     normal. If you see the following messages after each installation,
