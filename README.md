@@ -126,6 +126,7 @@ Remarks:
   - For cluster environments, you can also install *Gnu Parallel*:
 
         brew install parallel
+        parallel --bibtex
 
 
 ### Windows 7
