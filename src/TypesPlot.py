@@ -330,6 +330,7 @@ class Curve:
             fig.savefig(filename)
             if suffix == 'svg':
                 self.add_svg_links(filename, points, groupcode, point)
+        matplotlib.pyplot.close(fig)
 
     def plot_polys(self, ax):
         for i, poly in enumerate(self.polys):
