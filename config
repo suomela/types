@@ -169,7 +169,6 @@ class Config:
         self.ldflags_debug = []
         self.popcnt = False
         self.sse2 = False
-        self.disable_avx = False
         self.openmp = True
 
     def do_all(self):
@@ -252,11 +251,6 @@ class Config:
             # all Intel Macs should have SSE2
             self.sse2 = True
 
-        if self.osx:
-            print "- OS X assembler has difficulties with AVX instructions, disabling"
-            print
-            self.disable_avx = True
-
         if self.args.disable_openmp:
             print "- not using OpenMP as requested"
             print
@@ -279,8 +273,6 @@ class Config:
         features.append("OpenMP" if self.openmp else "no OpenMP")
         features.append("SSE2" if self.sse2 else "no SSE2")
         features.append("POPCNT" if self.popcnt else "no POPCNT")
-        if self.disable_avx:
-            features.append("avoiding AVX")
 
         print "- summary:", ', '.join(features)
         print
@@ -292,10 +284,8 @@ class Config:
 
         self.cppflags_prod.append("-DNDEBUG")
 
-        if self.ccversion >= [4,2,4]:
+        if self.ccversion >= [4,2,4] and not self.osx:
             self.cflags_prod.append("-march=native")
-            if self.disable_avx:
-                self.cflags_prod.append("-mno-avx")
 
         if self.openmp:
             self.cflags_prod.append("-fopenmp")
