@@ -288,7 +288,7 @@ http://creativecommons.org/licenses/by-sa/3.0/
 
 ### Other parts
 
-Copyright (c) 2012, Jukka Suomela.
+Copyright (c) 2014, Jukka Suomela.
 
 Enjoy, use at your own risk.
 
