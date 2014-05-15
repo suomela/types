@@ -5,7 +5,7 @@ This is a tool for analysing textual diversity, richness, and
 productivity in text corpora and other data sets.
 
 For more information, see
-http://www.cs.helsinki.fi/jukka.suomela/types2/
+http://users.ics.aalto.fi/suomela/types2/
 
 
 Downloading and compilation
@@ -44,9 +44,9 @@ Then open following file in your web browser:
 
 The output should be similar to these pages:
 
-  - http://www.cs.helsinki.fi/jukka.suomela/types2/example1/
-  - http://www.cs.helsinki.fi/jukka.suomela/types2/example2/
-  - http://www.cs.helsinki.fi/jukka.suomela/types2/example3/
+  - http://users.ics.aalto.fi/suomela/types2/example1/
+  - http://users.ics.aalto.fi/suomela/types2/example2/
+  - http://users.ics.aalto.fi/suomela/types2/example3/
 
 The computation will take a while, typically *several hours* unless you
 are using a high-performance computing cluster. If you are impatient,
@@ -292,4 +292,4 @@ Copyright (c) 2014, Jukka Suomela.
 
 Enjoy, use at your own risk.
 
-To contact the author, see http://www.cs.helsinki.fi/jukka.suomela/
+To contact the author, see http://users.ics.aalto.fi/suomela/
