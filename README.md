@@ -293,3 +293,38 @@ Copyright (c) 2014, Jukka Suomela.
 Enjoy, use at your own risk.
 
 To contact the author, see http://users.ics.aalto.fi/suomela/
+
+You can use any of the following licenses to distribute this software:
+
+  - MIT license, http://opensource.org/licenses/MIT
+
+  - BSD 2-clause license, http://opensource.org/licenses/BSD-2-Clause
+
+  - BSD 3-clause license, http://opensource.org/licenses/BSD-3-Clause
+
+The BSD 3-clause license might be most convenient, as it is the same
+license under which SFMT is distributed.
+
+For your convenience, here is the text of the MIT license.
+
+----
+
+Copyright (c) 2014 Jukka Suomela
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
