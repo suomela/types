@@ -67,11 +67,7 @@ These instructions should work on OS X 10.9:
         pip install numpy
         pip install matplotlib
         pip install lxml
-
-        brew tap homebrew/versions
-        brew install gcc48
-        brew link freetype
-        brew link libpng
+        brew install gcc
 
 ---
 
@@ -82,15 +78,7 @@ Remarks:
     tools:
 
         PYTHON = /usr/local/bin/python
-        CC = /usr/bin/gcc
-
-  - The `pip install` commands will print *lots* of warnings. This is
-    normal. If you see the following messages after each installation,
-    you should be fine:
-
-        Successfully installed numpy
-        Successfully installed matplotlib
-        Successfully installed lxml
+        CC = /usr/local/bin/gcc-4.9
 
   - For cluster environments, you can also install *Gnu Parallel*:
 
