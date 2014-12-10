@@ -248,8 +248,18 @@ class Config:
                         if 'popcnt' in flags:
                             self.popcnt = True
         elif self.osx:
-            # all Intel Macs should have SSE2
-            self.sse2 = True
+            print "- reading processor features..."
+            print
+            r = tryrun(['sysctl', '-n', 'machdep.cpu.features'])
+            if r is not None:
+                flags = set(r.strip().split(' '))
+                if 'SSE2' in flags:
+                    self.sse2 = True
+                if 'POPCNT' in flags:
+                    self.popcnt = True
+            else:
+                # all Intel Macs should have SSE2
+                self.sse2 = True
 
         if self.args.disable_openmp:
             print "- not using OpenMP as requested"
@@ -284,8 +294,11 @@ class Config:
 
         self.cppflags_prod.append("-DNDEBUG")
 
-        if self.ccversion >= [4,2,4] and not self.osx:
+        if self.ccversion >= [4,2,4]:
             self.cflags_prod.append("-march=native")
+            if self.osx:
+                # http://stackoverflow.com/questions/9840207/how-to-use-avx-pclmulqdq-on-mac-os-x-lion
+                self.cflags_prod.append("-Wa,-q")
 
         if self.openmp:
             self.cflags_prod.append("-fopenmp")
