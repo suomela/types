@@ -247,3 +247,6 @@ ifneq ($(MAKECMDGOALS),clean)
     endif
   endif
 endif
+
+.DELETE_ON_ERROR:
+
