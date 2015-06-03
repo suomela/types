@@ -146,7 +146,7 @@ class Tool:
         if tool is None:
             return self.find_best()
 
-GCC_RE = re.compile('gcc(-[0-9]+(\.[0-9]+)+)?(\.exe)?\Z')
+GCC_RE = re.compile('gcc(-[0-9]+(\.[0-9]+)*)?(\.exe)?\Z')
 PYTHON_RE = re.compile('python(-?2+(\.[0-9]+)+)?(\.exe)?\Z')
 
 GCC = Tool('gcc', 'a C compiler', GCC_RE, test_cc)
