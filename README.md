@@ -31,6 +31,13 @@ See https://github.com/suomela/types-examples for examples.
 Installing dependencies
 -----------------------
 
+### Ubuntu 15.04
+
+Open a terminal and run:
+
+    sudo apt-get install git python-matplotlib python-lxml sqlite3 libsqlite3-dev
+
+
 ### Ubuntu 12.04
 
 Open a terminal and run:
