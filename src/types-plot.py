@@ -28,6 +28,9 @@ FDR = [0.001, 0.01, 0.1]
 def msg(msg):
     sys.stderr.write("%s: %s\n" % (TOOL, msg))
 
+def none_to_empty(x):
+    return '' if x is None else x
+
 def classes(l):
     return { "class": " ".join(l) }
 
@@ -328,7 +331,7 @@ class AllCurves:
             c = self.by_corpus[corpuscode][0]
             cells = [
                 E.td(E.a(corpuscode, href=c.get_pointname_from_root('html', None))),
-                E.td(c.corpus_descr, **classes(['wrap', 'small'])),
+                E.td(none_to_empty(c.corpus_descr), **classes(['wrap', 'small'])),
             ]
             tablerows.append(E.tr(*cells, **firstlast(i, corpuslist)))
         return tablerows
