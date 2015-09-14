@@ -52,15 +52,15 @@ Open a terminal and run:
     sudo apt-get install git-core python-lxml python-matplotlib sqlite3 libsqlite3-dev
 
 
-### OS X Lion and OS X Mountain Lion
+### OS X Yosemite
 
-These instructions should work on OS X 10.9:
+These instructions should work on OS X 10.10 (Yosemite):
 
   - Open Terminal.
 
   - Install Homebrew: http://brew.sh/
 
-        ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
+        ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
         brew doctor
         brew update
 
@@ -69,28 +69,17 @@ These instructions should work on OS X 10.9:
 
         brew install python
         brew install freetype
-        pip install --upgrade setuptools
-        pip install --upgrade pip
+        pip install --upgrade pip setuptools
         pip install numpy
         pip install matplotlib
         pip install lxml
         brew install gcc
 
----
-
-Remarks:
-
-  - Once you have followed the above instructions, `./config` should
-    finish successfully. In particular, it should find the following
-    tools:
+Once you have followed the above instructions, `./config` should finish
+successfully. In particular, it should find the following tools:
 
         PYTHON = /usr/local/bin/python
-        CC = /usr/local/bin/gcc-4.9
-
-  - For cluster environments, you can also install *Gnu Parallel*:
-
-        brew install parallel
-        parallel --bibtex
+        CC = /usr/local/bin/gcc-5
 
 
 ### Windows 7
