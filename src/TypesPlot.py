@@ -551,7 +551,11 @@ class Curve:
             stat = [ E.span(v, **{"class": "menuitem"}) for v in stat ]
             menu = E.p(*add_sep([t] + stat, " "), **{"class": "menurow"})
             menublocks.append(menu)
+
         bodyblocks.append(E.div(*menublocks, **{"class": "menu"}))
+        if ac.with_typelists:
+            typelist = ac.get_typelist(self.corpuscode, self.datasetcode, collectioncode)
+            bodyblocks.append(E.div(*typelist, **{"class": "typelist"}))
 
         doc = E.html(E.head(*headblocks), E.body(*bodyblocks))
         write_html(f, doc)

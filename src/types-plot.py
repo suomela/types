@@ -51,6 +51,9 @@ def get_args():
                       help='which database to read [default: %default]',
                       default=TypesDatabase.DEFAULT_FILENAME)
     TypesParallel.add_options(parser)
+    parser.add_option('--type-lists', dest='with_typelists', action='store_true',
+                      help='produce type lists',
+                      default=False)
     parser.add_option('--plotdir', metavar='DIRECTORY', dest='plotdir',
                       help='where to store PDF plots [default: %default]',
                       default=PLOT_DIR)
@@ -126,9 +129,13 @@ class AllCurves:
         self.by_dataset_stat_fallback = dict()
         self.by_corpus_dataset_stat = dict()
         self.result_q = []
+        self.tokens = defaultdict(list)
+        self.sample_collection = defaultdict(list)
 
     def read_curves(self, args, conn):
         sys.stderr.write('%s: read:' % TOOL)
+
+        self.with_typelists = args.with_typelists
 
         dirdict = {
             "pdf": args.plotdir,
@@ -292,6 +299,28 @@ class AllCurves:
         for row in r:
             self.result_q.append(row)
 
+        if self.with_typelists:
+
+            ### token
+
+            sys.stderr.write(' token')
+            r = conn.execute('''
+                SELECT corpuscode, samplecode, datasetcode, tokencode, tokencount
+                FROM token
+            ''')
+            for corpuscode, samplecode, datasetcode, tokencode, tokencount in r:
+                self.tokens[(corpuscode, datasetcode, samplecode)].append(tokencode)
+
+            ### sample_collection
+
+            sys.stderr.write(' sample_collection')
+            r = conn.execute('''
+                SELECT corpuscode, samplecode, collectioncode
+                FROM sample_collection
+            ''')
+            for corpuscode, samplecode, collectioncode in r:
+                self.sample_collection[(corpuscode, collectioncode)].append(samplecode)
+
         sys.stderr.write('\n')
 
         ### fallbacks
@@ -406,6 +435,10 @@ class AllCurves:
             for outdated in c.get_outdated():
                 redraw.append((c, outdated))
         return redraw
+
+    def get_typelist(self, corpuscode, datasetcode, collectioncode):
+        return []
+
 
 def get_datafile(args):
     return os.path.join(args.tmpdir, DATA_FILE)
