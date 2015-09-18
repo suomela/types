@@ -1,6 +1,7 @@
 # coding=utf-8
 
 from collections import defaultdict
+import math
 import optparse
 import cPickle
 import os
@@ -129,8 +130,6 @@ class AllCurves:
         self.by_dataset_stat_fallback = dict()
         self.by_corpus_dataset_stat = dict()
         self.result_q = []
-        self.tokens = defaultdict(list)
-        self.sample_collection = defaultdict(list)
 
     def read_curves(self, args, conn):
         sys.stderr.write('%s: read:' % TOOL)
@@ -301,15 +300,11 @@ class AllCurves:
 
         if self.with_typelists:
 
-            ### token
-
-            sys.stderr.write(' token')
-            r = conn.execute('''
-                SELECT corpuscode, samplecode, datasetcode, tokencode, tokencount
-                FROM token
-            ''')
-            for corpuscode, samplecode, datasetcode, tokencode, tokencount in r:
-                self.tokens[(corpuscode, datasetcode, samplecode)].append(tokencode)
+            self.typelist_cache = {}
+            self.sampleset_by_collection = defaultdict(set)
+            self.sampleset_by_token = defaultdict(set)
+            self.tokenset_by_dataset = defaultdict(set)
+            self.token_short = {}
 
             ### sample_collection
 
@@ -319,7 +314,29 @@ class AllCurves:
                 FROM sample_collection
             ''')
             for corpuscode, samplecode, collectioncode in r:
-                self.sample_collection[(corpuscode, collectioncode)].append(samplecode)
+                self.sampleset_by_collection[(corpuscode, collectioncode)].add(samplecode)
+
+            ### token
+
+            sys.stderr.write(' token')
+            r = conn.execute('''
+                SELECT corpuscode, samplecode, datasetcode, tokencode, tokencount
+                FROM token
+            ''')
+            for corpuscode, samplecode, datasetcode, tokencode, tokencount in r:
+                self.sampleset_by_token[(corpuscode, datasetcode, tokencode)].add(samplecode)
+                self.tokenset_by_dataset[(corpuscode, datasetcode)].add(tokencode)
+                self.token_short[(corpuscode, datasetcode, tokencode)] = tokencode
+
+            ### token
+
+            sys.stderr.write(' tokeninfo')
+            r = conn.execute('''
+                SELECT corpuscode, datasetcode, tokencode, shortlabel, longlabel
+                FROM tokeninfo
+            ''')
+            for corpuscode, datasetcode, tokencode, shortlabel, longlabel in r:
+                self.token_short[(corpuscode, datasetcode, tokencode)] = shortlabel
 
         sys.stderr.write('\n')
 
@@ -419,7 +436,7 @@ class AllCurves:
         headblocks.append(E.title("Corpus menu"))
         headblocks.append(E.link(rel="stylesheet", href="types.css", type="text/css"))
         tablerows = self.generate_corpus_menu()
-        bodyblocks.append(E.table(*tablerows))
+        bodyblocks.append(E.table(*tablerows, **classes(["mainmenu"])))
         tablerows = self.generate_fdr_table()
         if len(tablerows) > 0:
             bodyblocks.append(E.table(*tablerows))
@@ -437,7 +454,64 @@ class AllCurves:
         return redraw
 
     def get_typelist(self, corpuscode, datasetcode, collectioncode):
-        return []
+        k = (corpuscode, datasetcode, collectioncode)
+        if k not in self.typelist_cache:
+            self.typelist_cache[k] = self.calc_typelist(*k)
+        return self.typelist_cache[k]
+
+    def calc_typelist(self, corpuscode, datasetcode, collectioncode):
+        # for corpuscode, samplecode, collectioncode in r:
+        #     self.sampleset_by_collection[(corpuscode, collectioncode)].add(samplecode)
+        # for corpuscode, samplecode, datasetcode, tokencode, tokencount in r:
+        #     self.sampleset_by_token[(corpuscode, datasetcode, tokencode)]].add(samplecode)
+        #     self.tokenset_by_dataset[(corpuscode, datasetcode)].add(tokencode)
+
+        csamples = self.sampleset_by_collection[(corpuscode, collectioncode)]
+        typelist = sorted(self.tokenset_by_dataset[(corpuscode, datasetcode)])
+        r = defaultdict(list)
+        for t in typelist:
+            tsamples = self.sampleset_by_token[(corpuscode, datasetcode, t)]
+            here = len(tsamples & csamples)
+            other = len(tsamples - csamples)
+            total = here + other
+            if total == 0:
+                continue
+            bracket = int(math.log(total, 2))
+            ratio = here / float(total)
+            r[bracket].append((t, here, other, ratio))
+        tables = []
+        for bracket in sorted(r.keys()):
+            table = []
+            l = sorted(r[bracket], key=lambda x: (-x[3], -x[1], x[2], x[0]))
+            for t, here, other, ratio in l:
+                table.append(E.tr(
+                    bar(bracket, here, 'bara'),
+                    bar(bracket, other, 'barb'),
+                    E.td(E.span(self.token_short[(corpuscode, datasetcode, t)],
+                                style="color: {};".format(grayness(here, other)))),
+                    title=u"{} — {}: {} samples, other: {} samples".format(t, collectioncode, here, other)
+                ))
+            tables.append(E.table(*table))
+        return [E.table(E.tr(*[E.td(x) for x in tables]))]
+
+
+def bar(bracket, x, label):
+    return E.td(
+        E.span(
+            '',
+            style="border-left-width: {}px;".format(bar_scale(bracket, x))
+        ),
+        **classes([label])
+    )
+
+def bar_scale(bracket, x):
+    scale = math.sqrt(2 ** bracket)
+    return int(round(5 * x / scale))
+
+def grayness(here, other):
+    total = here + other
+    ratio = int(round(10 * float(here) / total))
+    return ['#000', '#111', '#222', '#333', '#444', '#555', '#666', '#777', '#888', '#999', '#aaa'][10-ratio]
 
 
 def get_datafile(args):
@@ -485,7 +559,7 @@ BODY {
     background-color: #fff;
     font-family: Verdana, sans-serif;
     padding: 0px;
-    margin: 15px;
+    margin: 5px;
 }
 
 A:link {
@@ -504,7 +578,12 @@ A:hover, A:active {
 
 TABLE {
     border-collapse: collapse;
+    margin-left: 8px;
     margin-bottom: 30px;
+}
+
+.typelist {
+    margin-top: 20px;
 }
 
 TD {
@@ -515,6 +594,10 @@ TD {
     vertical-align: baseline;
     white-space: nowrap;
     font-size: 95%;
+}
+
+TD.right {
+    text-align: right;
 }
 
 TD+TD {
@@ -551,21 +634,21 @@ TR.last TD {
 
 P {
     margin: 0px;
-    margin-top: 12px;
-    margin-bottom: 12px;
+    margin-top: 6px;
+    margin-bottom: 6px;
     padding: 0px;
 }
 
 .plot {
-    margin-top: 35px;
-    margin-bottom: 15px;
+    margin-top: 20px;
+    margin-bottom: 10px;
 }
 
 .menudesc {
     margin-left: 30px;
 }
 
-.menudesc, .menudescinline {
+.menudesc, .menudescinline, .typelist {
     font-size: 80%;
 }
 
@@ -603,6 +686,26 @@ P {
 A.menuitem:hover, A.menutitle:hover {
     border: 1px dotted #000;
     background-color: #eee;
+}
+
+TD.bara {
+    text-align: right;
+}
+
+TD.barb {
+    padding-left: 1px;
+}
+
+TD.barb+TD {
+    padding-left: 5px;
+}
+
+TD.bara SPAN {
+    border-left: 0px solid #a00;
+}
+
+TD.barb SPAN {
+    border-left: 0px solid #888;
 }
 
 .menusel {

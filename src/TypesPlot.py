@@ -553,7 +553,7 @@ class Curve:
             menublocks.append(menu)
 
         bodyblocks.append(E.div(*menublocks, **{"class": "menu"}))
-        if ac.with_typelists:
+        if ac.with_typelists and collectioncode is not None:
             typelist = ac.get_typelist(self.corpuscode, self.datasetcode, collectioncode)
             bodyblocks.append(E.div(*typelist, **{"class": "typelist"}))
 

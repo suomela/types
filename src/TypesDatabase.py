@@ -101,6 +101,16 @@ def create_if_needed(conn):
             FOREIGN KEY (corpuscode, samplecode) REFERENCES sample(corpuscode, samplecode)
         );
 
+        CREATE TABLE IF NOT EXISTS tokeninfo (
+            corpuscode TEXT NOT NULL,
+            datasetcode TEXT NOT NULL,
+            tokencode TEXT NOT NULL,
+            shortlabel TEXT,
+            longlabel TEXT,
+            PRIMARY KEY (corpuscode, datasetcode, tokencode),
+            FOREIGN KEY (corpuscode, datasetcode) REFERENCES dataset(corpuscode, datasetcode)
+        );
+
         CREATE TABLE IF NOT EXISTS log (
             id INTEGER PRIMARY KEY NOT NULL,
             corpuscode TEXT NOT NULL,
