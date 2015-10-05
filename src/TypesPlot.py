@@ -249,9 +249,9 @@ class Curve:
         if p is not None:
             b.append('')
             b.append(self.collection_filenames[p.collectioncode])
-        if l is not None:
-            b.append('')
-            b.append(l)
+            if l is not None:
+                b.append('')
+                b.append(l)
         return '_'.join(b) + '.' + suffix
 
     def get_pointname_from_root(self, suffix, groupcode, p=None, l=None):
