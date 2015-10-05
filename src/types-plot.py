@@ -509,8 +509,8 @@ class AllCurves:
             l = sorted(r[bracket], key=lambda x: (-x[3], -x[1], x[2], x[0]))
             for t, here, other, ratio in l:
                 table.append(E.tr(
-                    bar(bracket, here, 'bara'),
-                    bar(bracket, other, 'barb'),
+                    bar(here, 'bara', bracket=bracket),
+                    bar(other, 'barb', bracket=bracket),
                     E.td(E.span(self.token_short[(corpuscode, datasetcode, t)],
                                 style="color: {};".format(grayness(here, other)))),
                     title=u"{} — {}: {} samples, other: {} samples".format(t, collectioncode, here, other)
@@ -521,6 +521,9 @@ class AllCurves:
     def calc_samplelist(self, corpuscode, datasetcode, collectioncode):
         csamples = self.sampleset_by_collection[(corpuscode, collectioncode)]
         l = []
+        maxwords = 1
+        maxtokens = 1
+        maxtypes = 1
         for samplecode in csamples:
             wordcount, descr = self.sample_info[(corpuscode, samplecode)]
             typelist = sorted(self.tokenset_by_sample[(corpuscode, datasetcode, samplecode)])
@@ -538,9 +541,13 @@ class AllCurves:
                     otherlist.append(t)
             tokencount = self.tokencount_by_sample[(corpuscode, datasetcode, samplecode)]
             l.append((samplecode, descr, collections, wordcount, tokencount, otherlist, uniquelist, hapaxlist))
+            typecount = len(otherlist) + len(uniquelist) + len(hapaxlist)
+            maxwords = max(maxwords, wordcount)
+            maxtokens = max(maxtokens, tokencount)
+            maxtypes = max(maxtypes, typecount)
 
         l = sorted(l, key=lambda x: (-x[3], x[0]))
-        table = []
+        tablerows = []
         for row in l:
             samplecode, descr, collections, wordcount, tokencount, otherlist, uniquelist, hapaxlist = row
             if descr is None:
@@ -549,32 +556,65 @@ class AllCurves:
             uniquecount = len(uniquelist) + len(hapaxlist)
             hapaxcount = len(hapaxlist)
             slist = [self.token_short[(corpuscode, datasetcode, t)] for t in uniquelist + hapaxlist]
-            table.append(E.tr(
+            tablerows.append([
                 E.td(samplecode),
                 E.td(descr),
                 E.td(' '.join(collections)),
-                E.td('{} words'.format(wordcount), **{"class": "right"}),
-                E.td('{} tokens'.format(tokencount), **{"class": "right"}),
-                E.td('{} types'.format(typecount), **{"class": "right"}),
-                E.td('{} unique'.format(uniquecount), **{"class": "right"}),
-                E.td('{} hapaxes'.format(hapaxcount), **{"class": "right"}),
+                E.td(str(wordcount), **{"class": "right"}),
+                bar(wordcount, 'bar', maxval=maxwords),
+                E.td(str(tokencount), **{"class": "right"}),
+                bar(tokencount, 'bar', maxval=maxtokens),
+                E.td(str(typecount), **{"class": "right"}),
+                bar(typecount, 'bar', maxval=maxtypes),
+                E.td(str(uniquecount), **{"class": "right"}),
+                bar(uniquecount, 'bar', maxval=maxtypes),
+                E.td(str(hapaxcount), **{"class": "right"}),
+                bar(hapaxcount, 'bar', maxval=maxtypes),
                 E.td(' '.join(slist), **{"class": "wrap"}),
-            ))
+            ])
+        table = [
+            E.tr(
+                E.td('Sample'),
+                E.td(),
+                E.td(),
+                E.td('Words', **{"class": "right"}),
+                E.td(),
+                E.td('Tokens', **{"class": "right"}),
+                E.td(),
+                E.td('Types', **{"class": "right"}),
+                E.td(),
+                E.td('Unique', **{"class": "right"}),
+                E.td(),
+                E.td('Hapaxes', **{"class": "right"}),
+                E.td(),
+                E.td('Unique types'),
+                E.td(),
+                **{"class": "head"}
+            )
+        ]
+        for i, row in enumerate(tablerows):
+            table.append(E.tr(*row, **firstlast(i, tablerows)))
         return [E.table(*table)]
 
 
-def bar(bracket, x, label):
+def bar(x, label, bracket=None, maxval=None):
+    x = bar_scale(x, bracket, maxval)
     return E.td(
         E.span(
             '',
-            style="border-left-width: {}px;".format(bar_scale(bracket, x))
+            style="border-left-width: {}px;".format(x)
         ),
         **classes([label])
     )
 
-def bar_scale(bracket, x):
-    scale = math.sqrt(2 ** bracket)
-    return int(round(5 * x / scale))
+def bar_scale(x, bracket=None, maxval=None):
+    if bracket is not None:
+        scale = math.sqrt(2 ** bracket)
+        return int(round(5.0 * x / scale))
+    elif maxval is not None:
+        return int(round(25.0 * x / maxval))
+    else:
+        return x
 
 def grayness(here, other):
     total = here + other
@@ -760,6 +800,10 @@ A.menuitem:hover, A.menutitle:hover {
     background-color: #eee;
 }
 
+TD.bar {
+    padding-left: 5px;
+}
+
 TD.bara {
     text-align: right;
 }
@@ -772,7 +816,7 @@ TD.barb+TD {
     padding-left: 5px;
 }
 
-TD.bara SPAN {
+TD.bar SPAN, TD.bara SPAN {
     border-left: 0px solid #a00;
 }
 
