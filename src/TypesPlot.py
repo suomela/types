@@ -566,7 +566,7 @@ class Curve:
                 [ groupcode ],
                 [ collectioncode ],
                 listings,
-                lambda c, g, x, l: (LISTING_LABEL[l], l)
+                lambda c, g, x, l: (LISTING_LABEL[l], None)
             )
 
         bodyblocks.append(E.div(*menublocks, **{"class": "menu"}))
@@ -585,7 +585,8 @@ class Curve:
             typelist = ac.get_typelist(self.corpuscode, self.datasetcode, collectioncode)
             bodyblocks.append(E.div(*typelist, **{"class": "listing"}))
         elif listing == 's':
-            pass
+            samplelist = ac.get_samplelist(self.corpuscode, self.datasetcode, collectioncode)
+            bodyblocks.append(E.div(*samplelist, **{"class": "listing"}))
         else:
             assert False
 

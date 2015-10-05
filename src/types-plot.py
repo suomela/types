@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from collections import defaultdict
+from collections import defaultdict, Counter
 import math
 import optparse
 import cPickle
@@ -302,13 +302,28 @@ class AllCurves:
         for row in r:
             self.result_q.append(row)
 
-        if self.with_typelists:
+        if self.with_typelists or self.with_samplelists:
 
             self.typelist_cache = {}
+            self.samplelist_cache = {}
             self.sampleset_by_collection = defaultdict(set)
             self.sampleset_by_token = defaultdict(set)
+            self.tokenset_by_sample = defaultdict(set)
+            self.sample_info = {}
             self.tokenset_by_dataset = defaultdict(set)
             self.token_short = {}
+            self.tokencount_by_token = Counter()
+            self.tokencount_by_sample = Counter()
+
+            ### sample
+
+            sys.stderr.write(' sample')
+            r = conn.execute('''
+                SELECT corpuscode, samplecode, wordcount, description
+                FROM sample
+            ''')
+            for corpuscode, samplecode, wordcount, description in r:
+                self.sample_info[(corpuscode, samplecode)] = (wordcount, description)
 
             ### sample_collection
 
@@ -329,10 +344,13 @@ class AllCurves:
             ''')
             for corpuscode, samplecode, datasetcode, tokencode, tokencount in r:
                 self.sampleset_by_token[(corpuscode, datasetcode, tokencode)].add(samplecode)
+                self.tokenset_by_sample[(corpuscode, datasetcode, samplecode)].add(tokencode)
                 self.tokenset_by_dataset[(corpuscode, datasetcode)].add(tokencode)
                 self.token_short[(corpuscode, datasetcode, tokencode)] = tokencode
+                self.tokencount_by_token[(corpuscode, datasetcode, tokencode)] += tokencount
+                self.tokencount_by_sample[(corpuscode, datasetcode, samplecode)] += tokencount
 
-            ### token
+            ### tokeninfo
 
             sys.stderr.write(' tokeninfo')
             r = conn.execute('''
@@ -463,13 +481,13 @@ class AllCurves:
             self.typelist_cache[k] = self.calc_typelist(*k)
         return self.typelist_cache[k]
 
-    def calc_typelist(self, corpuscode, datasetcode, collectioncode):
-        # for corpuscode, samplecode, collectioncode in r:
-        #     self.sampleset_by_collection[(corpuscode, collectioncode)].add(samplecode)
-        # for corpuscode, samplecode, datasetcode, tokencode, tokencount in r:
-        #     self.sampleset_by_token[(corpuscode, datasetcode, tokencode)]].add(samplecode)
-        #     self.tokenset_by_dataset[(corpuscode, datasetcode)].add(tokencode)
+    def get_samplelist(self, corpuscode, datasetcode, collectioncode):
+        k = (corpuscode, datasetcode, collectioncode)
+        if k not in self.samplelist_cache:
+            self.samplelist_cache[k] = self.calc_samplelist(*k)
+        return self.samplelist_cache[k]
 
+    def calc_typelist(self, corpuscode, datasetcode, collectioncode):
         csamples = self.sampleset_by_collection[(corpuscode, collectioncode)]
         typelist = sorted(self.tokenset_by_dataset[(corpuscode, datasetcode)])
         r = defaultdict(list)
@@ -497,6 +515,39 @@ class AllCurves:
                 ))
             tables.append(E.table(*table))
         return [E.table(E.tr(*[E.td(x) for x in tables]))]
+
+    def calc_samplelist(self, corpuscode, datasetcode, collectioncode):
+        csamples = self.sampleset_by_collection[(corpuscode, collectioncode)]
+        l = []
+        for samplecode in csamples:
+            wordcount, descr = self.sample_info[(corpuscode, samplecode)]
+            typelist = sorted(self.tokenset_by_sample[(corpuscode, datasetcode, samplecode)])
+            uniquelist = []
+            hapaxlist = []
+            for t in typelist:
+                if len(self.sampleset_by_token[(corpuscode, datasetcode, t)]) == 1:
+                    uniquelist.append(t)
+                if self.tokencount_by_token[(corpuscode, datasetcode, t)] == 1:
+                    hapaxlist.append(t)
+            tokencount = self.tokencount_by_sample[(corpuscode, datasetcode, samplecode)]
+            l.append((samplecode, descr, wordcount, tokencount, typelist, uniquelist, hapaxlist))
+
+        l = sorted(l, key=lambda x: (-x[2], x[0]))
+        table = []
+        for row in l:
+            samplecode, descr, wordcount, tokencount, typelist, uniquelist, hapaxlist = row
+            if descr is None:
+                descr = ''
+            table.append(E.tr(
+                E.td(samplecode),
+                E.td(descr),
+                E.td('{} words'.format(wordcount), **{"class": "right"}),
+                E.td('{} tokens'.format(tokencount), **{"class": "right"}),
+                E.td('{} types'.format(len(typelist)), **{"class": "right"}),
+                E.td('{} unique'.format(len(uniquelist)), **{"class": "right"}),
+                E.td('{} hapaxes'.format(len(hapaxlist)), **{"class": "right"}),
+            ))
+        return [E.table(*table)]
 
 
 def bar(bracket, x, label):
