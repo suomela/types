@@ -582,9 +582,15 @@ class Curve:
                 point.y, self.ylabel
             )))
             w = "at most" if point.side == "below" else "at least"
+            if point.pvalue > 0.1:
+                ppvalue = "{:.1f}%".format(100 * point.pvalue)
+            elif point.pvalue > 0.01:
+                ppvalue = "{:.2f}%".format(100 * point.pvalue)
+            else:
+                ppvalue = "{:.3f}%".format(100 * point.pvalue)
             stat.append(E.p(
-                ("Only approx. " if point.fdr > 0 else "Approx. "),
-                E.strong("{:.3f}%".format(100 * point.pvalue)),
+                ("Only approx. " if point.pvalue < 0.1 else "Approx. "),
+                E.strong(ppvalue),
                 " of random collections with {} {} contain {} {} {}.".format(
                     point.x, self.xlabel, w, point.y, self.ylabel
                 )
