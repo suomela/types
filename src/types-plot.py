@@ -307,6 +307,7 @@ class AllCurves:
             self.typelist_cache = {}
             self.samplelist_cache = {}
             self.sampleset_by_collection = defaultdict(set)
+            self.collectionset_by_sample = defaultdict(set)
             self.sampleset_by_token = defaultdict(set)
             self.tokenset_by_sample = defaultdict(set)
             self.sample_info = {}
@@ -334,6 +335,7 @@ class AllCurves:
             ''')
             for corpuscode, samplecode, collectioncode in r:
                 self.sampleset_by_collection[(corpuscode, collectioncode)].add(samplecode)
+                self.collectionset_by_sample[(corpuscode, samplecode)].add(collectioncode)
 
             ### token
 
@@ -522,6 +524,8 @@ class AllCurves:
         for samplecode in csamples:
             wordcount, descr = self.sample_info[(corpuscode, samplecode)]
             typelist = sorted(self.tokenset_by_sample[(corpuscode, datasetcode, samplecode)])
+            collections = sorted(self.collectionset_by_sample[(corpuscode, samplecode)])
+            collections = [x for x in collections if x != collectioncode]
             hapaxlist = []
             otherlist = []
             uniquelist = []
@@ -533,12 +537,12 @@ class AllCurves:
                 else:
                     otherlist.append(t)
             tokencount = self.tokencount_by_sample[(corpuscode, datasetcode, samplecode)]
-            l.append((samplecode, descr, wordcount, tokencount, otherlist, uniquelist, hapaxlist))
+            l.append((samplecode, descr, collections, wordcount, tokencount, otherlist, uniquelist, hapaxlist))
 
-        l = sorted(l, key=lambda x: (-x[2], x[0]))
+        l = sorted(l, key=lambda x: (-x[3], x[0]))
         table = []
         for row in l:
-            samplecode, descr, wordcount, tokencount, otherlist, uniquelist, hapaxlist = row
+            samplecode, descr, collections, wordcount, tokencount, otherlist, uniquelist, hapaxlist = row
             if descr is None:
                 descr = ''
             typecount = len(otherlist) + len(uniquelist) + len(hapaxlist)
@@ -548,6 +552,7 @@ class AllCurves:
             table.append(E.tr(
                 E.td(samplecode),
                 E.td(descr),
+                E.td(' '.join(collections)),
                 E.td('{} words'.format(wordcount), **{"class": "right"}),
                 E.td('{} tokens'.format(tokencount), **{"class": "right"}),
                 E.td('{} types'.format(typecount), **{"class": "right"}),
