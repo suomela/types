@@ -522,30 +522,38 @@ class AllCurves:
         for samplecode in csamples:
             wordcount, descr = self.sample_info[(corpuscode, samplecode)]
             typelist = sorted(self.tokenset_by_sample[(corpuscode, datasetcode, samplecode)])
-            uniquelist = []
             hapaxlist = []
+            otherlist = []
+            uniquelist = []
             for t in typelist:
-                if len(self.sampleset_by_token[(corpuscode, datasetcode, t)]) == 1:
-                    uniquelist.append(t)
                 if self.tokencount_by_token[(corpuscode, datasetcode, t)] == 1:
                     hapaxlist.append(t)
+                elif len(self.sampleset_by_token[(corpuscode, datasetcode, t)]) == 1:
+                    uniquelist.append(t)
+                else:
+                    otherlist.append(t)
             tokencount = self.tokencount_by_sample[(corpuscode, datasetcode, samplecode)]
-            l.append((samplecode, descr, wordcount, tokencount, typelist, uniquelist, hapaxlist))
+            l.append((samplecode, descr, wordcount, tokencount, otherlist, uniquelist, hapaxlist))
 
         l = sorted(l, key=lambda x: (-x[2], x[0]))
         table = []
         for row in l:
-            samplecode, descr, wordcount, tokencount, typelist, uniquelist, hapaxlist = row
+            samplecode, descr, wordcount, tokencount, otherlist, uniquelist, hapaxlist = row
             if descr is None:
                 descr = ''
+            typecount = len(otherlist) + len(uniquelist) + len(hapaxlist)
+            uniquecount = len(uniquelist) + len(hapaxlist)
+            hapaxcount = len(hapaxlist)
+            slist = [self.token_short[(corpuscode, datasetcode, t)] for t in uniquelist + hapaxlist]
             table.append(E.tr(
                 E.td(samplecode),
                 E.td(descr),
                 E.td('{} words'.format(wordcount), **{"class": "right"}),
                 E.td('{} tokens'.format(tokencount), **{"class": "right"}),
-                E.td('{} types'.format(len(typelist)), **{"class": "right"}),
-                E.td('{} unique'.format(len(uniquelist)), **{"class": "right"}),
-                E.td('{} hapaxes'.format(len(hapaxlist)), **{"class": "right"}),
+                E.td('{} types'.format(typecount), **{"class": "right"}),
+                E.td('{} unique'.format(uniquecount), **{"class": "right"}),
+                E.td('{} hapaxes'.format(hapaxcount), **{"class": "right"}),
+                E.td(' '.join(slist), **{"class": "wrap"}),
             ))
         return [E.table(*table)]
 
