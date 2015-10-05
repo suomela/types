@@ -1,5 +1,6 @@
 # coding=utf-8
 
+import itertools
 import os.path
 import numpy as np
 from lxml.builder import E
@@ -29,6 +30,8 @@ GREY   = colour('999999')
 DARK   = colour('333333')
 BLACK  = colour('000000')
 BLUE2  = colour('3f4f6c')
+
+LISTING_LABEL = { None: 'summary', 't': 'type list', 's': 'sample list' }
 
 def lim(maxval):
     return (-AXIS_PAD * maxval, (1.0 + AXIS_PAD) * maxval)
@@ -239,19 +242,22 @@ class Curve:
         else:
             return ['svg']
 
-    def get_pointname(self, suffix, groupcode, p=None):
+    def get_pointname(self, suffix, groupcode, p=None, l=None):
         b = [self.stat_filename, self.dataset_filename]
         if groupcode is not None:
             b.append(self.group_filenames[groupcode])
         if p is not None:
             b.append('')
             b.append(self.collection_filenames[p.collectioncode])
+        if l is not None:
+            b.append('')
+            b.append(l)
         return '_'.join(b) + '.' + suffix
 
-    def get_pointname_from_root(self, suffix, groupcode, p=None):
-        return self.corpus_filename + "/" + self.get_pointname(suffix, groupcode, p)
+    def get_pointname_from_root(self, suffix, groupcode, p=None, l=None):
+        return self.corpus_filename + "/" + self.get_pointname(suffix, groupcode, p, l)
 
-    def get_pointname_relative(self, other, suffix, groupcode, collectioncode=None):
+    def get_pointname_relative(self, other, suffix, groupcode, collectioncode=None, l=None):
         changed = False
         if groupcode is not None and groupcode not in self.group_set:
             groupcode = None
@@ -271,7 +277,7 @@ class Curve:
             p = self.point_by_collection[collectioncode]
         else:
             p = None
-        name = self.get_pointname(suffix, groupcode, p)
+        name = self.get_pointname(suffix, groupcode, p, l)
         if self.corpuscode == other.corpuscode:
             full = name
         else:
@@ -281,8 +287,8 @@ class Curve:
     def get_directory(self, suffix):
         return os.path.join(self.dirdict[suffix], self.corpus_filename)
 
-    def get_filename(self, suffix, groupcode, p=None):
-        return os.path.join(self.get_directory(suffix), self.get_pointname(suffix, groupcode, p))
+    def get_filename(self, suffix, groupcode, p=None, l=None):
+        return os.path.join(self.get_directory(suffix), self.get_pointname(suffix, groupcode, p, l))
 
     def get_directories(self):
         return [ self.get_directory(suffix) for suffix in self.get_suffixes() ]
@@ -418,12 +424,20 @@ class Curve:
 
     def generate_html(self, ac):
         for groupcode in sorted(self.points_by_group.keys()):
-            for p in [None] + self.points_by_group[groupcode]:
-                filename = self.get_filename('html', groupcode, p)
-                with open(filename, 'w') as f:
-                    self.generate_html_one(f, groupcode, p, ac)
+            ps = [None] + self.points_by_group[groupcode]
+            for p in ps:
+                ls = [None]
+                if p is not None:
+                    if ac.with_typelists:
+                        ls += ['t']
+                    if ac.with_samplelists:
+                        ls += ['s']
+                for l in ls:
+                    filename = self.get_filename('html', groupcode, p, l)
+                    with open(filename, 'w') as f:
+                        self.generate_html_one(f, groupcode, p, l, ls, ac)
 
-    def generate_html_one(self, f, groupcode, point, ac):
+    def generate_html_one(self, f, groupcode, point, listing, listings, ac):
         collectioncode = point.collectioncode if point is not None else None
 
         headblocks = []
@@ -434,45 +448,43 @@ class Curve:
         headblocks.append(E.title(t))
         headblocks.append(E.link(rel="stylesheet", href="../types.css", type="text/css"))
 
-        def add_menu(title, cl, gl, xl, labelhook, titlelink=None, groupby=None):
+        def add_menu(title, cl, gl, xl, ll, labelhook, titlelink=None, groupby=None, stat=None):
             prev = []
             prevj = 0
             result = []
-            for c in cl:
-                for g in gl:
-                    for x in xl:
-                        addbreak = False
-                        label, desc = labelhook(c, g, x)
-                        selected = c == self and g is groupcode and x is collectioncode
-                        if groupby is not None:
-                            cur = label.split(groupby)
-                            # A heuristic rule that tries to produce reasonable abbreviations
-                            j = longest_common_prefix(prev, cur)
-                            if j == len(prev):
-                                j -= 1
-                            if j < prevj:
-                                j = 0
-                            if 0 < prevj < j:
-                                j = prevj
-                            if j > 0:
-                                label = u"…" + groupby.join(cur[j:])
-                            if j == 0 and prevj > 0:
-                                addbreak = True
-                            prev = cur
-                            prevj = j
-                        attr = dict()
-                        if selected:
-                            attr["class"] = "menuitem menusel"
-                            e = E.span(label, **attr)
-                        else:
-                            href, changed = c.get_pointname_relative(self, 'html', g, x)
-                            if desc is not None:
-                                attr["title"] = desc
-                            attr["class"] = "menuitem menuother" if changed else "menuitem menusame"
-                            e = E.a(label, href=href, **attr)
-                        if addbreak:
-                            result.append(E.br())
-                        result.append(e)
+            for c, g, x, l in itertools.product(cl, gl, xl, ll):
+                addbreak = False
+                label, desc = labelhook(c, g, x, l)
+                selected = c == self and g is groupcode and x is collectioncode and l is listing
+                if groupby is not None:
+                    cur = label.split(groupby)
+                    # A heuristic rule that tries to produce reasonable abbreviations
+                    j = longest_common_prefix(prev, cur)
+                    if j == len(prev):
+                        j -= 1
+                    if j < prevj:
+                        j = 0
+                    if 0 < prevj < j:
+                        j = prevj
+                    if j > 0:
+                        label = u"…" + groupby.join(cur[j:])
+                    if j == 0 and prevj > 0:
+                        addbreak = True
+                    prev = cur
+                    prevj = j
+                attr = dict()
+                if selected:
+                    attr["class"] = "menuitem menusel"
+                    e = E.span(label, **attr)
+                else:
+                    href, changed = c.get_pointname_relative(self, 'html', g, x, l)
+                    if desc is not None:
+                        attr["title"] = desc
+                    attr["class"] = "menuitem menuother" if changed else "menuitem menusame"
+                    e = E.a(label, href=href, **attr)
+                if addbreak:
+                    result.append(E.br())
+                result.append(e)
             t = title + ":"
             if titlelink is None:
                 t = E.span(t, **{"class": "menutitle"})
@@ -487,7 +499,8 @@ class Curve:
             ac.by_dataset_stat_fallback[(self.datasetcode, self.statcode)],
             [ groupcode ],
             [ collectioncode ],
-            lambda c, g, x: (c.corpuscode, c.corpus_descr),
+            [ listing ],
+            lambda c, g, x, l: (c.corpuscode, c.corpus_descr),
             titlelink="../index.html",
             groupby='-'
         )
@@ -500,7 +513,8 @@ class Curve:
             ac.by_corpus_stat[(self.corpuscode, self.statcode)],
             [ groupcode ],
             [ collectioncode ],
-            lambda c, g, x: (c.datasetcode, c.dataset_descr)
+            [ listing ],
+            lambda c, g, x, l: (c.datasetcode, c.dataset_descr)
         )
         if self.dataset_descr is not None:
             menublocks.append(E.p(self.dataset_descr, **{"class": "menudesc"}))
@@ -509,14 +523,16 @@ class Curve:
             [ self ],
             sorted(self.groups),
             [ collectioncode ],
-            lambda c, g, x: ("none", None) if g is None else (g, None)
+            [ listing ],
+            lambda c, g, x, l: ("none", None) if g is None else (g, None)
         )
         add_menu(
             "Axes",
             ac.by_corpus_dataset[(self.corpuscode, self.datasetcode)],
             [ groupcode ],
             [ collectioncode ],
-            lambda c, g, x: (
+            [ listing ],
+            lambda c, g, x, l: (
                 "%s/%s" % (c.ylabel, c.xlabel),
                 "y = %s, x = %s" % (c.ylabel, c.xlabel)
             )
@@ -537,25 +553,41 @@ class Curve:
             [ self ],
             [ groupcode ],
             [ None ] + [ p.collectioncode for p in self.points_by_group[groupcode] ],
-            lambda c, g, x: ("none", None) if x is None else (x, self.collection_descr[x])
+            [ listing ],
+            lambda c, g, x, l: ("none", None) if x is None else (x, self.collection_descr[x])
         )
-        if collectioncode is not None:
-            if self.collection_descr[collectioncode] is not None:
-                menublocks.append(E.p(self.collection_descr[collectioncode], **{"class": "menudesc"}))
+        if collectioncode is not None and self.collection_descr[collectioncode] is not None:
+            menublocks.append(E.p(self.collection_descr[collectioncode], **{"class": "menudesc"}))
+
+        if len(listings) > 1:
+            add_menu(
+                "Show",
+                [ self ],
+                [ groupcode ],
+                [ collectioncode ],
+                listings,
+                lambda c, g, x, l: (LISTING_LABEL[l], l)
+            )
+
+        bodyblocks.append(E.div(*menublocks, **{"class": "menu"}))
+
+        if collectioncode is None:
+            pass
+        elif listing is None:
             stat = [
                 u"%s %s" % (point.x, self.xlabel),
                 u"%d %s" % (point.y, self.ylabel),
                 u"%f %s" % (point.pvalue, point.side),
             ]
-            t = E.span("Statistics:", **{"class": "menutitle"})
-            stat = [ E.span(v, **{"class": "menuitem"}) for v in stat ]
-            menu = E.p(*add_sep([t] + stat, " "), **{"class": "menurow"})
-            menublocks.append(menu)
-
-        bodyblocks.append(E.div(*menublocks, **{"class": "menu"}))
-        if ac.with_typelists and collectioncode is not None:
+            stat = [ E.p(', '.join(stat)) ]
+            bodyblocks.append(E.div(*stat, **{"class": "stats"}))
+        elif listing == 't':
             typelist = ac.get_typelist(self.corpuscode, self.datasetcode, collectioncode)
-            bodyblocks.append(E.div(*typelist, **{"class": "typelist"}))
+            bodyblocks.append(E.div(*typelist, **{"class": "listing"}))
+        elif listing == 's':
+            pass
+        else:
+            assert False
 
         doc = E.html(E.head(*headblocks), E.body(*bodyblocks))
         write_html(f, doc)

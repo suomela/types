@@ -55,6 +55,9 @@ def get_args():
     parser.add_option('--type-lists', dest='with_typelists', action='store_true',
                       help='produce type lists',
                       default=False)
+    parser.add_option('--sample-lists', dest='with_samplelists', action='store_true',
+                      help='produce sample lists',
+                      default=False)
     parser.add_option('--plotdir', metavar='DIRECTORY', dest='plotdir',
                       help='where to store PDF plots [default: %default]',
                       default=PLOT_DIR)
@@ -135,6 +138,7 @@ class AllCurves:
         sys.stderr.write('%s: read:' % TOOL)
 
         self.with_typelists = args.with_typelists
+        self.with_samplelists = args.with_samplelists
 
         dirdict = {
             "pdf": args.plotdir,
@@ -582,8 +586,12 @@ TABLE {
     margin-bottom: 30px;
 }
 
-.typelist {
+.listing, .stats {
     margin-top: 20px;
+}
+
+.stats {
+    margin-left: 7px;
 }
 
 TD {
@@ -648,7 +656,7 @@ P {
     margin-left: 30px;
 }
 
-.menudesc, .menudescinline, .typelist {
+.menudesc, .menudescinline, .listing {
     font-size: 80%;
 }
 
