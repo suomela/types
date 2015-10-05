@@ -288,7 +288,7 @@ class AllCurves:
         ''')
         for corpuscode, collectioncode, datasetcode, statcode, y, x, above, below, total, logid in r:
             k1 = (corpuscode, datasetcode, statcode)
-            p = TypesPlot.Point(collectioncode, y, x, above, below, total)
+            p = TypesPlot.Point(collectioncode, y, x, above, below, total, -FDR[-1])
             self.by_corpus_dataset_stat[k1].add_point(p, get_timestamp(logid))
 
         ### result_q
@@ -436,6 +436,7 @@ class AllCurves:
                 c = self.by_corpus_dataset_stat[(corpuscode, datasetcode, statcode)]
                 groupcode = c.group_by_collection[collectioncode]
                 point = c.point_by_collection[collectioncode]
+                point.fdr = FDR[fdri]
                 desc = c.collection_descr[collectioncode]
                 lh = u"−" if side == "below" else "+"
                 x, y = self.statcode_label[statcode]
@@ -648,8 +649,8 @@ def main():
         msg('there are no results in the database')
         return
     ac.create_directories()
-    ac.generate_html()
     ac.generate_index(args.htmldir)
+    ac.generate_html()
     redraw = ac.find_outdated()
     nredraw = len(redraw)
     if nredraw == 0:
@@ -695,7 +696,8 @@ TABLE {
 }
 
 .stats {
-    margin-left: 7px;
+    margin-left: 8px;
+    font-size: 95%;
 }
 
 TD {

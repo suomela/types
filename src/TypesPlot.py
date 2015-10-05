@@ -115,7 +115,7 @@ SEL   = CPoint( BLACK, WHITE, 1.5 )
 UNSEL = CPoint( GREY,  WHITE, 0.5 )
 
 class Point:
-    def __init__(self, collectioncode, y, x, above, below, total):
+    def __init__(self, collectioncode, y, x, above, below, total, fdr):
         self.collectioncode = collectioncode
         self.y = y
         self.x = x
@@ -127,6 +127,8 @@ class Point:
             is_above = False
             self.side = 'below'
             self.pvalue = float(below)/float(total)
+        # negative if larger
+        self.fdr = fdr
 
         self.ms = 7
         self.marker = 'o'
@@ -574,12 +576,35 @@ class Curve:
         if collectioncode is None:
             pass
         elif listing is None:
-            stat = [
-                u"%s %s" % (point.x, self.xlabel),
-                u"%d %s" % (point.y, self.ylabel),
-                u"%f %s" % (point.pvalue, point.side),
-            ]
-            stat = [ E.p(', '.join(stat)) ]
+            stat = []
+            stat.append(E.p("This collection contains {} {} and {} {}.".format(
+                point.x, self.xlabel,
+                point.y, self.ylabel
+            )))
+            w = "at most" if point.side == "below" else "at least"
+            stat.append(E.p(
+                ("Only approx. " if point.fdr > 0 else "Approx. "),
+                E.strong("{:.3f}%".format(100 * point.pvalue)),
+                " of random collections with {} {} contain {} {} {}.".format(
+                    point.x, self.xlabel, w, point.y, self.ylabel
+                )
+            ))
+            if point.pvalue > 0.1:
+                stat.append(E.p(
+                    "This seems to be a fairly typical collection."
+                ))
+            elif point.fdr < 0:
+                stat.append(E.p(
+                    "This finding is probably not interesting: ",
+                    "the false discovery rate is larger than {}".format(-point.fdr)
+                ))
+            else:
+                stat.append(E.p(
+                    "This finding is probably interesting: ",
+                    "the false discovery rate is ",
+                    E.strong("smaller than {}".format(point.fdr)),
+                    "."
+                ))
             bodyblocks.append(E.div(*stat, **{"class": "stats"}))
         elif listing == 't':
             typelist = ac.get_typelist(self.corpuscode, self.datasetcode, collectioncode)
