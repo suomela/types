@@ -596,7 +596,7 @@ class AllCurves:
             tablerows.append([
                 E.td(s.samplecode),
                 E.td(none_to_empty(s.descr)),
-                E.td(' '.join(colllist)),
+                E.td(', '.join(colllist)),
                 E.td(str(s.wordcount), **{"class": "right"}),
                 bar(s.wordcount, 'bar', maxval=maxwords),
                 E.td(str(s.tokencount), **{"class": "right"}),
