@@ -596,7 +596,7 @@ class AllCurves:
             tablerows.append([
                 E.td(s.samplecode),
                 E.td(none_to_empty(s.descr)),
-                E.td(', '.join(colllist)),
+                E.td(u' · '.join(colllist)),
                 E.td(str(s.wordcount), **{"class": "right"}),
                 bar(s.wordcount, 'bar', maxval=maxwords),
                 E.td(str(s.tokencount), **{"class": "right"}),
@@ -607,7 +607,7 @@ class AllCurves:
                 bar(s.uniquecount, 'bar', maxval=maxtypes),
                 E.td(str(s.hapaxcount), **{"class": "right"}),
                 bar(s.hapaxcount, 'bar', maxval=maxtypes),
-                E.td(', '.join(clist), **{"class": "wrap"}),
+                E.td(', '.join(clist)),
                 E.td(', '.join(ulist), **{"class": "wrap"}),
             ])
         table = [
@@ -618,7 +618,7 @@ class AllCurves:
                 E.td('Types', colspan="2"),
                 E.td('Unique', colspan="2"),
                 E.td('Hapaxes', colspan="2"),
-                E.td('Common types', **{"class": "wide"}),
+                E.td('Common types'),
                 E.td('Unique types', **{"class": "wide"}),
                 **{"class": "head"}
             )
