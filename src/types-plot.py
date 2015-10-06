@@ -359,12 +359,18 @@ class AllCurves:
             ### tokeninfo
 
             sys.stderr.write(' tokeninfo')
-            r = conn.execute('''
-                SELECT corpuscode, datasetcode, tokencode, shortlabel, longlabel
-                FROM tokeninfo
-            ''')
-            for corpuscode, datasetcode, tokencode, shortlabel, longlabel in r:
-                self.token_short[(corpuscode, datasetcode, tokencode)] = shortlabel
+            r = list(conn.execute('''
+                SELECT COUNT(*)
+                FROM sqlite_master
+                WHERE type='table' AND name='tokeninfo'
+            '''))
+            if r[0][0] > 0:
+                r = conn.execute('''
+                    SELECT corpuscode, datasetcode, tokencode, shortlabel, longlabel
+                    FROM tokeninfo
+                ''')
+                for corpuscode, datasetcode, tokencode, shortlabel, longlabel in r:
+                    self.token_short[(corpuscode, datasetcode, tokencode)] = shortlabel
 
         sys.stderr.write('\n')
 
