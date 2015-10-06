@@ -24,6 +24,8 @@ DATA_FILE = 'types-plot.pickle'
 
 DEFAULT_GROUP = "default"
 
+N_COMMON = 3
+
 FDR = [0.001, 0.01, 0.1]
 
 def msg(msg):
@@ -315,6 +317,7 @@ class AllCurves:
             self.token_short = {}
             self.tokencount_by_token = Counter()
             self.tokencount_by_sample = Counter()
+            self.tokencount_by_sample_token = defaultdict(Counter)
 
             ### sample
 
@@ -351,6 +354,7 @@ class AllCurves:
                 self.token_short[(corpuscode, datasetcode, tokencode)] = tokencode
                 self.tokencount_by_token[(corpuscode, datasetcode, tokencode)] += tokencount
                 self.tokencount_by_sample[(corpuscode, datasetcode, samplecode)] += tokencount
+                self.tokencount_by_sample_token[(corpuscode, datasetcode, samplecode)][tokencode] += tokencount
 
             ### tokeninfo
 
@@ -526,8 +530,9 @@ class AllCurves:
         maxtokens = 1
         maxtypes = 1
         for samplecode in csamples:
+            skey = (corpuscode, datasetcode, samplecode)
             wordcount, descr = self.sample_info[(corpuscode, samplecode)]
-            typelist = sorted(self.tokenset_by_sample[(corpuscode, datasetcode, samplecode)])
+            typelist = sorted(self.tokenset_by_sample[skey])
             collections = sorted(self.collectionset_by_sample[(corpuscode, samplecode)])
             collections = [x for x in collections if x != collectioncode]
             hapaxlist = []
@@ -540,8 +545,16 @@ class AllCurves:
                     uniquelist.append(t)
                 else:
                     otherlist.append(t)
-            tokencount = self.tokencount_by_sample[(corpuscode, datasetcode, samplecode)]
-            l.append((samplecode, descr, collections, wordcount, tokencount, otherlist, uniquelist, hapaxlist))
+            commonlist = self.tokencount_by_sample_token[skey].most_common(N_COMMON + 1)
+            if len(commonlist) > 0:
+                if len(commonlist) == N_COMMON + 1:
+                    threshold = max(commonlist[-1][1], 1)
+                else:
+                    threshold = 1
+                commonlist = [(x,c) for x,c in commonlist if c > threshold]
+                commonlist = sorted(commonlist, key=lambda x: (-x[1], x[0]))
+            tokencount = self.tokencount_by_sample[skey]
+            l.append((samplecode, descr, collections, wordcount, tokencount, otherlist, uniquelist, hapaxlist, commonlist))
             typecount = len(otherlist) + len(uniquelist) + len(hapaxlist)
             maxwords = max(maxwords, wordcount)
             maxtokens = max(maxtokens, tokencount)
@@ -550,13 +563,14 @@ class AllCurves:
         l = sorted(l, key=lambda x: (-x[3], x[0]))
         tablerows = []
         for row in l:
-            samplecode, descr, collections, wordcount, tokencount, otherlist, uniquelist, hapaxlist = row
+            samplecode, descr, collections, wordcount, tokencount, otherlist, uniquelist, hapaxlist, commonlist = row
             if descr is None:
                 descr = ''
             typecount = len(otherlist) + len(uniquelist) + len(hapaxlist)
             uniquecount = len(uniquelist) + len(hapaxlist)
             hapaxcount = len(hapaxlist)
-            slist = [self.token_short[(corpuscode, datasetcode, t)] for t in uniquelist + hapaxlist]
+            clist = [u"{}\u202F×\u202F{}".format(self.token_short[(corpuscode, datasetcode, t)], c) for t,c in commonlist]
+            ulist = [self.token_short[(corpuscode, datasetcode, t)] for t in uniquelist + hapaxlist]
             tablerows.append([
                 E.td(samplecode),
                 E.td(descr),
@@ -571,25 +585,19 @@ class AllCurves:
                 bar(uniquecount, 'bar', maxval=maxtypes),
                 E.td(str(hapaxcount), **{"class": "right"}),
                 bar(hapaxcount, 'bar', maxval=maxtypes),
-                E.td(' '.join(slist), **{"class": "wrap"}),
+                E.td(', '.join(clist), **{"class": "wrap"}),
+                E.td(', '.join(ulist), **{"class": "wrap"}),
             ])
         table = [
             E.tr(
-                E.td('Sample'),
-                E.td(),
-                E.td(),
-                E.td('Words', **{"class": "right"}),
-                E.td(),
-                E.td('Tokens', **{"class": "right"}),
-                E.td(),
-                E.td('Types', **{"class": "right"}),
-                E.td(),
-                E.td('Unique', **{"class": "right"}),
-                E.td(),
-                E.td('Hapaxes', **{"class": "right"}),
-                E.td(),
-                E.td('Unique types'),
-                E.td(),
+                E.td('Sample', colspan="3"),
+                E.td('Words', colspan="2"),
+                E.td('Tokens', colspan="2"),
+                E.td('Types', colspan="2"),
+                E.td('Unique', colspan="2"),
+                E.td('Hapaxes', colspan="2"),
+                E.td('Common types', **{"class": "wide"}),
+                E.td('Unique types', **{"class": "wide"}),
                 **{"class": "head"}
             )
         ]
@@ -824,6 +832,10 @@ TD.bar SPAN, TD.bara SPAN {
 
 TD.barb SPAN {
     border-left: 0px solid #888;
+}
+
+TD.wide {
+    min-width: 40ex;
 }
 
 .menusel {
