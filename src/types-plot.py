@@ -595,7 +595,6 @@ class AllCurves:
             ulist = [self.token_short[(corpuscode, datasetcode, t)] for t in s.uniquelist + s.hapaxlist]
             tablerows.append([
                 E.td(s.samplecode),
-                E.td(none_to_empty(s.descr)),
                 E.td(u' · '.join(colllist)),
                 E.td(str(s.wordcount), **{"class": "right"}),
                 bar(s.wordcount, 'bar', maxval=maxwords),
@@ -612,7 +611,7 @@ class AllCurves:
             ])
         table = [
             E.tr(
-                E.td('Sample', colspan="3"),
+                E.td('Sample', colspan="2"),
                 E.td('Words', colspan="2"),
                 E.td('Tokens', colspan="2"),
                 E.td('Types', colspan="2"),
