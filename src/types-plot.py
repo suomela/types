@@ -122,6 +122,10 @@ class Filenames:
         self.map[s] = candidate
 
 
+class SampleData:
+    pass
+
+
 class AllCurves:
     def __init__(self):
         self.curves = []
@@ -308,6 +312,7 @@ class AllCurves:
 
             self.typelist_cache = {}
             self.samplelist_cache = {}
+            self.sample_cache = {}
             self.sampleset_by_collection = defaultdict(set)
             self.collectionset_by_sample = defaultdict(set)
             self.sampleset_by_token = defaultdict(set)
@@ -503,6 +508,12 @@ class AllCurves:
             self.samplelist_cache[k] = self.calc_samplelist(*k)
         return self.samplelist_cache[k]
 
+    def get_sample(self, corpuscode, datasetcode, samplecode):
+        k = (corpuscode, datasetcode, samplecode)
+        if k not in self.sample_cache:
+            self.sample_cache[k] = self.calc_sample(*k)
+        return self.sample_cache[k]
+
     def calc_typelist(self, corpuscode, datasetcode, collectioncode):
         csamples = self.sampleset_by_collection[(corpuscode, collectioncode)]
         typelist = sorted(self.tokenset_by_dataset[(corpuscode, datasetcode)])
@@ -532,6 +543,37 @@ class AllCurves:
             tables.append(E.table(*table))
         return [E.table(E.tr(*[E.td(x) for x in tables]))]
 
+    def calc_sample(self, corpuscode, datasetcode, samplecode):
+        s = SampleData()
+        s.samplecode = samplecode
+        skey = (corpuscode, datasetcode, samplecode)
+        s.wordcount, s.descr = self.sample_info[(corpuscode, samplecode)]
+        typelist = sorted(self.tokenset_by_sample[skey])
+        s.collections = sorted(self.collectionset_by_sample[(corpuscode, samplecode)])
+        s.hapaxlist = []
+        s.otherlist = []
+        s.uniquelist = []
+        for t in typelist:
+            if self.tokencount_by_token[(corpuscode, datasetcode, t)] == 1:
+                s.hapaxlist.append(t)
+            elif len(self.sampleset_by_token[(corpuscode, datasetcode, t)]) == 1:
+                s.uniquelist.append(t)
+            else:
+                s.otherlist.append(t)
+        s.commonlist = self.tokencount_by_sample_token[skey].most_common(N_COMMON + 1)
+        if len(s.commonlist) > 0:
+            if len(s.commonlist) == N_COMMON + 1:
+                threshold = max(s.commonlist[-1][1], 1)
+            else:
+                threshold = 1
+            s.commonlist = [(x,c) for x,c in s.commonlist if c > threshold]
+            s.commonlist = sorted(s.commonlist, key=lambda x: (-x[1], x[0]))
+        s.tokencount = self.tokencount_by_sample[skey]
+        s.typecount = len(typelist)
+        s.uniquecount = len(s.uniquelist) + len(s.hapaxlist)
+        s.hapaxcount = len(s.hapaxlist)
+        return s
+
     def calc_samplelist(self, corpuscode, datasetcode, collectioncode):
         csamples = self.sampleset_by_collection[(corpuscode, collectioncode)]
         l = []
@@ -539,61 +581,32 @@ class AllCurves:
         maxtokens = 1
         maxtypes = 1
         for samplecode in csamples:
-            skey = (corpuscode, datasetcode, samplecode)
-            wordcount, descr = self.sample_info[(corpuscode, samplecode)]
-            typelist = sorted(self.tokenset_by_sample[skey])
-            collections = sorted(self.collectionset_by_sample[(corpuscode, samplecode)])
-            collections = [x for x in collections if x != collectioncode]
-            hapaxlist = []
-            otherlist = []
-            uniquelist = []
-            for t in typelist:
-                if self.tokencount_by_token[(corpuscode, datasetcode, t)] == 1:
-                    hapaxlist.append(t)
-                elif len(self.sampleset_by_token[(corpuscode, datasetcode, t)]) == 1:
-                    uniquelist.append(t)
-                else:
-                    otherlist.append(t)
-            commonlist = self.tokencount_by_sample_token[skey].most_common(N_COMMON + 1)
-            if len(commonlist) > 0:
-                if len(commonlist) == N_COMMON + 1:
-                    threshold = max(commonlist[-1][1], 1)
-                else:
-                    threshold = 1
-                commonlist = [(x,c) for x,c in commonlist if c > threshold]
-                commonlist = sorted(commonlist, key=lambda x: (-x[1], x[0]))
-            tokencount = self.tokencount_by_sample[skey]
-            l.append((samplecode, descr, collections, wordcount, tokencount, otherlist, uniquelist, hapaxlist, commonlist))
-            typecount = len(otherlist) + len(uniquelist) + len(hapaxlist)
-            maxwords = max(maxwords, wordcount)
-            maxtokens = max(maxtokens, tokencount)
-            maxtypes = max(maxtypes, typecount)
+            s = self.get_sample(corpuscode, datasetcode, samplecode)
+            l.append(s)
+            maxwords = max(maxwords, s.wordcount)
+            maxtokens = max(maxtokens, s.tokencount)
+            maxtypes = max(maxtypes, s.typecount)
 
-        l = sorted(l, key=lambda x: (-x[3], x[0]))
+        l = sorted(l, key=lambda s: (-s.wordcount, s.samplecode))
         tablerows = []
-        for row in l:
-            samplecode, descr, collections, wordcount, tokencount, otherlist, uniquelist, hapaxlist, commonlist = row
-            if descr is None:
-                descr = ''
-            typecount = len(otherlist) + len(uniquelist) + len(hapaxlist)
-            uniquecount = len(uniquelist) + len(hapaxlist)
-            hapaxcount = len(hapaxlist)
-            clist = [u"{}\u202F×\u202F{}".format(self.token_short[(corpuscode, datasetcode, t)], c) for t,c in commonlist]
-            ulist = [self.token_short[(corpuscode, datasetcode, t)] for t in uniquelist + hapaxlist]
+        for s in l:
+            colllist = [x for x in s.collections if x != collectioncode]
+            clist = [u"{}\u202F×\u202F{}".format(self.token_short[(corpuscode, datasetcode, t)], c) for t,c in s.commonlist]
+            ulist = [self.token_short[(corpuscode, datasetcode, t)] for t in s.uniquelist + s.hapaxlist]
             tablerows.append([
-                E.td(samplecode),
-                E.td(descr),
-                E.td(' '.join(collections)),
-                E.td(str(wordcount), **{"class": "right"}),
-                bar(wordcount, 'bar', maxval=maxwords),
-                E.td(str(tokencount), **{"class": "right"}),
-                bar(tokencount, 'bar', maxval=maxtokens),
-                E.td(str(typecount), **{"class": "right"}),
-                bar(typecount, 'bar', maxval=maxtypes),
-                E.td(str(uniquecount), **{"class": "right"}),
-                bar(uniquecount, 'bar', maxval=maxtypes),
-                E.td(str(hapaxcount), **{"class": "right"}),
-                bar(hapaxcount, 'bar', maxval=maxtypes),
+                E.td(s.samplecode),
+                E.td(none_to_empty(s.descr)),
+                E.td(' '.join(colllist)),
+                E.td(str(s.wordcount), **{"class": "right"}),
+                bar(s.wordcount, 'bar', maxval=maxwords),
+                E.td(str(s.tokencount), **{"class": "right"}),
+                bar(s.tokencount, 'bar', maxval=maxtokens),
+                E.td(str(s.typecount), **{"class": "right"}),
+                bar(s.typecount, 'bar', maxval=maxtypes),
+                E.td(str(s.uniquecount), **{"class": "right"}),
+                bar(s.uniquecount, 'bar', maxval=maxtypes),
+                E.td(str(s.hapaxcount), **{"class": "right"}),
+                bar(s.hapaxcount, 'bar', maxval=maxtypes),
                 E.td(', '.join(clist), **{"class": "wrap"}),
                 E.td(', '.join(ulist), **{"class": "wrap"}),
             ])
