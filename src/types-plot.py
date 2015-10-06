@@ -399,8 +399,11 @@ class AllCurves:
                 os.makedirs(d)
 
     def generate_html(self):
+        sys.stderr.write('%s: write: ' % TOOL)
         for c in self.curves:
+            sys.stderr.write('.')
             c.generate_html(self)
+        sys.stderr.write('\n')
 
     def generate_corpus_menu(self):
         tablerows = []
