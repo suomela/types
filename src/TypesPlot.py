@@ -253,9 +253,9 @@ class Curve:
         if p is not None:
             b.append('')
             b.append(self.collection_filenames[p.collectioncode])
-            if l is not None:
-                b.append('')
-                b.append(l)
+        if l is not None:
+            b.append('')
+            b.append(l)
         return '_'.join(b) + '.' + suffix
 
     def get_pointname_from_root(self, suffix, groupcode, p=None, l=None):
@@ -343,8 +343,7 @@ class Curve:
             filename = self.get_filename(suffix2, groupcode, point)
             fig.savefig(filename)
             if suffix == 'svg':
-                listings = self.get_listings(point)
-                for listing in listings:
+                for listing in self.listings:
                     target = self.get_filename(suffix, groupcode, point, listing)
                     self.add_svg_links(filename, target, points, groupcode, point, listing)
                 os.remove(filename)
@@ -438,19 +437,12 @@ class Curve:
         for groupcode in sorted(self.points_by_group.keys()):
             ps = [None] + self.points_by_group[groupcode]
             for p in ps:
-                ls = self.get_listings(p)
-                for l in ls:
+                for l in self.listings:
                     filename = self.get_filename('html', groupcode, p, l)
                     with open(filename, 'w') as f:
-                        self.generate_html_one(f, groupcode, p, l, ls, ac)
+                        self.generate_html_one(f, groupcode, p, l, ac)
 
-    def get_listings(self, p):
-        if p is None:
-            return [None]
-        else:
-            return self.listings
-
-    def generate_html_one(self, f, groupcode, point, listing, listings, ac):
+    def generate_html_one(self, f, groupcode, point, listing, ac):
         collectioncode = point.collectioncode if point is not None else None
 
         headblocks = []
@@ -572,13 +564,13 @@ class Curve:
         if collectioncode is not None and self.collection_descr[collectioncode] is not None:
             menublocks.append(E.p(self.collection_descr[collectioncode], **{"class": "menudesc"}))
 
-        if len(listings) > 1:
+        if len(self.listings) > 1:
             add_menu(
                 "Show",
                 [ self ],
                 [ groupcode ],
                 [ collectioncode ],
-                listings,
+                self.listings,
                 lambda c, g, x, l: (LISTING_LABEL[l], None)
             )
 
