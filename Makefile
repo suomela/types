@@ -87,7 +87,7 @@ $(state_debug): debug/types-rng
 
 ### Templates
 
-$(template_db): bin/types-db-init
+$(template_db): bin/types-db-init bin/TypesDatabase.py
 	mkdir -p $(@D)
 	rm -f $@
 	$< $@
