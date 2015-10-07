@@ -642,6 +642,8 @@ class AllCurves:
                 key = "t{}".format(self.file_token.map[c.tokencode])
             elif what == "token":
                 key = "s{}".format(self.file_sample.map[c.samplecode])
+            else:
+                assert False
             grouped[key].append(c)
 
         for key in sorted(grouped.keys()):
@@ -650,8 +652,14 @@ class AllCurves:
             block = []
             for c in ll:
                 row = []
-                sample = self.sample_link(c.corpuscode, c.datasetcode, c.samplecode, c.tokencode)
-                token = self.token_link(c.corpuscode, c.datasetcode, c.tokencode, c.samplecode)
+                if what == "sample":
+                    sample = c.samplecode
+                    token = self.token_link(c.corpuscode, c.datasetcode, c.tokencode, c.samplecode)
+                elif what == "token":
+                    sample = self.sample_link(c.corpuscode, c.datasetcode, c.samplecode, c.tokencode)
+                    token = self.token_short[(c.corpuscode, c.datasetcode, c.tokencode)]
+                else:
+                    assert False
                 before = none_to_empty(c.before)
                 word = none_to_empty(c.word)
                 after = none_to_empty(c.after)
@@ -1008,11 +1016,11 @@ TR.head.sep>TD {
     padding-top: 30px;
 }
 
-TR.first>TD, TBODY>TR:first-child>TD {
+TR.first>TD, .context TBODY>TR:first-child>TD {
     padding-top: 7px;
 }
 
-TR.last>TD, TBODY>TR:last-child>TD {
+TR.last>TD, .context TBODY>TR:last-child>TD {
     padding-bottom: 7px;
     border-bottom: 1px solid #888;
 }
@@ -1133,7 +1141,7 @@ A.menuother {
 }
 
 TBODY:target {
-    background-color: #ddd;
+    background-color: #eee;
 }
 """
 
