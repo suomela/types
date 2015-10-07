@@ -785,9 +785,17 @@ CSS = """
 BODY {
     color: #000;
     background-color: #fff;
-    font-family: Verdana, sans-serif;
+    font-family: Helvetica, Arial, sans-serif;
     padding: 0px;
-    margin: 5px;
+    margin: 15px;
+}
+
+.listing, .stats {
+    font-size: 85%;
+}
+
+.small, .menudesc, .menudescinline {
+    font-size: 80%;
 }
 
 A:link {
@@ -809,16 +817,12 @@ TABLE {
 }
 
 .mainmenu, .findings, .listing, .stats {
-    margin-left: 8px;
+    margin-left: 4px;
     margin-bottom: 20px;
 }
 
 .findings, .listing, .stats {
     margin-top: 20px;
-}
-
-.stats {
-    font-size: 95%;
 }
 
 TD {
@@ -828,7 +832,6 @@ TD {
     text-align: left;
     vertical-align: baseline;
     white-space: nowrap;
-    font-size: 95%;
 }
 
 TD.right {
@@ -843,15 +846,10 @@ TD.wrap {
     white-space: normal;
 }
 
-TD.small {
-    font-size: 80%;
-}
-
 TR.head>TD {
     padding-top: 7px;
     padding-bottom: 7px;
     border-bottom: 1px solid #000;
-    font-size: 100%;
 }
 
 TR.head.sep>TD {
@@ -869,8 +867,8 @@ TR.last>TD {
 
 P {
     margin: 0px;
-    margin-top: 6px;
-    margin-bottom: 6px;
+    margin-top: 3px;
+    margin-bottom: 3px;
     padding: 0px;
 }
 
@@ -883,26 +881,17 @@ P {
     margin-left: 30px;
 }
 
-.menudesc, .menudescinline, .listing {
-    font-size: 80%;
-}
-
-.menuitem {
-    font-size: 95%;
-}
-
-.menutitle {
-    font-weight: bold;
-}
-
 .menuitem, .menutitle, .menudescinline {
     display: inline-block;
-    padding: 3px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    padding-left: 1px;
+    padding-right: 1px;
     border: 1px solid #fff;
     margin-top: 1px;
     margin-bottom: 1px;
-    margin-left: 4px;
-    margin-right: 4px;
+    margin-left: 2px;
+    margin-right: 2px;
 }
 
 .menuitem, .menutitle {
