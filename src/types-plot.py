@@ -241,7 +241,7 @@ class AllCurves:
             GROUP BY corpuscode, datasetcode
         ''')
         for corpuscode, datasetcode, typecount, tokencount in r:
-            dataset_size[corpuscode] = (typecount, tokencount)
+            dataset_size[(corpuscode, datasetcode)] = (typecount, tokencount)
 
         ### result_curve
 
@@ -255,9 +255,9 @@ class AllCurves:
             k = (corpuscode, datasetcode, statcode)
 
             totals = {
-                'type':  dataset_size[corpuscode][0],
+                'type':  dataset_size[(corpuscode,datasetcode)][0],
                 'hapax': None,
-                'token': dataset_size[corpuscode][1],
+                'token': dataset_size[(corpuscode,datasetcode)][1],
                 'word':  corpus_size[corpuscode][1],
             }
 
