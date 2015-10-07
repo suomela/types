@@ -67,6 +67,13 @@ def wrap_svg_link(el, url, title=None):
     parent.replace(el, link)
     link.append(el)
 
+def cleanlist(l):
+    l = ['' if x is None else x for x in l]
+    while len(l) > 0 and l[-1] == '':
+        l = l[:-1]
+    return l
+
+
 class LabelPlacement:
     def __init__(self):
         self.freelist = set()
@@ -250,15 +257,13 @@ class Curve:
             return ['svg']
 
     def get_pointname(self, suffix, groupcode, p=None, l=None):
-        b = [self.stat_filename, self.dataset_filename]
-        if groupcode is not None:
-            b.append(self.group_filenames[groupcode])
-        if p is not None:
-            b.append('')
-            b.append(self.collection_filenames[p.collectioncode])
-        if l is not None:
-            b.append('')
-            b.append(l)
+        b = cleanlist([
+            self.stat_filename,
+            self.dataset_filename,
+            None if groupcode is None else self.group_filenames[groupcode],
+            None if p is None else self.collection_filenames[p.collectioncode],
+            None if l is None else l,
+        ])
         return '_'.join(b) + '.' + suffix
 
     def get_pointname_from_root(self, suffix, groupcode, p=None, l=None):
