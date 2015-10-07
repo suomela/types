@@ -794,6 +794,10 @@ BODY {
     font-size: 85%;
 }
 
+.menuitem {
+    font-size: 90%;
+}
+
 .small, .menudesc, .menudescinline {
     font-size: 80%;
 }
@@ -885,13 +889,13 @@ P {
     display: inline-block;
     padding-top: 1px;
     padding-bottom: 1px;
-    padding-left: 1px;
-    padding-right: 1px;
+    padding-left: 2px;
+    padding-right: 2px;
     border: 1px solid #fff;
     margin-top: 1px;
     margin-bottom: 1px;
-    margin-left: 2px;
-    margin-right: 2px;
+    margin-left: 1px;
+    margin-right: 1px;
 }
 
 .menuitem, .menutitle {
