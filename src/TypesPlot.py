@@ -512,10 +512,8 @@ class Curve:
             titlelink="../index.html",
             groupby='-'
         )
-        if self.corpus_descr is None:
-            menublocks.append(E.p(self.corpuscode, **{"class": "menudesc"}))
-        else:
-            menublocks.append(E.p(self.corpuscode, u" · ", self.corpus_descr, **{"class": "menudesc"}))
+        if self.corpus_descr is not None:
+            menublocks.append(E.p(self.corpus_descr, **{"class": "menudesc"}))
         add_menu(
             "Dataset",
             ac.by_corpus_stat[(self.corpuscode, self.statcode)],
