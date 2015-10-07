@@ -129,6 +129,7 @@ class SampleData:
 class AllCurves:
     def __init__(self):
         self.curves = []
+        self.statcode_stat = dict()
         self.statcode_label = dict()
         self.by_corpus = defaultdict(list)
         self.by_dataset = defaultdict(list)
@@ -178,14 +179,15 @@ class AllCurves:
 
         sys.stderr.write(' stat')
         r = conn.execute('''
-            SELECT statcode, xlabel.labeltext, ylabel.labeltext
+            SELECT statcode, x, y, xlabel.labeltext, ylabel.labeltext
             FROM stat
             JOIN label AS ylabel ON stat.y = ylabel.labelcode
             JOIN label AS xlabel ON stat.x = xlabel.labelcode
             ORDER BY statcode
         ''')
-        for statcode, xlabel, ylabel in r:
+        for statcode, x, y, xlabel, ylabel in r:
             file_stat.generate(statcode)
+            self.statcode_stat[statcode] = (x, y)
             self.statcode_label[statcode] = (xlabel, ylabel)
 
         ### corpus
@@ -214,6 +216,30 @@ class AllCurves:
             file_dataset.generate(datasetcode)
             dataset_descr[(corpuscode, datasetcode)] = description
 
+        ### sample
+
+        corpus_size = dict()
+        sys.stderr.write(' sample')
+        r = conn.execute('''
+            SELECT corpuscode, COUNT(*), SUM(wordcount)
+            FROM sample
+            GROUP BY corpuscode
+        ''')
+        for corpuscode, samplecount, wordcount in r:
+            corpus_size[corpuscode] = (samplecount, wordcount)
+
+        ### token
+
+        dataset_size = dict()
+        sys.stderr.write(' token')
+        r = conn.execute('''
+            SELECT corpuscode, datasetcode, COUNT(DISTINCT tokencode), SUM(tokencount)
+            FROM token
+            GROUP BY corpuscode, datasetcode
+        ''')
+        for corpuscode, datasetcode, typecount, tokencount in r:
+            dataset_size[corpuscode] = (typecount, tokencount)
+
         ### result_curve
 
         sys.stderr.write(' result_curve')
@@ -224,14 +250,25 @@ class AllCurves:
         ''')
         for corpuscode, statcode, datasetcode, curveid, level, side, logid in r:
             k = (corpuscode, datasetcode, statcode)
+
+            totals = {
+                'type':  dataset_size[corpuscode][0],
+                'hapax': None,
+                'token': dataset_size[corpuscode][1],
+                'word':  corpus_size[corpuscode][1],
+            }
+
             if k not in self.by_corpus_dataset_stat:
+                xkey, ykey = self.statcode_stat[statcode]
+                xlabel, ylabel = self.statcode_label[statcode]
+                xtotal, ytotal = totals[xkey], totals[ykey]
                 c = TypesPlot.Curve(
                         dirdict,
                         corpuscode, file_corpus.map[corpuscode],
                         corpus_descr[corpuscode],
                         statcode, file_stat.map[statcode],
-                        self.statcode_label[statcode][0],
-                        self.statcode_label[statcode][1],
+                        xlabel, ylabel,
+                        xtotal, ytotal,
                         datasetcode, file_dataset.map[datasetcode],
                         dataset_descr[(corpuscode, datasetcode)],
                         listings
@@ -320,6 +357,7 @@ class AllCurves:
             self.samplelist_cache = {}
             self.sample_cache = {}
             self.sampleset_by_collection = defaultdict(set)
+            self.sampleset_by_corpus = defaultdict(set)
             self.collectionset_by_sample = defaultdict(set)
             self.sampleset_by_token = defaultdict(set)
             self.tokenset_by_sample = defaultdict(set)
@@ -338,6 +376,7 @@ class AllCurves:
                 FROM sample
             ''')
             for corpuscode, samplecode, wordcount, description in r:
+                self.sampleset_by_corpus[corpuscode].add(samplecode)
                 self.sample_info[(corpuscode, samplecode)] = (wordcount, description)
 
             ### sample_collection
@@ -521,32 +560,54 @@ class AllCurves:
         return self.sample_cache[k]
 
     def calc_typelist(self, corpuscode, datasetcode, collectioncode):
-        csamples = self.sampleset_by_collection[(corpuscode, collectioncode)]
-        typelist = sorted(self.tokenset_by_dataset[(corpuscode, datasetcode)])
-        r = defaultdict(list)
-        for t in typelist:
-            tsamples = self.sampleset_by_token[(corpuscode, datasetcode, t)]
-            here = len(tsamples & csamples)
-            other = len(tsamples - csamples)
-            total = here + other
-            if total == 0:
-                continue
-            bracket = int(math.log(total, 2))
-            ratio = here / float(total)
-            r[bracket].append((t, here, other, ratio))
-        tables = []
-        for bracket in sorted(r.keys()):
-            table = []
-            l = sorted(r[bracket], key=lambda x: (-x[3], -x[1], x[2], x[0]))
-            for t, here, other, ratio in l:
-                table.append(E.tr(
-                    bar(here, 'bara', bracket=bracket),
-                    bar(other, 'barb', bracket=bracket),
-                    E.td(E.span(self.token_short[(corpuscode, datasetcode, t)],
-                                style="color: {};".format(grayness(here, other)))),
-                    title=u"{} — {}: {} samples, other: {} samples".format(t, collectioncode, here, other)
-                ))
-            tables.append(E.table(*table))
+        if collectioncode is None:
+            typelist = sorted(self.tokenset_by_dataset[(corpuscode, datasetcode)])
+            r = defaultdict(list)
+            for t in typelist:
+                tsamples = self.sampleset_by_token[(corpuscode, datasetcode, t)]
+                total = len(tsamples)
+                if total == 0:
+                    continue
+                bracket = int(math.log(total, 2))
+                r[bracket].append((t, total))
+            tables = []
+            for bracket in sorted(r.keys()):
+                table = []
+                l = sorted(r[bracket], key=lambda x: (-x[1], x[0]))
+                for t, total in l:
+                    table.append(E.tr(
+                        bar(total, 'bara', bracket=bracket),
+                        E.td(E.span(self.token_short[(corpuscode, datasetcode, t)])),
+                        title=u"{}: {} samples".format(t, total)
+                    ))
+                tables.append(E.table(*table))
+        else:
+            csamples = self.sampleset_by_collection[(corpuscode, collectioncode)]
+            typelist = sorted(self.tokenset_by_dataset[(corpuscode, datasetcode)])
+            r = defaultdict(list)
+            for t in typelist:
+                tsamples = self.sampleset_by_token[(corpuscode, datasetcode, t)]
+                here = len(tsamples & csamples)
+                other = len(tsamples - csamples)
+                total = here + other
+                if total == 0:
+                    continue
+                bracket = int(math.log(total, 2))
+                ratio = here / float(total)
+                r[bracket].append((t, here, other, ratio))
+            tables = []
+            for bracket in sorted(r.keys()):
+                table = []
+                l = sorted(r[bracket], key=lambda x: (-x[3], -x[1], x[2], x[0]))
+                for t, here, other, ratio in l:
+                    table.append(E.tr(
+                        bar(here, 'bara', bracket=bracket),
+                        bar(other, 'barb', bracket=bracket),
+                        E.td(E.span(self.token_short[(corpuscode, datasetcode, t)],
+                                    style="color: {};".format(grayness(here, other)))),
+                        title=u"{} — {}: {} samples, other: {} samples".format(t, collectioncode, here, other)
+                    ))
+                tables.append(E.table(*table))
         return [E.table(E.tr(*[E.td(x) for x in tables]))]
 
     def calc_sample(self, corpuscode, datasetcode, samplecode):
@@ -581,7 +642,10 @@ class AllCurves:
         return s
 
     def calc_samplelist(self, corpuscode, datasetcode, collectioncode):
-        csamples = self.sampleset_by_collection[(corpuscode, collectioncode)]
+        if collectioncode is not None:
+            csamples = self.sampleset_by_collection[(corpuscode, collectioncode)]
+        else:
+            csamples = self.sampleset_by_corpus[corpuscode]
         l = []
         maxwords = 1
         maxtokens = 1
@@ -596,12 +660,14 @@ class AllCurves:
         l = sorted(l, key=lambda s: (-s.wordcount, s.samplecode))
         tablerows = []
         for s in l:
-            colllist = [x for x in s.collections if x != collectioncode]
+            colist = s.collections
+            if collectioncode is not None:
+                colist = [x for x in colist if x != collectioncode]
             clist = [u"{}\u202F×\u202F{}".format(self.token_short[(corpuscode, datasetcode, t)], c) for t,c in s.commonlist]
             ulist = [self.token_short[(corpuscode, datasetcode, t)] for t in s.uniquelist + s.hapaxlist]
             tablerows.append([
                 E.td(s.samplecode),
-                E.td(u' · '.join(colllist)),
+                E.td(u' · '.join(colist)),
                 E.td(str(s.wordcount), **{"class": "right"}),
                 bar(s.wordcount, 'bar', maxval=maxwords),
                 E.td(str(s.tokencount), **{"class": "right"}),

@@ -169,7 +169,8 @@ class Point:
 class Curve:
     def __init__(self, dirdict,
                  corpuscode, corpus_filename, corpus_descr,
-                 statcode, stat_filename, xlabel, ylabel,
+                 statcode, stat_filename,
+                 xlabel, ylabel, xtotal, ytotal,
                  datasetcode, dataset_filename, dataset_descr,
                  listings):
         self.dirdict = dirdict
@@ -180,6 +181,8 @@ class Curve:
         self.stat_filename = stat_filename
         self.xlabel = xlabel
         self.ylabel = ylabel
+        self.xtotal = xtotal
+        self.ytotal = ytotal
         self.datasetcode = datasetcode
         self.dataset_filename = dataset_filename
         self.dataset_descr = dataset_descr
@@ -576,44 +579,56 @@ class Curve:
 
         bodyblocks.append(E.div(*menublocks, **{"class": "menu"}))
 
-        if collectioncode is None:
-            pass
-        elif listing is None:
+        if listing is None:
             stat = []
-            stat.append(E.p("This collection contains {} {} and {} {}.".format(
-                point.x, self.xlabel,
-                point.y, self.ylabel
-            )))
-            w = "at most" if point.side == "below" else "at least"
-            if point.pvalue > 0.1:
-                ppvalue = "{:.1f}%".format(100 * point.pvalue)
-            elif point.pvalue > 0.01:
-                ppvalue = "{:.2f}%".format(100 * point.pvalue)
+            if collectioncode is None:
+                what = []
+                for total, label in [
+                    (self.xtotal, self.xlabel),
+                    (self.ytotal, self.ylabel),
+                ]:
+                    if total is not None:
+                        what.append('{} {}'.format(total, label))
+                if len(what) > 0:
+                    stat.append(E.p("This corpus contains {}.".format(
+                        ' and '.join(what)
+                    )))
+                bodyblocks.append(E.div(*stat, **{"class": "stats"}))
             else:
-                ppvalue = "{:.3f}%".format(100 * point.pvalue)
-            stat.append(E.p(
-                ("Only approx. " if point.pvalue < 0.1 else "Approx. "),
-                E.strong(ppvalue),
-                " of random collections with {} {} contain {} {} {}.".format(
-                    point.x, self.xlabel, w, point.y, self.ylabel
-                )
-            ))
-            if point.pvalue > 0.1:
+                stat.append(E.p("This collection contains {} {} and {} {}.".format(
+                    point.x, self.xlabel,
+                    point.y, self.ylabel
+                )))
+                w = "at most" if point.side == "below" else "at least"
+                if point.pvalue > 0.1:
+                    ppvalue = "{:.1f}%".format(100 * point.pvalue)
+                elif point.pvalue > 0.01:
+                    ppvalue = "{:.2f}%".format(100 * point.pvalue)
+                else:
+                    ppvalue = "{:.3f}%".format(100 * point.pvalue)
                 stat.append(E.p(
-                    "This seems to be a fairly typical collection."
+                    ("Only approx. " if point.pvalue < 0.1 else "Approx. "),
+                    E.strong(ppvalue),
+                    " of random collections with {} {} contain {} {} {}.".format(
+                        point.x, self.xlabel, w, point.y, self.ylabel
+                    )
                 ))
-            elif point.fdr < 0:
-                stat.append(E.p(
-                    "This finding is probably not interesting: ",
-                    "the false discovery rate is larger than {}".format(-point.fdr)
-                ))
-            else:
-                stat.append(E.p(
-                    "This finding is probably interesting: ",
-                    "the false discovery rate is ",
-                    E.strong("smaller than {}".format(point.fdr)),
-                    "."
-                ))
+                if point.pvalue > 0.1:
+                    stat.append(E.p(
+                        "This seems to be a fairly typical collection."
+                    ))
+                elif point.fdr < 0:
+                    stat.append(E.p(
+                        "This finding is probably not interesting: ",
+                        "the false discovery rate is larger than {}".format(-point.fdr)
+                    ))
+                else:
+                    stat.append(E.p(
+                        "This finding is probably interesting: ",
+                        "the false discovery rate is ",
+                        E.strong("smaller than {}".format(point.fdr)),
+                        "."
+                    ))
             bodyblocks.append(E.div(*stat, **{"class": "stats"}))
         elif listing == 't':
             typelist = ac.get_typelist(self.corpuscode, self.datasetcode, collectioncode)
