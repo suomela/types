@@ -111,6 +111,22 @@ def create_if_needed(conn):
             FOREIGN KEY (corpuscode, datasetcode) REFERENCES dataset(corpuscode, datasetcode)
         );
 
+        CREATE TABLE IF NOT EXISTS context (
+            corpuscode TEXT NOT NULL,
+            samplecode TEXT NOT NULL,
+            datasetcode TEXT NOT NULL,
+            tokencode TEXT NOT NULL,
+            before TEXT,
+            word TEXT,
+            after TEXT,
+            link TEXT,
+            FOREIGN KEY (corpuscode, datasetcode) REFERENCES dataset(corpuscode, datasetcode),
+            FOREIGN KEY (corpuscode, samplecode) REFERENCES sample(corpuscode, samplecode)
+        );
+
+        CREATE INDEX IF NOT EXISTS context_idx
+        ON context (corpuscode, samplecode, datasetcode, tokencode);
+
         CREATE TABLE IF NOT EXISTS log (
             id INTEGER PRIMARY KEY NOT NULL,
             corpuscode TEXT NOT NULL,
