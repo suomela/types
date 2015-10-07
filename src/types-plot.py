@@ -35,7 +35,10 @@ def none_to_empty(x):
     return '' if x is None else x
 
 def classes(l):
-    return { "class": " ".join(l) }
+    if len(l) == 0:
+        return {}
+    else:
+        return { "class": " ".join(l) }
 
 def firstlast(i, rowlist):
     l = []
@@ -524,10 +527,10 @@ class AllCurves:
         headblocks.append(E.title("Corpus menu"))
         headblocks.append(E.link(rel="stylesheet", href="types.css", type="text/css"))
         tablerows = self.generate_corpus_menu()
-        bodyblocks.append(E.table(*tablerows, **classes(["mainmenu"])))
+        bodyblocks.append(E.div(E.table(*tablerows), **classes(["mainmenu"])))
         tablerows = self.generate_fdr_table()
         if len(tablerows) > 0:
-            bodyblocks.append(E.table(*tablerows))
+            bodyblocks.append(E.div(E.table(*tablerows), **classes(["findings"])))
         doc = E.html(E.head(*headblocks), E.body(*bodyblocks))
         with open(os.path.join(htmldir, "index.html"), 'w') as f:
             TypesPlot.write_html(f, doc)
@@ -571,7 +574,8 @@ class AllCurves:
                 bracket = int(math.log(total, 2))
                 r[bracket].append((t, total))
             tables = []
-            for bracket in sorted(r.keys()):
+            brackets = sorted(r.keys())
+            for bracket in brackets:
                 table = []
                 l = sorted(r[bracket], key=lambda x: (-x[1], x[0]))
                 for t, total in l:
@@ -596,7 +600,8 @@ class AllCurves:
                 ratio = here / float(total)
                 r[bracket].append((t, here, other, ratio))
             tables = []
-            for bracket in sorted(r.keys()):
+            brackets = sorted(r.keys())
+            for bracket in brackets:
                 table = []
                 l = sorted(r[bracket], key=lambda x: (-x[3], -x[1], x[2], x[0]))
                 for t, here, other, ratio in l:
@@ -608,7 +613,11 @@ class AllCurves:
                         title=u"{} — {}: {} samples, other: {} samples".format(t, collectioncode, here, other)
                     ))
                 tables.append(E.table(*table))
-        return [E.table(E.tr(*[E.td(x) for x in tables]))]
+        return [E.table(
+            E.tr(E.td(u"Types that occur in…", colspan="{}".format(len(brackets)))),
+            E.tr(*[E.td(descr_bracket(bracket)) for bracket in brackets], **{"class": "head"}),
+            E.tr(*[E.td(x) for x in tables], **{"class": "first last"}),
+        )]
 
     def calc_sample(self, corpuscode, datasetcode, samplecode):
         s = SampleData()
@@ -699,6 +708,15 @@ class AllCurves:
         return [E.table(*table)]
 
 
+def descr_bracket(bracket):
+    a = 2 ** bracket
+    b = 2 * a
+    if a == 1:
+        assert b == 2
+        return '{} sample'.format(a)
+    else:
+        return '< {} samples'.format(b)
+
 def bar(x, label, bracket=None, maxval=None):
     x = bar_scale(x, bracket, maxval)
     return E.td(
@@ -788,16 +806,18 @@ A:hover, A:active {
 
 TABLE {
     border-collapse: collapse;
-    margin-left: 8px;
-    margin-bottom: 30px;
 }
 
-.listing, .stats {
+.mainmenu, .findings, .listing, .stats {
+    margin-left: 8px;
+    margin-bottom: 20px;
+}
+
+.findings, .listing, .stats {
     margin-top: 20px;
 }
 
 .stats {
-    margin-left: 8px;
     font-size: 95%;
 }
 
@@ -827,22 +847,22 @@ TD.small {
     font-size: 80%;
 }
 
-TR.head TD {
+TR.head>TD {
     padding-top: 7px;
     padding-bottom: 7px;
     border-bottom: 1px solid #000;
     font-size: 100%;
 }
 
-TR.head.sep TD {
+TR.head.sep>TD {
     padding-top: 30px;
 }
 
-TR.first TD {
+TR.first>TD {
     padding-top: 7px;
 }
 
-TR.last TD {
+TR.last>TD {
     padding-bottom: 7px;
     border-bottom: 1px solid #000;
 }
@@ -919,11 +939,11 @@ TD.barb+TD {
     padding-left: 5px;
 }
 
-TD.bar SPAN, TD.bara SPAN {
+TD.bar>SPAN, TD.bara>SPAN {
     border-left: 0px solid #a00;
 }
 
-TD.barb SPAN {
+TD.barb>SPAN {
     border-left: 0px solid #888;
 }
 
