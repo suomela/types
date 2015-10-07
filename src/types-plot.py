@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from collections import defaultdict, Counter
+from collections import defaultdict, Counter, namedtuple
 import math
 import optparse
 import cPickle
@@ -129,6 +129,12 @@ class SampleData:
     pass
 
 
+Context = namedtuple('Context', [
+    'corpuscode', 'samplecode', 'datasetcode', 'tokencode',
+    'before', 'word', 'after', 'link'
+])
+
+
 class AllCurves:
     def __init__(self):
         self.curves = []
@@ -152,7 +158,7 @@ class AllCurves:
             listings += ['t']
         if args.with_samplelists:
             listings += ['s']
-        with_lists = len(listings) > 1
+        self.with_lists = len(listings) > 1
 
         dirdict = {
             "pdf": args.plotdir,
@@ -161,11 +167,11 @@ class AllCurves:
             "tmp.svg": args.htmldir,
         }
 
-        file_corpus = Filenames()
-        file_stat = Filenames()
-        file_dataset = Filenames()
-        file_group = Filenames()
-        file_collection = Filenames()
+        self.file_corpus = Filenames()
+        self.file_stat = Filenames()
+        self.file_dataset = Filenames()
+        self.file_group = Filenames()
+        self.file_collection = Filenames()
 
         ### log
 
@@ -189,7 +195,7 @@ class AllCurves:
             ORDER BY statcode
         ''')
         for statcode, x, y, xlabel, ylabel in r:
-            file_stat.generate(statcode)
+            self.file_stat.generate(statcode)
             self.statcode_stat[statcode] = (x, y)
             self.statcode_label[statcode] = (xlabel, ylabel)
 
@@ -203,7 +209,7 @@ class AllCurves:
             ORDER BY corpuscode
         ''')
         for corpuscode, description in r:
-            file_corpus.generate(corpuscode)
+            self.file_corpus.generate(corpuscode)
             corpus_descr[corpuscode] = description
 
         ### dataset
@@ -216,7 +222,7 @@ class AllCurves:
             ORDER BY corpuscode, datasetcode
         ''')
         for corpuscode, datasetcode, description in r:
-            file_dataset.generate(datasetcode)
+            self.file_dataset.generate(datasetcode)
             dataset_descr[(corpuscode, datasetcode)] = description
 
         ### sample
@@ -267,12 +273,12 @@ class AllCurves:
                 xtotal, ytotal = totals[xkey], totals[ykey]
                 c = TypesPlot.Curve(
                         dirdict,
-                        corpuscode, file_corpus.map[corpuscode],
+                        corpuscode, self.file_corpus.map[corpuscode],
                         corpus_descr[corpuscode],
-                        statcode, file_stat.map[statcode],
+                        statcode, self.file_stat.map[statcode],
                         xlabel, ylabel,
                         xtotal, ytotal,
-                        datasetcode, file_dataset.map[datasetcode],
+                        datasetcode, self.file_dataset.map[datasetcode],
                         dataset_descr[(corpuscode, datasetcode)],
                         listings
                 )
@@ -321,13 +327,13 @@ class AllCurves:
         for corpuscode, groupcode, collectioncode, description in r:
             if groupcode is None:
                 groupcode = DEFAULT_GROUP
-            file_group.generate(groupcode)
-            file_collection.generate(collectioncode)
+            self.file_group.generate(groupcode)
+            self.file_collection.generate(collectioncode)
             if corpuscode in self.by_corpus:
                 for c in self.by_corpus[corpuscode]:
                     c.add_collection(
-                        groupcode, file_group.map[groupcode],
-                        collectioncode, file_collection.map[collectioncode],
+                        groupcode, self.file_group.map[groupcode],
+                        collectioncode, self.file_collection.map[collectioncode],
                         description
                     )
 
@@ -354,7 +360,7 @@ class AllCurves:
         for row in r:
             self.result_q.append(row)
 
-        if with_lists:
+        if self.with_lists:
 
             self.typelist_cache = {}
             self.samplelist_cache = {}
@@ -370,6 +376,11 @@ class AllCurves:
             self.tokencount_by_token = Counter()
             self.tokencount_by_sample = Counter()
             self.tokencount_by_sample_token = defaultdict(Counter)
+            self.context_by_sample = defaultdict(list)
+            self.context_by_token = defaultdict(list)
+
+            self.file_sample = Filenames()
+            self.file_token = Filenames()
 
             ### sample
 
@@ -379,6 +390,7 @@ class AllCurves:
                 FROM sample
             ''')
             for corpuscode, samplecode, wordcount, description in r:
+                self.file_sample.generate(samplecode)
                 self.sampleset_by_corpus[corpuscode].add(samplecode)
                 self.sample_info[(corpuscode, samplecode)] = (wordcount, description)
 
@@ -401,6 +413,7 @@ class AllCurves:
                 FROM token
             ''')
             for corpuscode, samplecode, datasetcode, tokencode, tokencount in r:
+                self.file_token.generate(tokencode)
                 self.sampleset_by_token[(corpuscode, datasetcode, tokencode)].add(samplecode)
                 self.tokenset_by_sample[(corpuscode, datasetcode, samplecode)].add(tokencode)
                 self.tokenset_by_dataset[(corpuscode, datasetcode)].add(tokencode)
@@ -424,6 +437,25 @@ class AllCurves:
                 ''')
                 for corpuscode, datasetcode, tokencode, shortlabel, longlabel in r:
                     self.token_short[(corpuscode, datasetcode, tokencode)] = shortlabel
+
+            ### context
+
+            sys.stderr.write(' context')
+            r = list(conn.execute('''
+                SELECT COUNT(*)
+                FROM sqlite_master
+                WHERE type='table' AND name='context'
+            '''))
+            if r[0][0] > 0:
+                r = conn.execute('''
+                    SELECT corpuscode, samplecode, datasetcode, tokencode,
+                           before, word, after, link
+                    FROM context
+                ''')
+                for row in r:
+                    c = Context(*row)
+                    self.context_by_token[(c.corpuscode, c.datasetcode, c.tokencode)].append(c)
+                    self.context_by_sample[(c.corpuscode, c.datasetcode, c.samplecode)].append(c)
 
         sys.stderr.write('\n')
 
@@ -452,11 +484,9 @@ class AllCurves:
                 os.makedirs(d)
 
     def generate_html(self):
-        sys.stderr.write('%s: write: (' % TOOL)
         for c in self.curves:
             sys.stderr.write('.')
             c.generate_html(self)
-        sys.stderr.write(')\n')
 
     def generate_corpus_menu(self):
         tablerows = []
@@ -522,6 +552,7 @@ class AllCurves:
         return tablerows
 
     def generate_index(self, htmldir):
+        sys.stderr.write('.')
         headblocks = []
         bodyblocks = []
         headblocks.append(E.title("Corpus menu"))
@@ -536,6 +567,110 @@ class AllCurves:
             TypesPlot.write_html(f, doc)
         with open(os.path.join(htmldir, "types.css"), 'w') as f:
             f.write(CSS)
+
+    def get_context_filename_sample(self, datasetcode, samplecode):
+        return '_{}_{}_s.html'.format(
+            self.file_dataset.map[datasetcode],
+            self.file_sample.map[samplecode],
+        )
+
+    def get_context_filename_token(self, datasetcode, tokencode):
+        return '_{}_{}_t.html'.format(
+            self.file_dataset.map[datasetcode],
+            self.file_token.map[tokencode],
+        )
+
+    def sample_link(self, corpuscode, datasetcode, samplecode, tokencode=None):
+        if (corpuscode, datasetcode, samplecode) not in self.context_by_sample:
+            return samplecode
+        else:
+            link = self.get_context_filename_sample(datasetcode, samplecode)
+            if tokencode is not None:
+                link += "#t{}".format(self.file_token.map[tokencode])
+            return E.a(samplecode, href=link)
+
+    def token_link(self, corpuscode, datasetcode, tokencode, samplecode=None):
+        token = self.token_short[(corpuscode, datasetcode, tokencode)]
+        flags = {}
+        if token != tokencode:
+            flags["title"] = tokencode
+        if (corpuscode, datasetcode, tokencode) not in self.context_by_token:
+            return E.span(token, **flags)
+        else:
+            link=self.get_context_filename_token(datasetcode, tokencode)
+            if samplecode is not None:
+                link += "#s{}".format(self.file_sample.map[samplecode])
+            return E.a(token, href=link, **flags)
+
+    def generate_context(self, htmldir):
+        for key in sorted(self.context_by_sample.keys()):
+            corpuscode, datasetcode, samplecode = key
+            title = [samplecode]
+            wordcount, descr = self.sample_info[(corpuscode, samplecode)]
+            if descr is not None:
+                title.append(descr)
+            filename = self.get_context_filename_sample(datasetcode, samplecode)
+            filename = os.path.join(htmldir, self.file_corpus.map[corpuscode], filename)
+            l = self.context_by_sample[(corpuscode, datasetcode, samplecode)]
+            self.generate_context_one(l, filename, title, "sample")
+        for key in sorted(self.context_by_token.keys()):
+            corpuscode, datasetcode, tokencode = key
+            title = [tokencode]
+            filename = self.get_context_filename_token(datasetcode, tokencode)
+            filename = os.path.join(htmldir, self.file_corpus.map[corpuscode], filename)
+            l = self.context_by_token[(corpuscode, datasetcode, tokencode)]
+            self.generate_context_one(l, filename, title, "token")
+
+    def generate_context_one(self, l, filename, title, what):
+        sys.stderr.write('.')
+        headblocks = []
+        bodyblocks = []
+        headblocks.append(E.title(u" · ".join(title)))
+        headblocks.append(E.link(rel="stylesheet", href="../types.css", type="text/css"))
+        headrow = [
+            E.td('Sample'),
+            E.td('Token', **classes(["pad"])),
+            E.td(E.span('Before'), **classes(["before"])),
+            E.td(E.span('Word'), **classes(["word"])),
+            E.td(E.span('After'), **classes(["after"])),
+        ]
+        tablerows = [E.tr(*headrow, **classes(["head"]))]
+        
+        grouped = defaultdict(list)
+        for c in l:
+            if what == "sample":
+                key = "t{}".format(self.file_token.map[c.tokencode])
+            elif what == "token":
+                key = "s{}".format(self.file_sample.map[c.samplecode])
+            grouped[key].append(c)
+
+        for key in sorted(grouped.keys()):
+            ll = grouped[key]
+            ll = sorted(ll, key=lambda c: (c.after, c.before, c.word))
+            block = []
+            for c in ll:
+                row = []
+                sample = self.sample_link(c.corpuscode, c.datasetcode, c.samplecode, c.tokencode)
+                token = self.token_link(c.corpuscode, c.datasetcode, c.tokencode, c.samplecode)
+                before = none_to_empty(c.before)
+                word = none_to_empty(c.word)
+                after = none_to_empty(c.after)
+                if c.link is not None:
+                    word = E.a(word, href=c.link)
+                row = [
+                    E.td(sample),
+                    E.td(token, **classes(["pad"])),
+                    E.td(E.span(before), **classes(["before"])),
+                    E.td(E.span(word), **classes(["word"])),
+                    E.td(E.span(after), **classes(["after"])),
+                ]
+                block.append(E.tr(*row))
+            tablerows.append(E.tbody(*block, id=key))
+
+        bodyblocks.append(E.div(E.table(*tablerows), **classes(["context"])))
+        doc = E.html(E.head(*headblocks), E.body(*bodyblocks))
+        with open(filename, 'w') as f:
+            TypesPlot.write_html(f, doc)
 
     def find_outdated(self):
         redraw = []
@@ -581,7 +716,7 @@ class AllCurves:
                 for t, total in l:
                     table.append(E.tr(
                         bar(total, 'bara', bracket=bracket),
-                        E.td(E.span(self.token_short[(corpuscode, datasetcode, t)])),
+                        E.td(E.span(self.token_link(corpuscode, datasetcode, t))),
                         title=u"{}: {} samples".format(t, total)
                     ))
                 tables.append(E.table(*table))
@@ -608,7 +743,7 @@ class AllCurves:
                     table.append(E.tr(
                         bar(here, 'bara', bracket=bracket),
                         bar(other, 'barb', bracket=bracket),
-                        E.td(E.span(self.token_short[(corpuscode, datasetcode, t)],
+                        E.td(E.span(self.token_link(corpuscode, datasetcode, t),
                                     style="color: {};".format(grayness(here, other)))),
                         title=u"{} — {}: {} samples, other: {} samples".format(t, collectioncode, here, other)
                     ))
@@ -672,11 +807,16 @@ class AllCurves:
             colist = s.collections
             if collectioncode is not None:
                 colist = [x for x in colist if x != collectioncode]
-            clist = [u"{}\u202F×\u202F{}".format(self.token_short[(corpuscode, datasetcode, t)], c) for t,c in s.commonlist]
-            ulist = [self.token_short[(corpuscode, datasetcode, t)] for t in s.uniquelist + s.hapaxlist]
+            clist = []
+            for t,c in s.commonlist:
+                if len(clist) > 0:
+                    clist.append(', ')
+                clist.append(self.token_link(corpuscode, datasetcode, t, s.samplecode))
+                clist.append(u"\u202F×\u202F{}".format(c))
+            ulist = [self.token_link(corpuscode, datasetcode, t, s.samplecode) for t in s.uniquelist + s.hapaxlist]
             tablerows.append([
-                E.td(s.samplecode),
-                E.td(u' · '.join(colist)),
+                E.td(self.sample_link(corpuscode, datasetcode, s.samplecode)),
+                E.td(*TypesPlot.add_sep(colist, u' · ')),
                 E.td(str(s.wordcount), **{"class": "right"}),
                 bar(s.wordcount, 'bar', maxval=maxwords),
                 E.td(str(s.tokencount), **{"class": "right"}),
@@ -687,8 +827,8 @@ class AllCurves:
                 bar(s.uniquecount, 'bar', maxval=maxtypes),
                 E.td(str(s.hapaxcount), **{"class": "right"}),
                 bar(s.hapaxcount, 'bar', maxval=maxtypes),
-                E.td(', '.join(clist)),
-                E.td(', '.join(ulist), **{"class": "wrap"}),
+                E.td(*clist),
+                E.td(*TypesPlot.add_sep(ulist, ', '), **{"class": "wrap"}),
             ])
         table = [
             E.tr(
@@ -768,8 +908,12 @@ def main():
         msg('there are no results in the database')
         return
     ac.create_directories()
+    sys.stderr.write('%s: write: (' % TOOL)
     ac.generate_index(args.htmldir)
+    if ac.with_lists:
+        ac.generate_context(args.htmldir)
     ac.generate_html()
+    sys.stderr.write(')\n')
     redraw = ac.find_outdated()
     nredraw = len(redraw)
     if nredraw == 0:
@@ -790,7 +934,7 @@ BODY {
     margin: 15px;
 }
 
-.listing, .stats {
+.listing, .stats, .context {
     font-size: 85%;
 }
 
@@ -834,7 +978,7 @@ TD {
     padding-top: 1px;
     padding-bottom: 1px;
     text-align: left;
-    vertical-align: baseline;
+    vertical-align: top;
     white-space: nowrap;
 }
 
@@ -846,6 +990,10 @@ TD+TD {
     padding-left: 15px;
 }
 
+TD.pad {
+    padding-right: 15px;
+}
+
 TD.wrap {
     white-space: normal;
 }
@@ -853,20 +1001,20 @@ TD.wrap {
 TR.head>TD {
     padding-top: 7px;
     padding-bottom: 7px;
-    border-bottom: 1px solid #000;
+    border-bottom: 1px solid #888;
 }
 
 TR.head.sep>TD {
     padding-top: 30px;
 }
 
-TR.first>TD {
+TR.first>TD, TBODY>TR:first-child>TD {
     padding-top: 7px;
 }
 
-TR.last>TD {
+TR.last>TD, TBODY>TR:last-child>TD {
     padding-bottom: 7px;
-    border-bottom: 1px solid #000;
+    border-bottom: 1px solid #888;
 }
 
 P {
@@ -944,6 +1092,34 @@ TD.wide {
     min-width: 40ex;
 }
 
+TD.before {
+    text-align: right;
+}
+
+TD.word {
+    text-align: center;
+}
+
+TD.after {
+    text-align: left;
+}
+
+TD.before, TD.after {
+    overflow: hidden;
+    position: relative;
+    width: 50%;
+}
+
+TD.before SPAN {
+    position: absolute;
+    right: 0px;
+}
+
+TD.after SPAN {
+    position: absolute;
+    left: 15px;
+}
+
 .menusel {
     color: #a00;
 }
@@ -954,6 +1130,10 @@ A.menusame, A.menutitle {
 
 A.menuother {
     color: #888;
+}
+
+TBODY:target {
+    background-color: #ddd;
 }
 """
 
