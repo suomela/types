@@ -143,13 +143,18 @@ class AllCurves:
     def read_curves(self, args, conn):
         sys.stderr.write('%s: read:' % TOOL)
 
-        self.with_typelists = args.with_typelists
-        self.with_samplelists = args.with_samplelists
+        listings = [None]
+        if args.with_typelists:
+            listings += ['t']
+        if args.with_samplelists:
+            listings += ['s']
+        with_lists = len(listings) > 1
 
         dirdict = {
             "pdf": args.plotdir,
             "svg": args.htmldir,
             "html": args.htmldir,
+            "tmp.svg": args.htmldir,
         }
 
         file_corpus = Filenames()
@@ -228,7 +233,8 @@ class AllCurves:
                         self.statcode_label[statcode][0],
                         self.statcode_label[statcode][1],
                         datasetcode, file_dataset.map[datasetcode],
-                        dataset_descr[(corpuscode, datasetcode)]
+                        dataset_descr[(corpuscode, datasetcode)],
+                        listings
                 )
                 c.levels = defaultdict(dict)
                 self.curves.append(c)
@@ -308,7 +314,7 @@ class AllCurves:
         for row in r:
             self.result_q.append(row)
 
-        if self.with_typelists or self.with_samplelists:
+        if with_lists:
 
             self.typelist_cache = {}
             self.samplelist_cache = {}
@@ -404,11 +410,11 @@ class AllCurves:
                 os.makedirs(d)
 
     def generate_html(self):
-        sys.stderr.write('%s: write: ' % TOOL)
+        sys.stderr.write('%s: write: (' % TOOL)
         for c in self.curves:
             sys.stderr.write('.')
             c.generate_html(self)
-        sys.stderr.write('\n')
+        sys.stderr.write(')\n')
 
     def generate_corpus_menu(self):
         tablerows = []

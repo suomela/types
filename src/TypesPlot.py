@@ -1,7 +1,7 @@
 # coding=utf-8
 
 import itertools
-import os.path
+import os
 import numpy as np
 from lxml.builder import E
 from lxml import etree
@@ -170,7 +170,8 @@ class Curve:
     def __init__(self, dirdict,
                  corpuscode, corpus_filename, corpus_descr,
                  statcode, stat_filename, xlabel, ylabel,
-                 datasetcode, dataset_filename, dataset_descr):
+                 datasetcode, dataset_filename, dataset_descr,
+                 listings):
         self.dirdict = dirdict
         self.corpuscode = corpuscode
         self.corpus_filename = corpus_filename
@@ -196,6 +197,7 @@ class Curve:
         self.maxx = 0
         self.maxy = 0
         self.group_seen(None)
+        self.listings = listings
 
     def group_seen(self, groupcode):
         if groupcode not in self.group_set:
@@ -334,10 +336,18 @@ class Curve:
         self.plot_points(ax, points, groupcode, point)
         self.plot_labels(ax)
         for suffix in self.get_suffixes(point):
-            filename = self.get_filename(suffix, groupcode, point)
+            if suffix == 'svg':
+                suffix2 = 'tmp.svg'
+            else:
+                suffix2 = suffix
+            filename = self.get_filename(suffix2, groupcode, point)
             fig.savefig(filename)
             if suffix == 'svg':
-                self.add_svg_links(filename, points, groupcode, point)
+                listings = self.get_listings(point)
+                for listing in listings:
+                    target = self.get_filename(suffix, groupcode, point, listing)
+                    self.add_svg_links(filename, target, points, groupcode, point, listing)
+                os.remove(filename)
         matplotlib.pyplot.close(fig)
 
     def plot_polys(self, ax):
@@ -404,14 +414,14 @@ class Curve:
         ax.set_xlabel(ucfirst(self.xlabel), labelpad=10)
         ax.set_ylabel(ucfirst(self.ylabel), labelpad=15)
 
-    def add_svg_links(self, filename, points, groupcode, point):
+    def add_svg_links(self, filename, target, points, groupcode, point, listing):
         with open(filename) as f:
             svg = etree.parse(f)
         for i, p in enumerate(points):
             if point is not None and point == p:
                 url = self.get_pointname('html', groupcode)
             else:
-                url = self.get_pointname('html', groupcode, p)
+                url = self.get_pointname('html', groupcode, p, listing)
             title = self.collection_descr[p.collectioncode]
             if title is None:
                 title = p.collectioncode
@@ -421,23 +431,24 @@ class Curve:
                 el = svg.find(path)
                 if el is not None:
                     wrap_svg_link(el, url, title)
-        with open(filename, 'w') as f:
+        with open(target, 'w') as f:
             svg.write(f)
 
     def generate_html(self, ac):
         for groupcode in sorted(self.points_by_group.keys()):
             ps = [None] + self.points_by_group[groupcode]
             for p in ps:
-                ls = [None]
-                if p is not None:
-                    if ac.with_typelists:
-                        ls += ['t']
-                    if ac.with_samplelists:
-                        ls += ['s']
+                ls = self.get_listings(p)
                 for l in ls:
                     filename = self.get_filename('html', groupcode, p, l)
                     with open(filename, 'w') as f:
                         self.generate_html_one(f, groupcode, p, l, ls, ac)
+
+    def get_listings(self, p):
+        if p is None:
+            return [None]
+        else:
+            return self.listings
 
     def generate_html_one(self, f, groupcode, point, listing, listings, ac):
         collectioncode = point.collectioncode if point is not None else None
@@ -542,7 +553,7 @@ class Curve:
         bodyblocks.append(E.div(*menublocks, **{"class": "menu"}))
 
         fig = E.p(E.object(
-            data=self.get_pointname('svg', groupcode, point),
+            data=self.get_pointname('svg', groupcode, point, listing),
             type="image/svg+xml",
             width=str(WIDTH*DPI),
             height=str(HEIGHT*DPI),
