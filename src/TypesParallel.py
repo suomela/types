@@ -102,7 +102,8 @@ class Parallel:
         if self.locally:
             self.run_serial()
         elif not os.path.exists(self.loginfile):
-            self.msg("login file %s missing, running locally" % self.loginfile)
+            if self.loginfile != LOGIN_FILE:
+                self.msg("login file %s missing, running locally" % self.loginfile)
             self.run_serial()
         elif not self.parallel_ok():
             self.msg("could not find GNU parallel version %s or later, running locally" % MINVERSION)
