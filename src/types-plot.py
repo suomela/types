@@ -7,6 +7,7 @@ import cPickle
 import os
 import os.path
 import re
+import sqlite3
 import string
 import sys
 import numpy as np
@@ -386,14 +387,20 @@ class AllCurves:
             ### sample
 
             sys.stderr.write(' sample')
-            r = conn.execute('''
-                SELECT corpuscode, samplecode, wordcount, description
-                FROM sample
-            ''')
-            for corpuscode, samplecode, wordcount, description in r:
+            try:
+                r = conn.execute('''
+                    SELECT corpuscode, samplecode, wordcount, description, link
+                    FROM sample
+                ''')
+            except sqlite3.OperationalError:
+                r = conn.execute('''
+                        SELECT corpuscode, samplecode, wordcount, description, NULL
+                        FROM sample
+                    ''')
+            for corpuscode, samplecode, wordcount, description, link in r:
                 self.file_sample.generate(samplecode)
                 self.sampleset_by_corpus[corpuscode].add(samplecode)
-                self.sample_info[(corpuscode, samplecode)] = (wordcount, description)
+                self.sample_info[(corpuscode, samplecode)] = (wordcount, description, link)
 
             ### sample_collection
 
@@ -618,11 +625,12 @@ class AllCurves:
             sys.stderr.write('.')
             corpuscode, datasetcode, samplecode = key
             title = samplecode
-            wordcount, descr = self.sample_info[(corpuscode, samplecode)]
+            wordcount, descr, link = self.sample_info[(corpuscode, samplecode)]
+            samplelink = samplecode if link is None else E.a(samplecode, href=link)
             if descr is None:
-                headtext = [E.p(samplecode)]
+                headtext = [E.p(samplelink)]
             else:
-                headtext = [E.p(samplecode, ": ", descr)]
+                headtext = [E.p(samplelink, ": ", descr)]
             filename = self.get_context_filename_sample(datasetcode, samplecode)
             filename = os.path.join(htmldir, self.file_corpus.map[corpuscode], filename)
             l = self.context_by_sample[(corpuscode, datasetcode, samplecode)]
@@ -805,7 +813,7 @@ class AllCurves:
         s = SampleData()
         s.samplecode = samplecode
         skey = (corpuscode, datasetcode, samplecode)
-        s.wordcount, s.descr = self.sample_info[(corpuscode, samplecode)]
+        s.wordcount, s.descr, s.link = self.sample_info[(corpuscode, samplecode)]
         typelist = sorted(self.tokenset_by_sample[skey])
         s.collections = sorted(self.collectionset_by_sample[(corpuscode, samplecode)])
         s.hapaxlist = []

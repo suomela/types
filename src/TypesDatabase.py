@@ -70,6 +70,7 @@ def create_if_needed(conn):
             samplecode TEXT NOT NULL,
             wordcount INTEGER NOT NULL,
             description TEXT,
+            link TEXT,
             PRIMARY KEY (corpuscode, samplecode)
         );
 
