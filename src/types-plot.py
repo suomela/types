@@ -368,6 +368,7 @@ class AllCurves:
             self.sampleset_by_collection = defaultdict(set)
             self.sampleset_by_corpus = defaultdict(set)
             self.collectionset_by_sample = defaultdict(set)
+            self.collectionset_by_token = defaultdict(set)
             self.sampleset_by_token = defaultdict(set)
             self.tokenset_by_sample = defaultdict(set)
             self.sample_info = {}
@@ -421,6 +422,9 @@ class AllCurves:
                 self.tokencount_by_token[(corpuscode, datasetcode, tokencode)] += tokencount
                 self.tokencount_by_sample[(corpuscode, datasetcode, samplecode)] += tokencount
                 self.tokencount_by_sample_token[(corpuscode, datasetcode, samplecode)][tokencode] += tokencount
+                collectioncodes = self.collectionset_by_sample[(corpuscode, samplecode)]
+                for c in collectioncodes:
+                    self.collectionset_by_token[(corpuscode, datasetcode, tokencode)].add(c)
 
             ### tokeninfo
 
@@ -569,16 +573,23 @@ class AllCurves:
             f.write(CSS)
 
     def get_context_filename_sample(self, datasetcode, samplecode):
-        return '_{}_{}_s.html'.format(
+        b = TypesPlot.cleanlist([
+            '',
+            's',
             self.file_dataset.map[datasetcode],
             self.file_sample.map[samplecode],
-        )
+        ])
+        return '_'.join(b) + '.html'
 
-    def get_context_filename_token(self, datasetcode, tokencode):
-        return '_{}_{}_t.html'.format(
+    def get_context_filename_token(self, datasetcode, tokencode, collectioncode=None):
+        b = TypesPlot.cleanlist([
+            '',
+            't',
             self.file_dataset.map[datasetcode],
             self.file_token.map[tokencode],
-        )
+            collectioncode,
+        ])
+        return '_'.join(b) + '.html'
 
     def sample_link(self, corpuscode, datasetcode, samplecode, tokencode=None):
         if (corpuscode, datasetcode, samplecode) not in self.context_by_sample:
@@ -589,43 +600,71 @@ class AllCurves:
                 link += "#t{}".format(self.file_token.map[tokencode])
             return E.a(samplecode, href=link)
 
-    def token_link(self, corpuscode, datasetcode, tokencode, samplecode=None):
-        token = self.token_short[(corpuscode, datasetcode, tokencode)]
+    def token_link(self, corpuscode, datasetcode, tokencode, samplecode=None, collectioncode=None, shorten=True):
+        token = self.token_short[(corpuscode, datasetcode, tokencode)] if shorten else tokencode
         flags = {}
         if token != tokencode:
             flags["title"] = tokencode
         if (corpuscode, datasetcode, tokencode) not in self.context_by_token:
             return E.span(token, **flags)
         else:
-            link=self.get_context_filename_token(datasetcode, tokencode)
+            link=self.get_context_filename_token(datasetcode, tokencode, collectioncode)
             if samplecode is not None:
                 link += "#s{}".format(self.file_sample.map[samplecode])
             return E.a(token, href=link, **flags)
 
     def generate_context(self, htmldir):
         for key in sorted(self.context_by_sample.keys()):
+            sys.stderr.write('.')
             corpuscode, datasetcode, samplecode = key
-            title = [samplecode]
+            title = samplecode
             wordcount, descr = self.sample_info[(corpuscode, samplecode)]
-            if descr is not None:
-                title.append(descr)
+            if descr is None:
+                headtext = [E.p(samplecode)]
+            else:
+                headtext = [E.p(samplecode, ": ", descr)]
             filename = self.get_context_filename_sample(datasetcode, samplecode)
             filename = os.path.join(htmldir, self.file_corpus.map[corpuscode], filename)
             l = self.context_by_sample[(corpuscode, datasetcode, samplecode)]
-            self.generate_context_one(l, filename, title, "sample")
+            self.generate_context_one(l, filename, title, headtext, "sample")
         for key in sorted(self.context_by_token.keys()):
+            sys.stderr.write('.')
             corpuscode, datasetcode, tokencode = key
-            title = [tokencode]
-            filename = self.get_context_filename_token(datasetcode, tokencode)
-            filename = os.path.join(htmldir, self.file_corpus.map[corpuscode], filename)
-            l = self.context_by_token[(corpuscode, datasetcode, tokencode)]
-            self.generate_context_one(l, filename, title, "token")
+            collectioncodes = sorted(self.collectionset_by_token[key])
+            l_all = self.context_by_token[(corpuscode, datasetcode, tokencode)]
+            for collectioncode in [None] + collectioncodes:
+                if collectioncode is not None:
+                    title = u'{} · {}'.format(tokencode, samplecode)
+                    headtext = [E.p(
+                        self.token_link(corpuscode, datasetcode, tokencode, shorten=False),
+                        u' — ',
+                        collectioncode
+                    )]
+                    sampleset = self.sampleset_by_collection[(corpuscode, collectioncode)]
+                    l = [c for c in l_all if c.samplecode in sampleset]
+                else:
+                    title = tokencode
+                    if len(collectioncodes) > 0:
+                        links = [
+                            E.a(c, href=self.get_context_filename_token(datasetcode, tokencode, c))
+                            for c in collectioncodes
+                        ]
+                        headtext = [E.p(
+                            tokencode,
+                            u' — ',
+                            *TypesPlot.add_sep(links, u' · ')
+                        )]
+                    else:
+                        headtext = [E.p(tokencode)]
+                    l = l_all
+                filename = self.get_context_filename_token(datasetcode, tokencode, collectioncode)
+                filename = os.path.join(htmldir, self.file_corpus.map[corpuscode], filename)
+                self.generate_context_one(l, filename, title, headtext, "token")
 
-    def generate_context_one(self, l, filename, title, what):
-        sys.stderr.write('.')
+    def generate_context_one(self, l, filename, title, headtext, what):
         headblocks = []
         bodyblocks = []
-        headblocks.append(E.title(u" · ".join(title)))
+        headblocks.append(E.title(title))
         headblocks.append(E.link(rel="stylesheet", href="../types.css", type="text/css"))
         headrow = [
             E.td('Sample'),
@@ -634,8 +673,8 @@ class AllCurves:
             E.td(E.span('Word'), **classes(["word"])),
             E.td(E.span('After'), **classes(["after"])),
         ]
+        bodyblocks.extend(headtext)
         tablerows = [E.tr(*headrow, **classes(["head"]))]
-        
         grouped = defaultdict(list)
         for c in l:
             if what == "sample":
@@ -751,7 +790,7 @@ class AllCurves:
                     table.append(E.tr(
                         bar(here, 'bara', bracket=bracket),
                         bar(other, 'barb', bracket=bracket),
-                        E.td(E.span(self.token_link(corpuscode, datasetcode, t),
+                        E.td(E.span(self.token_link(corpuscode, datasetcode, t, collectioncode=collectioncode),
                                     style="color: {};".format(grayness(here, other)))),
                         title=u"{} — {}: {} samples, other: {} samples".format(t, collectioncode, here, other)
                     ))
@@ -977,7 +1016,7 @@ TABLE {
     margin-bottom: 20px;
 }
 
-.findings, .listing, .stats {
+.findings, .listing, .stats, .context {
     margin-top: 20px;
 }
 
