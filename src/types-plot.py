@@ -851,9 +851,6 @@ class AllCurves:
         l = sorted(l, key=lambda s: (-s.wordcount, s.samplecode))
         tablerows = []
         for s in l:
-            colist = s.collections
-            if collectioncode is not None:
-                colist = [x for x in colist if x != collectioncode]
             clist = []
             for t,c in s.commonlist:
                 if len(clist) > 0:
@@ -863,7 +860,7 @@ class AllCurves:
             ulist = [self.token_link(corpuscode, datasetcode, t, s.samplecode) for t in s.uniquelist + s.hapaxlist]
             tablerows.append([
                 E.td(self.sample_link(corpuscode, datasetcode, s.samplecode)),
-                E.td(*TypesPlot.add_sep(colist, u' · ')),
+                E.td(none_to_empty(s.descr)),
                 E.td(str(s.wordcount), **{"class": "right"}),
                 bar(s.wordcount, 'bar', maxval=maxwords),
                 E.td(str(s.tokencount), **{"class": "right"}),
