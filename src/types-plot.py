@@ -594,7 +594,7 @@ class AllCurves:
             't',
             self.file_dataset.map[datasetcode],
             self.file_token.map[tokencode],
-            collectioncode,
+            None if collectioncode is None else self.file_collection.map[collectioncode],
         ])
         return '_'.join(b) + '.html'
 
