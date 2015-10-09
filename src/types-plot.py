@@ -626,11 +626,16 @@ class AllCurves:
             corpuscode, datasetcode, samplecode = key
             title = samplecode
             wordcount, descr, link = self.sample_info[(corpuscode, samplecode)]
-            samplelink = samplecode if link is None else E.a(samplecode, href=link)
             if descr is None:
-                headtext = [E.p(samplelink)]
+                if link is None:
+                    headtext = [E.p(samplecode)]
+                else:
+                    headtext = [E.p(E.a(samplecode, href=link))]
             else:
-                headtext = [E.p(samplelink, ": ", descr)]
+                if link is None:
+                    headtext = [E.p(samplecode, ": ", descr)]
+                else:
+                    headtext = [E.p(samplecode, ": ", E.a(descr, href=link))]
             filename = self.get_context_filename_sample(datasetcode, samplecode)
             filename = os.path.join(htmldir, self.file_corpus.map[corpuscode], filename)
             l = self.context_by_sample[(corpuscode, datasetcode, samplecode)]
@@ -675,7 +680,7 @@ class AllCurves:
         headblocks.append(E.title(title))
         headblocks.append(E.link(rel="stylesheet", href="../types.css", type="text/css"))
         headrow = [
-            E.td('Sample'),
+            E.td('Sample', colspan="2"),
             E.td('Token', **classes(["pad"])),
             E.td(E.span('Before'), **classes(["before"])),
             E.td(E.span('Word'), **classes(["word"])),
@@ -699,6 +704,17 @@ class AllCurves:
             block = []
             for c in ll:
                 row = []
+                wordcount, descr, link = self.sample_info[(c.corpuscode, c.samplecode)]
+                if descr is None:
+                    if link is None:
+                        dl = None
+                    else:
+                        dl = E.a('link', href=link)
+                else:
+                    if link is None:
+                        dl = descr
+                    else:
+                        dl = E.a(descr, href=link)
                 if what == "sample":
                     sample = c.samplecode
                     token = self.token_link(c.corpuscode, c.datasetcode, c.tokencode, c.samplecode)
@@ -712,8 +728,16 @@ class AllCurves:
                 after = none_to_empty(c.after)
                 if c.link is not None:
                     word = E.a(word, href=c.link)
-                row = [
-                    E.td(sample),
+                if dl is None:
+                    row = [
+                        E.td(sample, colspan="2")
+                    ]
+                else:
+                    row = [
+                        E.td(sample),
+                        E.td(dl),
+                    ]
+                row += [
                     E.td(token, **classes(["pad"])),
                     E.td(E.span(before), **classes(["before"])),
                     E.td(E.span(word), **classes(["word"])),
