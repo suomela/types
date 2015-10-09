@@ -1075,8 +1075,8 @@ TD.wrap {
 }
 
 TR.head>TD {
-    padding-top: 7px;
-    padding-bottom: 7px;
+    padding-top: 5px;
+    padding-bottom: 5px;
     border-bottom: 1px solid #888;
 }
 
@@ -1085,11 +1085,11 @@ TR.head.sep>TD {
 }
 
 TR.first>TD, .context TBODY>TR:first-child>TD {
-    padding-top: 7px;
+    padding-top: 5px;
 }
 
 TR.last>TD, .context TBODY>TR:last-child>TD {
-    padding-bottom: 7px;
+    padding-bottom: 5px;
     border-bottom: 1px solid #888;
 }
 
