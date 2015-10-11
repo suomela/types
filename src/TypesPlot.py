@@ -1,20 +1,11 @@
 # coding=utf-8
 
+from collections import namedtuple
 import itertools
 import os
 import numpy as np
 from lxml.builder import E
 from lxml import etree
-
-WIDTH = 9
-HEIGHT = 6
-DPI = 96
-
-LABEL_SEP = 0.06
-LABEL_AREA = (0.03, 0.97)
-AXIS_PAD = 0.02
-XSEP = 0.04
-THRESHOLD = 0.005
 
 def colour(c):
     return tuple([ int(c[2*i:2*i+2], 16)/float(255) for i in range(3) ])
@@ -31,7 +22,43 @@ DARK   = colour('333333')
 BLACK  = colour('000000')
 BLUE2  = colour('3f4f6c')
 
+class CPoint:
+    def __init__(self, ec, fc, lw):
+        self.ec = ec
+        self.fc = fc
+        self.lw = lw
+
+Layout = namedtuple('Layout', [
+    'width', 'height', 'dpi',
+    'label_sep', 'label_area', 'xsep',
+    'sel', 'unsel',
+])
+
+layout_slides = Layout(
+    width = 5,
+    height = 3,
+    dpi = 96,
+    label_sep = 0.12,
+    label_area = (0.03, 0.97),
+    xsep = 0.06,
+    sel = CPoint( BLACK, WHITE, 1.5 ),
+    unsel = CPoint( GREY,  WHITE, 1.0 ),
+)
+
+layout_normal = Layout(
+    width = 9,
+    height = 6,
+    dpi = 96,
+    label_sep = 0.06,
+    label_area = (0.03, 0.97),
+    xsep = 0.04,
+    sel = CPoint( BLACK, WHITE, 1.5 ),
+    unsel = CPoint( GREY,  WHITE, 0.5 ),
+)
+
 LISTING_LABEL = { None: 'summary', 't': 'type list', 's': 'sample list' }
+
+AXIS_PAD = 0.02
 
 def lim(maxval):
     return (-AXIS_PAD * maxval, (1.0 + AXIS_PAD) * maxval)
@@ -75,9 +102,10 @@ def cleanlist(l):
 
 
 class LabelPlacement:
-    def __init__(self):
+    def __init__(self, layout):
+        self.layout = layout
         self.freelist = set()
-        self.freelist.add(LABEL_AREA)
+        self.freelist.add(self.layout.label_area)
 
     def place(self, y):
         closest = None
@@ -104,22 +132,13 @@ class LabelPlacement:
             return None
         self.freelist.remove(closest)
         y1, y4 = closest
-        y2 = bestplace - LABEL_SEP
-        y3 = bestplace + LABEL_SEP
+        y2 = bestplace - self.layout.label_sep
+        y3 = bestplace + self.layout.label_sep
         if y1 < y2:
             self.freelist.add((y1, y2))
         if y3 < y4:
             self.freelist.add((y3, y4))
         return bestplace
-
-class CPoint:
-    def __init__(self, ec, fc, lw):
-        self.ec = ec
-        self.fc = fc
-        self.lw = lw
-
-SEL   = CPoint( BLACK, WHITE, 1.5 )
-UNSEL = CPoint( GREY,  WHITE, 0.5 )
 
 class Point:
     def __init__(self, collectioncode, y, x, above, below, total, fdr):
@@ -174,12 +193,13 @@ class Point:
 
 
 class Curve:
-    def __init__(self, dirdict,
+    def __init__(self, layout, dirdict,
                  corpuscode, corpus_filename, corpus_descr,
                  statcode, stat_filename,
                  xlabel, ylabel, xtotal, ytotal,
                  datasetcode, dataset_filename, dataset_descr,
                  listings):
+        self.layout = layout
         self.dirdict = dirdict
         self.corpuscode = corpuscode
         self.corpus_filename = corpus_filename
@@ -334,7 +354,10 @@ class Curve:
     def plot_group_points(self, matplotlib, groupcode, point):
         points = sorted(self.points_by_group[groupcode], key=lambda p: p.x, reverse=True)
         SPP = matplotlib.figure.SubplotParams(left=0.1, right=0.85, bottom=0.1, top=0.98)
-        fig = matplotlib.pyplot.figure(figsize=(WIDTH, HEIGHT), subplotpars=SPP)
+        fig = matplotlib.pyplot.figure(
+            figsize=(self.layout.width, self.layout.height),
+            subplotpars=SPP
+        )
         ax = fig.add_subplot(111)
         ax.set_autoscalex_on(False)
         ax.set_autoscaley_on(False)
@@ -366,19 +389,19 @@ class Curve:
             ax.fill(poly[:,0], poly[:,1], fc=fill, ec=edge, linewidth=0.4, zorder=100 + f)
 
     def plot_points(self, ax, points, groupcode, point):
-        placement = LabelPlacement()
+        placement = LabelPlacement(self.layout)
         for i, p in enumerate(points):
             scx, scy = float(p.x)/self.maxx, float(p.y)/self.maxy
-            stx = scx + XSEP
+            stx = scx + self.layout.xsep
             sty = placement.place(scy)
             zbase = 201.0 - p.pvalue
             if point is None:
                 cp = p
             elif point == p:
-                cp = SEL
+                cp = self.layout.sel
                 zbase += 100
             else:
-                cp = UNSEL
+                cp = self.layout.unsel
             if sty is not None:
                 tx = stx * self.maxx
                 ty = sty * self.maxy
@@ -553,8 +576,8 @@ class Curve:
         fig = E.p(E.object(
             data=self.get_pointname('svg', groupcode, point, listing),
             type="image/svg+xml",
-            width=str(WIDTH*DPI),
-            height=str(HEIGHT*DPI),
+            width=str(self.layout.width * self.layout.dpi),
+            height=str(self.layout.height * self.layout.dpi),
         ), **{"class": "plot"})
         bodyblocks.append(fig)
 

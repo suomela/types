@@ -64,6 +64,9 @@ def get_args():
     parser.add_option('--sample-lists', dest='with_samplelists', action='store_true',
                       help='produce sample lists',
                       default=False)
+    parser.add_option('--slides', dest='slide_version', action='store_true',
+                      help='presentation slide version',
+                      default=False)
     parser.add_option('--plotdir', metavar='DIRECTORY', dest='plotdir',
                       help='where to store PDF plots [default: %default]',
                       default=PLOT_DIR)
@@ -153,6 +156,11 @@ class AllCurves:
 
     def read_curves(self, args, conn):
         sys.stderr.write('%s: read:' % TOOL)
+
+        if args.slide_version:
+            layout = TypesPlot.layout_slides
+        else:
+            layout = TypesPlot.layout_normal
 
         listings = [None]
         if args.with_typelists:
@@ -273,6 +281,7 @@ class AllCurves:
                 xlabel, ylabel = self.statcode_label[statcode]
                 xtotal, ytotal = totals[xkey], totals[ykey]
                 c = TypesPlot.Curve(
+                        layout,
                         dirdict,
                         corpuscode, self.file_corpus.map[corpuscode],
                         corpus_descr[corpuscode],
