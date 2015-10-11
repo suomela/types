@@ -509,13 +509,13 @@ class Curve:
                     prev = cur
                     prevj = j
                 attr = dict()
+                if desc is not None:
+                    attr["title"] = desc
                 if selected:
                     attr["class"] = "menuitem menusel"
                     e = E.span(label, **attr)
                 else:
                     href, changed = c.get_pointname_relative(self, 'html', g, x, l)
-                    if desc is not None:
-                        attr["title"] = desc
                     attr["class"] = "menuitem menuother" if changed else "menuitem menusame"
                     e = E.a(label, href=href, **attr)
                 if addbreak:
@@ -540,8 +540,6 @@ class Curve:
             titlelink="../index.html",
             groupby='-'
         )
-        if self.corpus_descr is not None:
-            menublocks.append(E.p(self.corpus_descr, **{"class": "menudesc"}))
         add_menu(
             "Dataset",
             ac.by_corpus_stat[(self.corpuscode, self.statcode)],
@@ -550,8 +548,6 @@ class Curve:
             [ listing ],
             lambda c, g, x, l: (c.datasetcode, c.dataset_descr)
         )
-        if self.dataset_descr is not None:
-            menublocks.append(E.p(self.dataset_descr, **{"class": "menudesc"}))
         add_menu(
             "Points",
             [ self ],
