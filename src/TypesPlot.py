@@ -488,11 +488,12 @@ class Curve:
             prev = []
             prevj = 0
             result = []
+            count = len(cl) * len(gl) * len(xl) * len(ll)
             for c, g, x, l in itertools.product(cl, gl, xl, ll):
                 addbreak = False
                 label, desc = labelhook(c, g, x, l)
                 selected = c == self and g is groupcode and x is collectioncode and l is listing
-                if groupby is not None:
+                if groupby is not None and count >= 5:
                     cur = label.split(groupby)
                     # A heuristic rule that tries to produce reasonable abbreviations
                     j = longest_common_prefix(prev, cur)
