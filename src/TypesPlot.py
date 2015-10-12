@@ -32,6 +32,7 @@ Layout = namedtuple('Layout', [
     'width', 'height', 'dpi',
     'label_sep', 'label_area', 'xsep',
     'sel', 'unsel',
+    'xbins'
 ])
 
 layout_slides = Layout(
@@ -43,6 +44,7 @@ layout_slides = Layout(
     xsep = 0.06,
     sel = CPoint( BLACK, WHITE, 1.5 ),
     unsel = CPoint( GREY,  WHITE, 1.0 ),
+    xbins = 5,
 )
 
 layout_normal = Layout(
@@ -54,6 +56,7 @@ layout_normal = Layout(
     xsep = 0.04,
     sel = CPoint( BLACK, WHITE, 1.5 ),
     unsel = CPoint( GREY,  WHITE, 0.5 ),
+    xbins = None,
 )
 
 LISTING_LABEL = { None: 'summary', 't': 'type list', 's': 'sample list' }
@@ -363,6 +366,8 @@ class Curve:
         ax.set_autoscaley_on(False)
         ax.set_xlim(lim(self.maxx))
         ax.set_ylim(lim(self.maxy))
+        if self.layout.xbins != None:
+            ax.locator_params(axis='x', nbins=self.layout.xbins)
         self.plot_polys(ax)
         self.plot_points(ax, points, groupcode, point)
         self.plot_labels(ax)
