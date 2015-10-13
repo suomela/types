@@ -33,11 +33,11 @@ Layout = namedtuple('Layout', [
     'width', 'height', 'dpi',
     'label_sep', 'label_area', 'xsep',
     'sel', 'unsel',
-    'xbins'
+    'xbins', 'spp',
 ])
 
 layout_slides = Layout(
-    width = 5,
+    width = 6,
     height = 3,
     dpi = 96,
     label_sep = 0.12,
@@ -46,6 +46,7 @@ layout_slides = Layout(
     sel = CPoint( BLACK, WHITE, 1.5 ),
     unsel = CPoint( GREY,  WHITE, 1.0 ),
     xbins = 5,
+    spp = {'left': 0.15, 'right': 0.77, 'bottom': 0.1, 'top': 0.98},
 )
 
 layout_normal = Layout(
@@ -58,6 +59,7 @@ layout_normal = Layout(
     sel = CPoint( BLACK, WHITE, 1.5 ),
     unsel = CPoint( GREY,  WHITE, 0.5 ),
     xbins = None,
+    spp = {'left': 0.1, 'right': 0.85, 'bottom': 0.1, 'top': 0.98},
 )
 
 LISTING_LABEL = { None: 'summary', 't': 'type list', 's': 'sample list' }
@@ -340,10 +342,9 @@ class Curve:
 
     def plot_group_points(self, matplotlib, groupcode, point):
         points = sorted(self.points_by_group[groupcode], key=lambda p: p.x, reverse=True)
-        SPP = matplotlib.figure.SubplotParams(left=0.1, right=0.85, bottom=0.1, top=0.98)
         fig = matplotlib.pyplot.figure(
             figsize=(self.layout.width, self.layout.height),
-            subplotpars=SPP
+            subplotpars=matplotlib.figure.SubplotParams(**self.layout.spp)
         )
         ax = fig.add_subplot(111)
         ax.set_autoscalex_on(False)
