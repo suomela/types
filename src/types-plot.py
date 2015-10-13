@@ -831,8 +831,7 @@ class AllCurves:
                     table.append(E.tr(
                         bar(here, 'bara', bracket=bracket),
                         bar(other, 'barb', bracket=bracket),
-                        E.td(E.span(self.token_link(corpuscode, datasetcode, t, collectioncode=collectioncode),
-                                    style="color: {};".format(grayness(here, other)))),
+                        E.td(self.token_link(corpuscode, datasetcode, t, collectioncode=collectioncode)),
                         title=u"{} — {}: {} samples, other: {} samples".format(t, collectioncode, here, other)
                     ))
                 tables.append(E.table(*table))
@@ -960,12 +959,6 @@ def bar_scale(x, bracket=None, maxval=None):
         return int(round(25.0 * x / maxval))
     else:
         return x
-
-def grayness(here, other):
-    total = here + other
-    ratio = int(round(10 * float(here) / total))
-    return ['#000', '#111', '#222', '#333', '#444', '#555', '#666', '#777', '#888', '#999', '#aaa'][10-ratio]
-
 
 def get_datafile(args):
     return os.path.join(args.tmpdir, DATA_FILE)
