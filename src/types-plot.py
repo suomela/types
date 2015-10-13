@@ -828,10 +828,14 @@ class AllCurves:
                 table = []
                 l = sorted(r[bracket], key=lambda x: (-x[3], -x[1], x[2], x[0]))
                 for t, here, other, ratio in l:
+                    if here > 0:
+                        tokenlink = self.token_link(corpuscode, datasetcode, t, collectioncode=collectioncode)
+                    else:
+                        tokenlink = self.token_short[(corpuscode, datasetcode, t)]
                     table.append(E.tr(
                         bar(here, 'bara', bracket=bracket),
                         bar(other, 'barb', bracket=bracket),
-                        E.td(self.token_link(corpuscode, datasetcode, t, collectioncode=collectioncode)),
+                        E.td(tokenlink),
                         title=u"{} — {}: {} samples, other: {} samples".format(t, collectioncode, here, other)
                     ))
                 tables.append(E.table(*table))
