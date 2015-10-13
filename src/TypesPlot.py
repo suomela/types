@@ -13,14 +13,15 @@ def colour(c):
 def colours(l):
     return [ colour(c) for c in l ]
 
-BLUE   = colours(('95a8c9','acbbd5','c2cddf','d7deeb','e7ebf2'))
-ORANGE = colours(('e5af5a','ebc07f','f0d1a1','f5e0c3','f9eddc'))
-RED    = colours(('c99eb1','d4b3c1','dfc7d2','eadae1','f2e9ed'))
+# Colour scheme from:
+# http://colorbrewer2.org/?type=sequential&scheme=PuBu&n=4
+REGIONS_RGB = ('0570b0', '74a9cf', 'bdc9e1', 'f1eef6')
+
 WHITE  = colour('ffffff')
 GREY   = colour('999999')
 DARK   = colour('333333')
 BLACK  = colour('000000')
-BLUE2  = colour('3f4f6c')
+REGIONS = colours(REGIONS_RGB)
 
 class CPoint:
     def __init__(self, ec, fc, lw):
@@ -41,7 +42,7 @@ layout_slides = Layout(
     dpi = 96,
     label_sep = 0.12,
     label_area = (0.03, 0.97),
-    xsep = 0.06,
+    xsep = 0.05,
     sel = CPoint( BLACK, WHITE, 1.5 ),
     unsel = CPoint( GREY,  WHITE, 1.0 ),
     xbins = 5,
@@ -53,7 +54,7 @@ layout_normal = Layout(
     dpi = 96,
     label_sep = 0.06,
     label_area = (0.03, 0.97),
-    xsep = 0.04,
+    xsep = 0.03,
     sel = CPoint( BLACK, WHITE, 1.5 ),
     unsel = CPoint( GREY,  WHITE, 0.5 ),
     xbins = None,
@@ -164,7 +165,7 @@ class Point:
 
         if self.side is None:
             pass
-        elif self.pvalue > 0.1:
+        elif self.pvalue > 0.01:
             pass
         elif is_above:
             self.ms = 10
@@ -176,23 +177,6 @@ class Point:
         self.ec = BLACK
         self.fc = WHITE
         self.lw = 1.0
-
-        palette = ORANGE if is_above else RED
-
-        if self.pvalue is None:
-            pass
-        elif self.pvalue < 0.000001:
-            self.fc = palette[0]
-        elif self.pvalue < 0.00001:
-            self.fc = palette[1]
-        elif self.pvalue < 0.0001:
-            self.fc = palette[2]
-        elif self.pvalue < 0.001:
-            self.fc = palette[3]
-        elif self.pvalue < 0.01:
-            self.fc = palette[4]
-        else:
-            self.ec = DARK
 
 
 class Curve:
@@ -388,10 +372,9 @@ class Curve:
     def plot_polys(self, ax):
         for i, poly in enumerate(self.polys):
             f = i/(len(self.polys)-1.0)
-            j = min(i, len(BLUE)-1)
-            edge = BLUE2
-            fill = BLUE[-(j+1)]
-            ax.fill(poly[:,0], poly[:,1], fc=fill, ec=edge, linewidth=0.4, zorder=100 + f)
+            j = min(i, len(REGIONS)-1)
+            fill = REGIONS[-(j+1)]
+            ax.fill(poly[:,0], poly[:,1], fc=fill, ec=BLACK, linewidth=0.2, zorder=100 + f)
 
     def plot_points(self, ax, points, groupcode, point):
         placement = LabelPlacement(self.layout)

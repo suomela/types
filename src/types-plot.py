@@ -1032,12 +1032,12 @@ BODY {
 }
 
 A:link {
-    color: #00f;
+    color: <DARK>;
     text-decoration: none;
 }
 
 A:visited {
-    color: #008;
+    color: <DARK>;
     text-decoration: none;
 }
 
@@ -1140,7 +1140,7 @@ P {
 }
 
 .menusel {
-    border: 1px solid #aaa;
+    border: 1px solid #000;
     background-color: #fff;
 }
 
@@ -1166,11 +1166,11 @@ TD.barb+TD {
 }
 
 TD.bar>SPAN, TD.bara>SPAN {
-    border-left: 0px solid #a00;
+    border-left: 0px solid <DARK>;
 }
 
 TD.barb>SPAN {
-    border-left: 0px solid #888;
+    border-left: 0px solid <LIGHT>;
 }
 
 TD.wide {
@@ -1206,11 +1206,11 @@ TD.after SPAN {
 }
 
 .menusel {
-    color: #a00;
+    color: #000;
 }
 
 A.menusame, A.menutitle {
-    color: #008;
+    color: <DARK>;
 }
 
 A.menuother {
@@ -1221,5 +1221,8 @@ TBODY:target {
     background-color: #eee;
 }
 """
+
+CSS = CSS.replace('<DARK>', '#' + TypesPlot.REGIONS_RGB[0])
+CSS = CSS.replace('<LIGHT>', '#' + TypesPlot.REGIONS_RGB[2])
 
 main()
