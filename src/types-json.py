@@ -8,6 +8,7 @@ import TypesPlot
 
 TOOL = 'types-json'
 BIN_DIR = 'bin'
+DEFAULT_JSON = 'db/types.json'
 
 what = [
     ('label', ['labelcode'], [], [], 'normal'),
@@ -37,6 +38,9 @@ def get_args():
     parser.add_option('--db', metavar='FILE', dest='db',
                       help='which database to read [default: %default]',
                       default=TypesDatabase.DEFAULT_FILENAME)
+    parser.add_option('--json', metavar='FILE', dest='json',
+                      help='which database to read [default: %default]',
+                      default=DEFAULT_JSON)
     (options, args) = parser.parse_args()
     return options
 
@@ -135,6 +139,7 @@ def main():
     data = {}
     for w in what:
         dump(data, conn, *w)
-    print json.dumps(data, sort_keys=True)
+    with open(args.json, "w") as f:
+        f.write(json.dumps(data, sort_keys=True, separators=(',', ':')))
 
 main()
