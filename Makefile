@@ -15,7 +15,7 @@ sfmt = external/SFMT-src-1.4
 
 #--- Programs
 
-prog_py = types-db-init types-db-refresh types-draw-curves types-plot types-run
+prog_py = types-db-init types-db-refresh types-draw-curves types-plot types-run types-json
 prog_db = types-convert types-query types-store
 prog_other = types-comp types-rng 
 mod_py = TypesDatabase TypesParallel TypesPlot TypesVersion
