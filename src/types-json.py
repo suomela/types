@@ -4,7 +4,6 @@ import json
 import optparse
 import sqlite3
 import TypesDatabase
-import TypesPlot
 
 TOOL = 'types-json'
 BIN_DIR = 'bin'

@@ -76,15 +76,7 @@ def test_python(python):
         ok = False
     else:
         output, error = r
-        if output != PYTHON_OK:
-            ok = False
-        elif error == '':
-            ok = True
-        else:
-            # Both OK and error messages?
-            # Might be first-time initialisation related to matplotlib:
-            # try again...
-            ok = tryrun([python, PYTHON_TEST]) == PYTHON_OK
+        ok = (output == PYTHON_OK) and (error == '')
     return (version, ok)
 
 class Tool:

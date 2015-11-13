@@ -3,7 +3,7 @@
 dir="$1"
 wrapper="$2"
 
-for a in types-comp types-convert types-draw-curves types-query types-rng types-store; do
+for a in types-comp types-convert types-query types-rng types-store; do
     if "$dir/$a" > /dev/null; then
         printf "."
     else
@@ -56,11 +56,6 @@ cp check/types.sqlite tmp/types.sqlite || exit 1
 $rcmd --parts 3 --loginfile tmp/loginfile || exit 1
 check/verify-all || exit 1
 
-pcmd="$dir/types-plot --bindir=$dir --plotdir=tmp/plot --htmldir=tmp/html --db=tmp/types.sqlite"
-rm -rf tmp/plot tmp/html
-$pcmd --local || exit 1
-rm -rf tmp/plot tmp/html
-$pcmd --parts 3 --loginfile tmp/loginfile || exit 1
-
-$rcmd --local || exit 1
-$pcmd --local || exit 1
+pcmd="$dir/types-json --db=tmp/types.sqlite --json=tmp/types.json"
+rm -rf tmp/types.json
+$pcmd || exit 1
