@@ -71,7 +71,7 @@ def dump(data, conn, table, keys, skip, sort, kind):
             j = key_map[column]
             assert key_columns[j] is None
             key_columns[j] = i
-        elif key in skip:
+        elif column in skip:
             pass
         else:
             plain_columns.append((i, column))
