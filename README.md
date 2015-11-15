@@ -31,6 +31,14 @@ See https://github.com/suomela/types-examples for examples.
 Installing dependencies
 -----------------------
 
+You will need:
+
+  - Linux or OS X
+  - a modern C compiler (GCC or Clang)
+  - Python 2
+  - SQLite 3
+
+
 ### Ubuntu 15.04
 
 Open a terminal and run:
@@ -38,29 +46,30 @@ Open a terminal and run:
     sudo apt-get install git sqlite3 libsqlite3-dev
 
 
-### OS X 10.11
+### OS X 10.11 with Clang
 
-These instructions should work on OS X 10.11 (El Capitan):
+Installing Xcode command line tools should be enough:
 
-  - Open Terminal.
+    xcode-select --install
 
-  - Install Homebrew: http://brew.sh/
+However, then you will be using Clang as your C compiler, and on OS X
+it does not support OpenMP, so the performance will be worse.
 
-        ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-        brew doctor
-        brew update
 
-  - Run the following commands to install recent versions of *GCC* and
-    *Python*:
+### OS X 10.11 with GCC
 
-        brew install python
-        brew install gcc
+If you have a recent GCC installed, it will be used automatically
+instead of Clang. To install GCC, you can use Homebrew: http://brew.sh/
 
-Once you have followed the above instructions, `./config` should finish
-successfully. In particular, it should find the following tools:
+First, install Homebrew as usual, and make sure it is fine and up-to-date:
 
-        PYTHON = /usr/local/bin/python
-        CC = /usr/local/bin/gcc-5
+    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    brew doctor
+    brew update
+
+Then install GCC:
+
+    brew install gcc
 
 
 License

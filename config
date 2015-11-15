@@ -9,11 +9,12 @@ import sys
 
 MEXP = 19937
 
-FLAGS_RE = re.compile('flags\s*:')
+FLAGS_RE = re.compile(r'flags\s*:')
+DEFINE_RE = re.compile(r'^#define +(\w+) +(.*)$', re.MULTILINE)
 
 def tryrun2(cmd):
     try:
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except:
         return None
     output, error = p.communicate()
@@ -42,27 +43,51 @@ def tryrun_get_err(cmd):
 def versionstring(version):
     return '.'.join([str(v) for v in version])
 
+def definemap(dump):
+    r = {}
+    for m in DEFINE_RE.finditer(dump):
+        r[m.group(1)] = m.group(2)
+    return r
+
+def try_get_version(r, label, ind, v1, v2, v3):
+    if ind in r and v1 in r and v2 in r and v3 in r:
+        return (label, (r[v1], r[v2], r[v3]))
+    else:
+        return None
+
 def test_cc(cc):
-    BAD = (None, False)
-    version = tryrun([cc, '-dumpversion'])
-    if version is None:
+    BAD = (None, None, None)
+    dump = tryrun([cc, '-dM', '-E', '-'])
+    if dump is None:
         return BAD
-    version = version.rstrip(' \n\r').split('.')
-    for v in version:
-        if not v.isdigit():
-            return BAD
-    version = [ int(v) for v in version ]
-    ok = True
-    return (version, ok)
+    r = definemap(dump)
+    clang_macros = ['__clang__', '__clang_major__', '__clang_minor__', '__clang_patchlevel__']
+    gcc_macros = ['__GNUC__', '__GNUC__', '__GNUC_MINOR__', '__GNUC_PATCHLEVEL__']
+    x = try_get_version(r, 'clang', *clang_macros)
+    if x is not None:
+        name, version = x
+        return (name, version, (1, version))
+    x = try_get_version(r, 'gcc', *gcc_macros)
+    if x is not None:
+        name, version = x
+        return (name, version, (2, version))
+    return BAD
 
 PYTHON_TEST = 'src/test.py'
 PYTHON_OK = 'OK\n'
 
 def test_python(python):
-    BAD = (None, False)
-    version = tryrun_get_err([python, '--version'])
-    if version is None:
+    BAD = (None, None, None)
+    name = "Python"
+    version_raw = tryrun2([python, '--version'])
+    if version_raw is None:
         return BAD
+    if version_raw[0] != '' and version_raw[1] != '':
+        return BAD
+    if version_raw[0] != '':
+        version = version_raw[0]
+    else:
+        version = version_raw[1]
     version = version.rstrip(' \n\r')
     if not version.startswith('Python '):
         return BAD
@@ -77,22 +102,24 @@ def test_python(python):
     else:
         output, error = r
         ok = (output == PYTHON_OK) and (error == '')
-    return (version, ok)
+    if ok:
+        return (name, version, (1, version))
+    else:
+        return (name, version, None)
 
 class Tool:
-    def __init__(self, short, long, re, hook):
-        self.short = short
+    def __init__(self, long, re, hook):
         self.long = long
         self.re = re
         self.hook = hook
         self.msg = None
 
-    def report(self, full, version, ok):
-        okstring = "looks good" if ok else "test failed"
-        if version is None:
-            toolstring = "?"
-        else:
-            toolstring = "%s %s" % (self.short, versionstring(version))
+    def report(self, full, name, version, pref):
+        okstring = "looks good" if pref is not None else "test failed"
+        toolstring = "%s %s" % (
+            "?" if name is None else name,
+            "?" if version is None else versionstring(version)
+        )
         print "- %-30s %-20s %s" % (full, toolstring, okstring)
 
     def find_best(self):
@@ -101,7 +128,7 @@ class Tool:
             print self.msg
         print
         tool = None
-        toolversion = None
+        best = None
         pathseen = set()
         for d in os.environ['PATH'].split(os.pathsep):
             if d in pathseen:
@@ -111,16 +138,16 @@ class Tool:
                 for f in sorted(os.listdir(d)):
                     if self.re.match(f):
                         full = os.path.join(d, f)
-                        (version, ok) = self.hook(full)
-                        self.report(full, version, ok)
-                        if ok and (toolversion is None or toolversion < version):
-                            tool = full
-                            toolversion = version
+                        (name, version, pref) = self.hook(full)
+                        self.report(full, name, version, pref)
+                        if pref is not None and (best is None or best < pref):
+                            tool = (full, name, version)
+                            best = pref
         print
         if tool is None:
             print "Error: could not find %s." % self.long
             sys.exit(1)
-        return (tool, toolversion)
+        return tool
 
     def find_tool(self, hint):
         tool = None
@@ -130,26 +157,25 @@ class Tool:
             if self.msg is not None:
                 print self.msg
             print
-            (version, ok) = self.hook(hint)
-            self.report(hint, version, ok)
+            (name, version, pref) = self.hook(hint)
+            self.report(hint, name, version, pref)
             print
-            if ok:
-                return (hint, version)
+            if pref is not None:
+                return (hint, name, version)
         if tool is None:
             return self.find_best()
 
-GCC_RE = re.compile('gcc(-[0-9]+(\.[0-9]+)*)?\Z')
-PYTHON_RE = re.compile('python(-?2+(\.[0-9]+)+)?\Z')
+CC_RE = re.compile(r'(cc|clang|gcc)(-?[0-9]+(\.[0-9]+)*)?\Z')
+PYTHON_RE = re.compile(r'python(-?[0-9]+(\.[0-9]+)*)?\Z')
 
-GCC = Tool('gcc', 'a C compiler', GCC_RE, test_cc)
-PYTHON = Tool('python', 'a Python interpreter', PYTHON_RE, test_python)
+CC = Tool('a C compiler', CC_RE, test_cc)
+PYTHON = Tool('a Python interpreter', PYTHON_RE, test_python)
 PYTHON.msg = "I will try to run the test script %s" % PYTHON_TEST
 
 
 class Config:
     def __init__(self):
         self.cc = None
-        self.ccversion = None
         self.python = None
         self.cflags_prod = []
         self.cflags_debug = []
@@ -204,14 +230,18 @@ class Config:
         print
 
     def find_cc(self):
-        (self.cc, self.ccversion) = GCC.find_tool(self.args.cc)
-        print "I will use %s, which seems to be GCC version %s." % (self.cc, versionstring(self.ccversion))
+        (self.cc, self.ccname, self.ccversion) = CC.find_tool(self.args.cc)
+        print "I will use %s, which seems to be %s version %s." % (
+            self.cc, self.ccname, versionstring(self.ccversion)
+        )
         print "You can override it with the --cc flag."
         print
 
     def find_python(self):
-        (self.python, self.pythonversion) = PYTHON.find_tool(self.args.python)
-        print "I will use Python interpreter %s, version %s." % (self.python, versionstring(self.pythonversion))
+        (self.python, self.pythonname, self.pythonversion) = PYTHON.find_tool(self.args.python)
+        print "I will use %s, which seems to be %s version %s." % (
+            self.python, self.pythonname, versionstring(self.pythonversion)
+        )
         print "You can override it with the --python flag."
         print
 
@@ -255,13 +285,8 @@ class Config:
             print "- not using OpenMP as requested"
             print
             self.openmp = False
-        elif self.osx and self.ccversion < [4,3,0]:
-            print "- most likely this compiler does not work reliably with OpenMP"
-            print "  (consider installing gcc from Homebrew)"
-            print
-            self.openmp = False
-        elif self.ccversion < [4,2,0]:
-            print "- the C compiler is too old to support OpenMP"
+        if self.osx and self.ccname == 'clang':
+            print "- clang on OS X does not support OpenMP"
             print
             self.openmp = False
         if self.args.enable_openmp and self.openmp == False:
@@ -283,12 +308,11 @@ class Config:
             cppflags.append("-DSFMT_MEXP=%s" % MEXP)
 
         self.cppflags_prod.append("-DNDEBUG")
+        self.cflags_prod.append("-march=native")
 
-        if self.ccversion >= [4,2,4]:
-            self.cflags_prod.append("-march=native")
-            if self.osx:
-                # http://stackoverflow.com/questions/9840207/how-to-use-avx-pclmulqdq-on-mac-os-x-lion
-                self.cflags_prod.append("-Wa,-q")
+        if self.osx and self.ccname == 'gcc':
+            # http://stackoverflow.com/questions/9840207/how-to-use-avx-pclmulqdq-on-mac-os-x-lion
+            self.cflags_prod.append("-Wa,-q")
 
         if self.openmp:
             self.cflags_prod.append("-fopenmp")
@@ -302,7 +326,7 @@ class Config:
 
         self.cflags_prod.append("-O3")
 
-        if self.ccversion >= [4,7,0]:
+        if self.ccname == 'gcc' and self.ccversion >= [4,7,0]:
             for cflags in (self.cflags_prod, self.cflags_debug, self.cflags_dep):
                 cflags.extend(("-std=c11", "-g", "-pedantic",
                                "-Werror", "-Wall", "-Wextra",
@@ -316,15 +340,27 @@ class Config:
             if self.ccversion >= [4,8,0]:
                 self.cflags_prod.append("-Wno-unused-parameter")
             self.cflags_debug.append("-Wunused-macros")
-        else:
+            if not self.openmp:
+                self.cflags_prod.append("-Wno-unknown-pragmas")
+            self.cflags_debug.append("-Wno-unknown-pragmas")
+        elif self.ccname == 'clang':
             for cflags in (self.cflags_prod, self.cflags_debug, self.cflags_dep):
-                cflags.extend(("-std=c99", "-g", "-Wall", "-Wextra", "-Wno-unused", "-Wno-sign-compare"))
+                cflags.extend(("-std=c11", "-g", "-pedantic",
+                               "-Werror", "-Weverything",
+                               "-Wno-conversion", "-Wno-vla", "-Wno-padded",
+                               "-Wno-format-nonliteral", "-Wno-sign-compare",
+                               "-Wno-covered-switch-default", "-Wno-cast-align",
+                               "-Wno-unused"))
+            self.cflags_prod.append("-Wno-unused-parameter")
+            if not self.openmp:
+                self.cflags_prod.append("-Wno-source-uses-openmp")
+            self.cflags_debug.append("-Wno-source-uses-openmp")
+        else:
+            # Fallback settings
+            for cflags in (self.cflags_prod, self.cflags_debug, self.cflags_dep):
+                cflags.extend(("-std=c99", "-g", "-Wall"))
             for cppflags in (self.cppflags_prod, self.cppflags_debug, self.cppflags_dep):
                 cppflags.append("-D_Noreturn='__attribute__((noreturn))'")
-
-        if not self.openmp:
-            self.cflags_prod.append("-Wno-unknown-pragmas")
-        self.cflags_debug.append("-Wno-unknown-pragmas")
 
 
     def write_flags(self):
