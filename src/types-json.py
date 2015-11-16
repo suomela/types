@@ -16,7 +16,7 @@ what = [
     ('dataset', ['corpuscode', 'datasetcode'], [], [], 'normal'),
     ('sample', ['corpuscode', 'samplecode'], [], [], 'normal'),
     ('collection', ['corpuscode', 'collectioncode'], [], [], 'normal'),
-    ('sample_collection', ['corpuscode', 'samplecode', 'collectioncode'], [], [], 'set'),
+    ('sample_collection', ['corpuscode', 'collectioncode', 'samplecode'], [], [], 'set'),
     ('token', ['corpuscode', 'samplecode', 'datasetcode', 'tokencode'], [], [], 'normal'),
     ('tokeninfo', ['corpuscode', 'datasetcode', 'tokencode'], [], [], 'normal'),
     ('context', ['corpuscode', 'samplecode', 'datasetcode', 'tokencode'], [], [], 'multi'),
