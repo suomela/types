@@ -1142,6 +1142,7 @@ var Database = function(data) {
     this.setup_statcodes();
     this.setup_results();
     this.setup_samples();
+    this.setup_collections();
     this.setup_tokens();
     this.setup_context();
 };
@@ -1281,6 +1282,26 @@ Database.prototype.setup_samples = function() {
         }
         corpus.wordcount = wc;
         corpus.samplecount = sc;
+    }
+};
+
+Database.prototype.setup_collections = function() {
+    var x = this.data.sample_collection;
+    var y = {};
+    this.sample_collection_map = y;
+    for (var corpuscode in x) {
+        var xx = x[corpuscode];
+        var yy = {};
+        y[corpuscode] = yy;
+        for (var collectioncode in xx) {
+            var xxx = xx[collectioncode];
+            var yyy = {};
+            yy[collectioncode] = yyy;
+            for (var i = 0; i < xxx.length; ++i) {
+                var samplecode = xxx[i];
+                yyy[samplecode] = true;
+            }
+        }
     }
 };
 
@@ -1525,7 +1546,7 @@ Model.prototype.fix_sel = function() {
     if (sel.collectioncode && !(sel.collectioncode in get2obj(this.db.group_map_map, sel.corpuscode, sel.groupcode))) {
         sel.collectioncode = null;
     }
-    if (sel.samplecode && !(sel.samplecode in get2obj(data.sample_collection, sel.corpuscode, sel.collectioncode))) {
+    if (sel.samplecode && !(sel.samplecode in get2obj(this.db.sample_collection_map, sel.corpuscode, sel.collectioncode))) {
         sel.samplecode = null;
     }
     if (!sel.statcode || !(sel.statcode in this.db.statcode_map)) {
