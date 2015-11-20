@@ -3,7 +3,7 @@ import os.path
 import subprocess
 import sys
 
-BIN_DIR = 'bin'
+BIN_DIR = os.path.realpath(sys.path[0])
 TMP_DIR = 'tmp'
 LOGIN_FILE = 'loginfile'
 PARTS=1

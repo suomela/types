@@ -48,7 +48,7 @@ for prefix in a b c d e f g h; do
     echo
 done
 
-rcmd="$dir/types-run --bindir=$dir --db=tmp/types.sqlite --citer 10000 --piter 10000 --x 10000 --y 100"
+rcmd="$dir/types-run --db=tmp/types.sqlite --citer 10000 --piter 10000 --x 10000 --y 100"
 cp check/types.sqlite tmp/types.sqlite || exit 1
 $rcmd --local || exit 1
 check/verify-all || exit 1
