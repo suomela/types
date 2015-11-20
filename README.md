@@ -37,29 +37,10 @@ You will need:
   - a modern C compiler (GCC or Clang)
   - Python 2
   - SQLite 3
+  - Bower
 
 
-### Ubuntu 15.04
-
-Open a terminal and run:
-
-    sudo apt-get install git sqlite3 libsqlite3-dev
-
-
-### OS X 10.11 with Clang
-
-Installing Xcode command line tools should be enough:
-
-    xcode-select --install
-
-However, then you will be using Clang as your C compiler, and on OS X
-it does not support OpenMP, so the performance will be worse.
-
-
-### OS X 10.11 with GCC
-
-If you have a recent GCC installed, it will be used automatically
-instead of Clang. To install GCC, you can use Homebrew: http://brew.sh/
+### OS X 10.11
 
 First, install Homebrew as usual, and make sure it is fine and up-to-date:
 
@@ -67,9 +48,13 @@ First, install Homebrew as usual, and make sure it is fine and up-to-date:
     brew doctor
     brew update
 
-Then install GCC:
+Then install GCC and Node.js:
 
-    brew install gcc
+    brew install gcc node
+
+Then install Bower:
+
+    npm install -g bower
 
 
 License
