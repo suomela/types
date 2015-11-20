@@ -2,12 +2,13 @@
 
 import json
 import optparse
+import os
 import sqlite3
 import TypesDatabase
 
-TOOL = 'types-json'
+TOOL = 'types-web'
 BIN_DIR = 'bin'
-DEFAULT_JSON = 'db/types.json'
+DEFAULT_HTML = 'web'
 
 what = [
     ('label', ['labelcode'], [], [], 'normal'),
@@ -31,15 +32,15 @@ def msg(msg):
 
 def get_args():
     parser = optparse.OptionParser(
-        description='JSON export.',
+        description='Generate web user interface.',
         version=TypesDatabase.version_string(TOOL),
     )
     parser.add_option('--db', metavar='FILE', dest='db',
                       help='which database to read [default: %default]',
                       default=TypesDatabase.DEFAULT_FILENAME)
-    parser.add_option('--json', metavar='FILE', dest='json',
-                      help='which database to read [default: %default]',
-                      default=DEFAULT_JSON)
+    parser.add_option('--htmldir', metavar='FILE', dest='htmldir',
+                      help='target directory [default: %default]',
+                      default=DEFAULT_HTML)
     (options, args) = parser.parse_args()
     return options
 
@@ -138,7 +139,13 @@ def main():
     data = {}
     for w in what:
         dump(data, conn, *w)
-    with open(args.json, "w") as f:
+    d = args.htmldir
+    if not os.path.exists(d):
+        os.makedirs(d)
+    jsfile = os.path.join(d, "types-data.js")
+    with open(jsfile, "w") as f:
+        f.write('types.data(')
         f.write(json.dumps(data, sort_keys=True, separators=(',', ':')))
+        f.write(')')
 
 main()

@@ -56,6 +56,6 @@ cp check/types.sqlite tmp/types.sqlite || exit 1
 $rcmd --parts 3 --loginfile tmp/loginfile || exit 1
 check/verify-all || exit 1
 
-pcmd="$dir/types-json --db=tmp/types.sqlite --json=tmp/types.json"
+pcmd="$dir/types-web --db=tmp/types.sqlite --htmldir=tmp/html"
 rm -rf tmp/types.json
 $pcmd || exit 1

@@ -15,7 +15,7 @@ sfmt = external/SFMT-src-1.4
 
 #--- Programs
 
-prog_py = types-db-init types-db-refresh types-run types-json
+prog_py = types-db-init types-db-refresh types-run types-web
 prog_db = types-convert types-query types-store
 prog_other = types-comp types-rng 
 mod_py = TypesDatabase TypesParallel TypesVersion
