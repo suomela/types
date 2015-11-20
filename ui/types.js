@@ -23,86 +23,55 @@ var config = {
 //// Auxiliary functions
 
 var get1 = function(a, k1) {
-    var x = a;
-    if (!x || !k1) {
-        return null;
-    }
-    return x[k1];
+    return (a && k1) ? a[k1] : null;
 };
 
 var get2 = function(a, k1, k2) {
-    var x = a;
-    if (!x || !k1) {
-        return null;
-    }
-    x = x[k1];
-    if (!x || !k2) {
-        return null;
-    }
-    return x[k2];
+    return get1(get1(a, k1), k2);
 };
 
 var get3 = function(a, k1, k2, k3) {
-    var x = a;
-    if (!x || !k1) {
-        return null;
-    }
-    x = x[k1];
-    if (!x || !k2) {
-        return null;
-    }
-    x = x[k2];
-    if (!x || !k3) {
-        return null;
-    }
-    return x[k3];
+    return get1(get2(a, k1, k2), k3);
 };
 
 var get4 = function(a, k1, k2, k3, k4) {
-    var x = a;
-    if (!x || !k1) {
-        return null;
-    }
-    x = x[k1];
-    if (!x || !k2) {
-        return null;
-    }
-    x = x[k2];
-    if (!x || !k3) {
-        return null;
-    }
-    x = x[k3];
-    if (!x || !k4) {
-        return null;
-    }
-    return x[k4];
+    return get1(get3(a, k1, k2, k3), k4);
+};
+
+var get0list = function(a) {
+    return a ? a : [];
+};
+
+var get0obj = function(a) {
+    return a ? a : {};
+};
+
+var get0first = function(a) {
+    return (a && a.length) ? a[0] : null;
 };
 
 var get1list = function(a, k1) {
-    var x = get1(a, k1);
-    if (x) {
-        return x;
-    } else {
-        return [];
-    }
+    return get0list(get1(a, k1));
 };
 
 var get2list = function(a, k1, k2) {
-    var x = get2(a, k1, k2);
-    if (x) {
-        return x;
-    } else {
-        return [];
-    }
+    return get0list(get2(a, k1, k2));
 };
 
 var get3list = function(a, k1, k2, k3) {
-    var x = get3(a, k1, k2, k3);
-    if (x) {
-        return x;
-    } else {
-        return [];
-    }
+    return get0list(get3(a, k1, k2, k3));
+};
+
+var get1first = function(a, k1) {
+    return get0first(get1(a, k1));
+};
+
+var get1obj = function(a, k1) {
+    return get0obj(get1(a, k1));
+};
+
+var get2obj = function(a, k1, k2) {
+    return get0obj(get2(a, k1, k2));
 };
 
 var set2 = function(a, k1, k2, v) {
@@ -164,33 +133,6 @@ var opt_encode = function(x) {
     } else {
         return "p" + x;
     }
-};
-
-var set_option = function(sel, hide) {
-    sel
-        .attr("value", function(d) { return opt_encode(d); })
-        .text(function(d) { return (d === null) ? "none" : d.substring(hide); });
-};
-
-var set_option_obj = function(sel, hide) {
-    sel
-        .attr("value", function(d) { return opt_encode(d ? d.code : null); })
-        .text(function(d) { return (d === null) ? "none" : d.label; });
-};
-
-var set_options = function(sel, key, control, data, hide, setter, override) {
-    var opt = control.selectAll("option").data(data);
-    opt.exit().remove();
-    setter(opt.enter().append("option"), hide);
-    setter(opt, hide);
-    var got = opt_decode(control.property("value"));
-    if (override && key in override) {
-        if (override[key] != got) {
-            got = override[key];
-            control.property("value", opt_encode(got));
-        }
-    }
-    sel[key] = got;
 };
 
 var compactify = function(t) {
@@ -850,18 +792,24 @@ View.prototype.ev_resize = function() {
 //// Controller: Input
 
 var Input = function(ctrl) {
-    this.corpus = d3.select("#input_corpus");
-    this.dataset = d3.select("#input_dataset");
-    this.group = d3.select("#input_group");
-    this.collection = d3.select("#input_collection");
-    this.stat = d3.select("#input_stat");
-    this.inputs = [this.corpus, this.dataset, this.group, this.collection, this.stat];
+    this.inputs = ['corpuscode', 'datasetcode', 'groupcode', 'collectioncode', 'statcode'];
     for (var i = 0; i < this.inputs.length; ++i) {
-        this.inputs[i].on({
+        var l = this.inputs[i];
+        this[l] = d3.select("#input_" + l);
+        this[l].on({
             'change': ctrl.ev_input_changed.bind(ctrl),
             'input': ctrl.ev_input_changed.bind(ctrl)
         });
     }
+};
+
+Input.prototype.get_options = function() {
+    var x = {};
+    for (var i = 0; i < this.inputs.length; ++i) {
+        var l = this.inputs[i];
+        x[l] = opt_decode(this[l].property("value"));
+    }
+    return x;
 };
 
 //// Controller: Settings
@@ -895,6 +843,66 @@ var Controller = function() {
     this.model = new Model();
     this.settings = new Settings(this);
     this.input = new Input(this);
+    var model = this.model;
+    this.fields = [
+        {
+            key: 'corpuscode',
+            get: model.get_corpuscodes.bind(model),
+            set: set_option,
+            invalidates: [
+                'datasetcode', 'groupcode', 'collectioncode', 'samplecode', 'tokencode',
+                'curves', 'points', 'selection'
+            ],
+        },
+        {
+            key: 'datasetcode',
+            get: model.get_datasetcodes.bind(model),
+            set: set_option,
+            invalidates: [
+                'tokencode',
+                'curves', 'points', 'selection'
+            ],
+        },
+        {
+            key: 'groupcode',
+            get: model.get_groupcodes.bind(model),
+            set: set_option_hide,
+            invalidates: [
+                'collectioncode', 'samplecode', 'tokencode',
+                'points', 'selection'
+            ],
+        },
+        {
+            key: 'collectioncode',
+            get: model.get_collectioncodes.bind(model),
+            set: set_option,
+            invalidates: [
+                'samplecode', 'tokencode',
+                'points', 'selection'
+            ],
+        },
+        {
+            key: 'statcode',
+            get: model.get_statcodes.bind(model),
+            set: set_option_obj,
+            invalidates: [
+                'curves', 'points', 'selection'
+            ],
+        },
+        {
+            key: 'samplecode',
+            invalidates: [
+                'tokencode',
+                'selection'
+            ],
+        },
+        {
+            key: 'tokencode',
+            invalidates: [
+                'selection'
+            ],
+        },
+    ];
     this.refresh_settings();
     this.view.plot.set_curves({maxx: 1, maxy: 1, data: [{data: []}]});
     this.view.plot.set_points([]);
@@ -909,55 +917,108 @@ Controller.prototype.refresh_settings = function() {
     plot.yticks = +this.settings.yticks.property("value");
 };
 
-Controller.prototype.update_sel = function(what) {
-    this.view.indicator.set_info(this.model);
-    if (what === 'sample') {
-    } else if (what === 'point') {
+Controller.prototype.update_sel = function(changes) {
+    if (changes.force || changes.invalid.curves) {
+        this.view.plot.set_curves(this.model.get_curves());
+        this.view.plot.recalc_axes();
+        this.view.plot.recalc_curves();
+    }
+    if (changes.force || changes.invalid.points) {
         this.view.plot.set_points(this.model.get_points());
         this.view.plot.recalc_points();
         this.view.set_samples(this.model);
-    } else {
-        this.view.plot.set_curves(this.model.get_curves());
-        this.view.plot.set_points(this.model.get_points());
-        this.view.plot.recalc_plot();
-        this.view.set_samples(this.model);
     }
-    this.view.set_context(this.model);
-    this.view.set_sel(this.model);
+    if (changes.force || changes.invalid.selection) {
+        this.view.indicator.set_info(this.model);
+        this.view.set_context(this.model);
+        this.view.set_sel(this.model);
+    }
 };
 
-Controller.prototype.recalc_sel_point = function(override) {
+var set_option = function(sel) {
+    sel.attr("value", function(d) { return opt_encode(d); });
+    sel.text(function(d) { return (d === null) ? "none" : d; });
+};
+
+var set_option_hide = function(sel) {
+    sel.attr("value", function(d) { return opt_encode(d); });
+    sel.text(function(d) { return (d === null) ? "none" : d.substring(1); });
+};
+
+var set_option_obj = function(sel) {
+    sel.attr("value", function(d) { return opt_encode(d ? d.code : null); });
+    sel.text(function(d) { return (d === null) ? "none" : d.label; });
+};
+
+Controller.prototype.set_sel_raw = function(old, x) {
+    for (var i = 0; i < this.fields.length; ++i) {
+        var f = this.fields[i];
+        var k = f.key;
+        if (k in x) {
+            this.model.sel[k] = x[k];
+        } else {
+            this.model.sel[k] = old[k];
+        }
+    }
+};
+
+Controller.prototype.find_changed = function(old) {
+    var changes = {
+        changed: {},
+        invalid: {},
+        level: 0,
+    };
+    for (var i = 0; i < this.fields.length; ++i) {
+        var f = this.fields[i];
+        var k = f.key;
+        if (this.model.sel[k] !== old[k]) {
+            changes.changed[k] = true;
+            if (f.level > changes.level) {
+                changes.level = f.level;
+            }
+            for (var j = 0; j < f.invalidates.length; ++j) {
+                changes.invalid[f.invalidates[j]] = true;
+            }
+        }
+    }
+    return changes;
+};
+
+Controller.prototype.update_inputs = function(changes) {
+    for (var i = 0; i < this.fields.length; ++i) {
+        var f = this.fields[i];
+        var k = f.key;
+        if (k in this.input) {
+            var control = this.input[k];
+            if (changes.force || changes.invalid[k]) {
+                var values = f.get();
+                var opt = control.selectAll("option").data(values);
+                opt.exit().remove();
+                f.set(opt.enter().append("option"));
+                f.set(opt);
+            }
+            control.property("value", opt_encode(this.model.sel[k]));
+        }
+    }
+};
+
+Controller.prototype.recalc_sel = function(x, force) {
     var model = this.model;
-    var sel = model.sel;
-    var input = this.input;
-    set_options(sel, "collectioncode", input.collection, model.get_collectioncodes(), 0, set_option, override);
-    this.model.sel.samplecode = null;
-    this.update_sel('point');
-};
-
-Controller.prototype.recalc_sel_sample = function(override) {
-    this.model.sel.samplecode = override.samplecode;
-    this.update_sel('sample');
-};
-
-Controller.prototype.recalc_sel = function(override) {
-    var model = this.model;
-    var sel = model.sel;
-    var input = this.input;
-    set_options(sel, "corpuscode", input.corpus, model.get_corpuscodes(), 0, set_option, override);
-    set_options(sel, "datasetcode", input.dataset, model.get_datasetcodes(), 0, set_option, override);
-    set_options(sel, "groupcode", input.group, model.get_groupcodes(), 1, set_option, override);
-    set_options(sel, "statcode", input.stat, model.get_statcodes(), 0, set_option_obj, override);
-    set_options(sel, "collectioncode", input.collection, model.get_collectioncodes(), 0, set_option, override);
-    this.model.sel.samplecode = null;
-    this.update_sel('full');
+    var old = model.sel;
+    model.sel = {};
+    this.set_sel_raw(old, x);
+    model.fix_sel();
+    var changes = this.find_changed(old);
+    changes.force = force;
+    this.update_inputs(changes);
+    this.update_sel(changes);
 };
 
 Controller.prototype.data = function(data) {
     this.view.indicator.set_loading(false);
     this.model.set_data(data);
     this.view.update_results(this.model);
-    this.recalc_sel();
+    this.recalc_sel({}, true);
 };
 
 Controller.prototype.ev_settings_reset = function() {
@@ -973,17 +1034,15 @@ Controller.prototype.ev_settings_changed = function() {
 };
 
 Controller.prototype.ev_input_changed = function() {
-    this.recalc_sel();
+    this.recalc_sel(this.input.get_options());
 };
 
 Controller.prototype.ev_point_click = function(d, i) {
-    var x = {};
-    if (d.collectioncode === this.model.sel.collectioncode) {
-        x.collectioncode = null;
+    if (this.model.all_set(d)) {
+        this.recalc_sel({ collectioncode: null });
     } else {
-        x.collectioncode = d.collectioncode;
+        this.recalc_sel(d);
     }
-    this.recalc_sel_point(x);
 };
 
 Controller.prototype.ev_result_cell_click = function(d, i) {
@@ -996,9 +1055,9 @@ Controller.prototype.ev_result_cell_click = function(d, i) {
 
 Controller.prototype.ev_sample_cell_click = function(d, i) {
     if (this.model.all_set(d.row)) {
-        this.recalc_sel_sample({ samplecode: null });
+        this.recalc_sel({ samplecode: null });
     } else {
-        this.recalc_sel_sample(d.row);
+        this.recalc_sel(d.row);
     }
 };
 
@@ -1008,6 +1067,7 @@ var Database = function(data) {
     this.data = data;
     this.setup_group_maps();
     this.setup_corpuscodes();
+    this.setup_datasetcodes();
     this.setup_statcodes();
     this.setup_results();
     this.setup_samples();
@@ -1017,6 +1077,7 @@ var Database = function(data) {
 
 Database.prototype.setup_group_maps = function() {
     this.group_map = {};
+    this.group_map_map = {};
     this.group_reverse_map = {};
     this.group_list = {};
     for (var corpuscode in this.data.collection) {
@@ -1040,6 +1101,7 @@ Database.prototype.setup_group_map = function(corpuscode) {
     }
 
     this.group_map[corpuscode] = {};
+    this.group_map_map[corpuscode] = {};
     this.group_reverse_map[corpuscode] = {};
     this.group_list[corpuscode] = [];
     this.add_group(corpuscode, '1all', all);
@@ -1058,14 +1120,26 @@ Database.prototype.add_group = function(corpuscode, groupcode, collections) {
     collections.sort();
     this.group_list[corpuscode].push(groupcode);
     this.group_map[corpuscode][groupcode] = collections;
+    this.group_map_map[corpuscode][groupcode] = {};
     for (var i = 0; i < collections.length; ++i) {
-        this.group_reverse_map[corpuscode][collections[i]] = groupcode;
+        var collectioncode = collections[i];
+        this.group_map_map[corpuscode][groupcode][collectioncode] = true;
+        this.group_reverse_map[corpuscode][collectioncode] = groupcode;
     }
 };
 
 Database.prototype.setup_corpuscodes = function() {
     this.corpuscodes = Object.keys(this.data.corpus);
     this.corpuscodes.sort();
+};
+
+Database.prototype.setup_datasetcodes = function() {
+    this.datasetcodes = {};
+    for (var corpuscode in this.data.dataset) {
+        var l = Object.keys(this.data.dataset[corpuscode]);
+        l.sort();
+        this.datasetcodes[corpuscode] = l;
+    }
 };
 
 Database.prototype.setup_statcodes = function() {
@@ -1365,6 +1439,29 @@ Model.prototype.all_set = function(x) {
     return true;
 };
 
+Model.prototype.fix_sel = function() {
+    var sel = this.sel;
+    var data = this.db.data;
+    if (!sel.corpuscode || !(sel.corpuscode in data.corpus)) {
+        sel.corpuscode = get0first(this.db.corpuscodes);
+    }
+    if (!sel.datasetcode || !(sel.datasetcode in get1obj(data.dataset, sel.corpuscode))) {
+        sel.datasetcode = get1first(this.db.datasetcodes, sel.corpuscode);
+    }
+    if (!sel.groupcode || !(sel.groupcode in get1obj(this.db.group_map, sel.corpuscode))) {
+        sel.groupcode = get1first(this.db.group_list, sel.corpuscode);
+    }
+    if (sel.collectioncode && !(sel.collectioncode in get2obj(this.db.group_map_map, sel.corpuscode, sel.groupcode))) {
+        sel.collectioncode = null;
+    }
+    if (sel.samplecode && !(sel.samplecode in get2obj(data.sample_collection, sel.corpuscode, sel.collectioncode))) {
+        sel.samplecode = null;
+    }
+    if (!sel.statcode || !(sel.statcode in this.db.statcode_map)) {
+        sel.statcode = get1(get0first(this.db.statcodes), "code");
+    }
+};
+
 Model.prototype.set_data = function(data) {
     this.db = new Database(data);
 };
@@ -1382,12 +1479,7 @@ Model.prototype.get_corpuscodes = function() {
 };
 
 Model.prototype.get_datasetcodes = function() {
-    if (!this.sel.corpuscode) {
-        return [];
-    }
-    var l = Object.keys(this.db.data.dataset[this.sel.corpuscode]);
-    l.sort();
-    return l;
+    return get1list(this.db.datasetcodes, this.sel.corpuscode);
 };
 
 Model.prototype.get_groupcodes = function() {
