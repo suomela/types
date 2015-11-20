@@ -576,11 +576,11 @@ var td_builder = function(d) {
     var e;
     if (!val) {
         e = document.createTextNode('');
-    } else if (kind == 'link') {
+    } else if (kind === 'link') {
         e = document.createElement('a');
         e.appendChild(document.createTextNode('link'));
         e.setAttribute('href', val);
-    } else if (kind == 'wrap') {
+    } else if (kind === 'wrap') {
         e = document.createElement('span');
         e.appendChild(document.createTextNode(val));
     } else {
@@ -619,7 +619,7 @@ var table_builder = function(columns, data, table, row_hook) {
             return d3.ascending(c.key(a), c.key(b));
         });
         th.classed("active", function(c2, i2) {
-            return i == i2;
+            return i === i2;
         });
     };
     var th = head.append("tr").selectAll("th")
@@ -1339,10 +1339,10 @@ Database.prototype.setup_tokens_2 = function(tokenmap, corpuscode, datasetcode) 
             var sc = s.tokenmap[tokencode];
             s.tokens += sc;
             s.types += 1;
-            if (gc == 1) {
+            if (gc === 1) {
                 s.hapaxes += 1;
             }
-            if (gc == sc) {
+            if (gc === sc) {
                 var l = get4(this.data.tokeninfo, corpuscode, datasetcode, tokencode, "shortlabel");
                 if (!l) {
                     l = tokencode;
@@ -1368,7 +1368,7 @@ Database.prototype.setup_tokens = function() {
                 var count = tokenmap[tokencode];
                 dataset.tokens += count;
                 dataset.types += 1;
-                if (count == 1) {
+                if (count === 1) {
                     dataset.hapaxes += 1;
                 }
             }
@@ -1455,9 +1455,9 @@ Database.prototype.get_one_curve = function(curves, input, level) {
     while (i < data_lower.length || j < data_upper.length) {
         var igood = false;
         var jgood = false;
-        if (i == data_lower.length) {
+        if (i === data_lower.length) {
             jgood = true;
-        } else if (i == data_lower.length) {
+        } else if (i === data_lower.length) {
             igood = true;
         } else {
             igood = (data_lower[i].x <= data_upper[j].x);

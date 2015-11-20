@@ -1,4 +1,7 @@
 {
+    "bitwise": true,
+    "curly": true,
+    "eqeqeq": true,
     "browser": true,
     "globals": {
         "d3": false
