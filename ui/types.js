@@ -1,3 +1,4 @@
+var types = (function() {
 "use strict";
 
 //// Configuration
@@ -327,33 +328,38 @@ Plot.prototype.recalc_points = function() {
         return {x: x, y: y, vis: vis};
     };
     var plot = this;
-    this.marks.each(function(d) {
+
+    var pointset = function(d) {
         var c = coord(d);
         var sym;
         d3.select(this)
             .attr("transform", translate(c.x, c.y))
             .attr("d", d3.svg.symbol().size(d.area).type(d.sym))
             .style("visibility", c.vis);
-    });
-    this.texts.each(function(d) {
+    };
+    var labelset = function(d) {
         var c = coord(d);
         d3.select(this)
             .attr("x", c.x + config.label_x_offset)
             .attr("y", c.y + config.label_y_offset)
             .text(d.collectioncode)
             .style("visibility", c.vis);
-    });
+    };
+    var bgset = function(d,i) {
+        var c = coord(d);
+        var bbox = plot.texts[0][i].getBBox();
+        d3.select(this)
+            .attr("x", bbox.x - config.label_x_margin)
+            .attr("y", bbox.y)
+            .attr("width", bbox.width + 2 * config.label_x_margin)
+            .attr("height", bbox.height)
+            .style("visibility", c.vis);
+    };
+
+    this.marks.each(pointset);
+    this.texts.each(labelset);
     for (var j = 0; j < 2; ++j) {
-        this.textbgs[j].each(function(d,i) {
-            var c = coord(d);
-            var bbox = plot.texts[0][i].getBBox();
-            d3.select(this)
-                .attr("x", bbox.x - config.label_x_margin)
-                .attr("y", bbox.y)
-                .attr("width", bbox.width + 2 * config.label_x_margin)
-                .attr("height", bbox.height)
-                .style("visibility", c.vis);
-        });
+        this.textbgs[j].each(bgset);
     }
 };
 
@@ -1553,4 +1559,5 @@ Model.prototype.get_context = function() {
 
 //// main
 
-var types = new Controller();
+return new Controller();
+}());
