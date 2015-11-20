@@ -68,7 +68,7 @@ template_dump = template/types.sql
 
 ### Targets
 
-.PHONY: all build web debug bin check debug-check valgrind-check unittest debug-unittest valgrind-unittest jumptable version clean veryclean
+.PHONY: all build web debug bin check debug-check valgrind-check web-check unittest debug-unittest valgrind-unittest jumptable version clean veryclean
 
 all: build web
 
@@ -219,6 +219,9 @@ ui/bootstrap.min.css:
 	(cd external-ui && bower install)
 	cp -p $(uicomp)/bootstrap/dist/css/bootstrap.min.css $(uicomp)/bootstrap/dist/fonts/glyphicons* $(uicomp)/html5shiv/dist/html5shiv.min.js $(uicomp)/respond/dest/respond.min.js $(uicomp)/jquery/dist/jquery.min.js $(uicomp)/bootstrap/dist/js/bootstrap.min.js $(uicomp)/d3/d3.min.js ui/
 	sed 's,../fonts/,,g' < $(uicomp)/bootstrap/dist/css/bootstrap.min.css > ui/bootstrap.min.css
+
+web-check:
+	jshint ui/types.js
 
 ### Testing
 
