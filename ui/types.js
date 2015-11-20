@@ -1100,7 +1100,7 @@ Database.prototype.setup_results = function() {
             qq = r.q;
         }
         var p = this.data.result_p[r.corpuscode][r.datasetcode][r.collectioncode][r.statcode];
-        if (!p.fdr) {
+        if (!p.side) {
             p.fdr = qq;
             p.side = r.side;
             p.fraction = p[r.side] / p.total;
