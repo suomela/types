@@ -102,3 +102,7 @@ td.after span {
     left: 0px;
 }
 
+.footer {
+    margin-top: 10px;
+    font-size: 90%;
+}
