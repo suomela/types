@@ -24,7 +24,7 @@ var config = {
 
 var get1 = function(a, k1) {
     var x = a;
-    if (x === null || k1 === null) {
+    if (!x || !k1) {
         return null;
     }
     return x[k1];
@@ -32,11 +32,11 @@ var get1 = function(a, k1) {
 
 var get2 = function(a, k1, k2) {
     var x = a;
-    if (x === null || k1 === null) {
+    if (!x || !k1) {
         return null;
     }
     x = x[k1];
-    if (x === null || k2 === null) {
+    if (!x || !k2) {
         return null;
     }
     return x[k2];
@@ -44,15 +44,15 @@ var get2 = function(a, k1, k2) {
 
 var get3 = function(a, k1, k2, k3) {
     var x = a;
-    if (x === null || k1 === null) {
+    if (!x || !k1) {
         return null;
     }
     x = x[k1];
-    if (x === null || k2 === null) {
+    if (!x || !k2) {
         return null;
     }
     x = x[k2];
-    if (x === null || k3 === null) {
+    if (!x || !k3) {
         return null;
     }
     return x[k3];
@@ -60,19 +60,19 @@ var get3 = function(a, k1, k2, k3) {
 
 var get4 = function(a, k1, k2, k3, k4) {
     var x = a;
-    if (x === null || k1 === null) {
+    if (!x || !k1) {
         return null;
     }
     x = x[k1];
-    if (x === null || k2 === null) {
+    if (!x || !k2) {
         return null;
     }
     x = x[k2];
-    if (x === null || k3 === null) {
+    if (!x || !k3) {
         return null;
     }
     x = x[k3];
-    if (x === null || k4 === null) {
+    if (!x || !k4) {
         return null;
     }
     return x[k4];
@@ -602,7 +602,7 @@ var btn_up = '<span class="glyphicon glyphicon-sort-by-attributes-alt"></span> '
 var td_builder = function(d) {
     var kind = d.column.kind;
     var val = kind === 'pad' ? null : d.column.val(d.row);
-    if (val === null) {
+    if (!val) {
         return document.createTextNode('');
     } else if (kind == 'link') {
         var e = document.createElement('a');
