@@ -270,7 +270,7 @@ Plot.prototype.recalc_axes = function() {
     if (this.yticks) {
         margin.left *= config.leftaxisextra;
     }
-    var fullwidth = parseInt(this.plotdiv.style('width'));
+    var fullwidth = parseInt(this.plotdiv.style('width'), 10);
     if (!fullwidth) {
         fullwidth = this.oldwidth;
     } else {
@@ -638,62 +638,62 @@ View.prototype.set_samples = function(model) {
             html: btn_down + 'sample',
             kind: 'plain',
             val: function(p) { return p.samplecode; },
-            key: function(p) { return p.samplecode; },
+            key: function(p) { return p.samplecode; }
         },
         {
             html: btn_down + 'description',
             kind: 'plain',
             val: function(p) { return p.description; },
-            key: function(p) { return p.description; },
+            key: function(p) { return p.description; }
         },
         {
             html: btn_up + model.db.data.label.word.labeltext,
             kind: 'plain',
-            val: function(p) { return f_large(p.wordcount); },
-            key: function(p) { return -p.wordcount; },
             right: true,
+            val: function(p) { return f_large(p.wordcount); },
+            key: function(p) { return -p.wordcount; }
         },
         {
             html: btn_up + model.db.data.label.token.labeltext,
             kind: 'plain',
-            val: function(p) { return f_large(p.tokens); },
-            key: function(p) { return -p.tokens; },
             right: true,
+            val: function(p) { return f_large(p.tokens); },
+            key: function(p) { return -p.tokens; }
         },
         {
             html: btn_up + "/1000",
             kind: 'plain',
-            val: function(p) { return f_fraction(p.tokens/p.wordcount*1000); },
-            key: function(p) { return -p.tokens/p.wordcount; },
             right: true,
+            val: function(p) { return f_fraction(p.tokens/p.wordcount*1000); },
+            key: function(p) { return -p.tokens/p.wordcount; }
         },
         {
             html: btn_up + model.db.data.label.type.labeltext,
             kind: 'plain',
-            val: function(p) { return f_large(p.types); },
-            key: function(p) { return -p.types; },
             right: true,
+            val: function(p) { return f_large(p.types); },
+            key: function(p) { return -p.types; }
         },
         {
             html: btn_up + model.db.data.label.hapax.labeltext,
             kind: 'plain',
-            val: function(p) { return f_large(p.hapaxes); },
-            key: function(p) { return -p.hapaxes; },
             right: true,
+            val: function(p) { return f_large(p.hapaxes); },
+            key: function(p) { return -p.hapaxes; }
         },
         { kind: 'pad' },
         {
             html: btn_up + "unique",
             kind: 'plain',
-            val: function(p) { return p.unique.join(" "); },
-            key: function(p) { return -p.unique.length; },
             classed: 'wrap small',
+            val: function(p) { return p.unique.join(" "); },
+            key: function(p) { return -p.unique.length; }
         },
         {
             html: 'link',
             kind: 'link',
-            val: function(p) { return p.link; },
-        },
+            val: function(p) { return p.link; }
+        }
     ];
 
     this.sample_rows = table_builder(
@@ -711,44 +711,44 @@ View.prototype.set_context = function(model) {
             html: btn_down + 'sample',
             kind: 'plain',
             val: function(p) { return p.samplecode; },
-            key: function(p) { return p.samplecode; },
+            key: function(p) { return p.samplecode; }
         },
         {
             html: btn_down + 'token',
             kind: 'plain',
             val: function(p) { return p.shortlabel; },
-            key: function(p) { return p.shortlabel; },
+            key: function(p) { return p.shortlabel; }
         },
         { kind: 'pad' },
         {
             html: btn_down + 'before',
             kind: 'wrap',
-            val: function(p) { return p.before; },
-            key: function(p) { return p.before_sort; },
             classed: 'before',
+            val: function(p) { return p.before; },
+            key: function(p) { return p.before_sort; }
         },
         { kind: 'pad' },
         {
             html: btn_down + 'word',
             kind: 'plain',
-            val: function(p) { return p.word; },
-            key: function(p) { return p.word_sort; },
             classed: 'word',
+            val: function(p) { return p.word; },
+            key: function(p) { return p.word_sort; }
         },
         { kind: 'pad' },
         {
             html: btn_down + 'after',
             kind: 'wrapwrap',
-            val: function(p) { return p.after; },
-            key: function(p) { return p.after_sort; },
             classed: 'after',
+            val: function(p) { return p.after; },
+            key: function(p) { return p.after_sort; }
         },
         { kind: 'pad' },
         {
             html: 'link',
             kind: 'link',
-            val: function(p) { return p.link; },
-        },
+            val: function(p) { return p.link; }
+        }
     ];
 
     this.context_rows = table_builder(
@@ -780,7 +780,7 @@ View.prototype.update_results = function(model) {
             } else {
                 return "> 1";
             }
-        }],
+        }]
     ];
 
     var head = table.append("thead");
@@ -875,7 +875,7 @@ var Controller = function() {
             invalidates: [
                 'datasetcode', 'groupcode', 'collectioncode', 'samplecode', 'tokencode',
                 'curves', 'points', 'selection'
-            ],
+            ]
         },
         {
             key: 'datasetcode',
@@ -884,7 +884,7 @@ var Controller = function() {
             invalidates: [
                 'tokencode',
                 'curves', 'points', 'selection'
-            ],
+            ]
         },
         {
             key: 'groupcode',
@@ -893,7 +893,7 @@ var Controller = function() {
             invalidates: [
                 'collectioncode', 'samplecode', 'tokencode',
                 'points', 'selection'
-            ],
+            ]
         },
         {
             key: 'collectioncode',
@@ -902,7 +902,7 @@ var Controller = function() {
             invalidates: [
                 'samplecode', 'tokencode',
                 'points', 'selection'
-            ],
+            ]
         },
         {
             key: 'statcode',
@@ -910,21 +910,21 @@ var Controller = function() {
             set: set_option_obj,
             invalidates: [
                 'curves', 'points', 'selection'
-            ],
+            ]
         },
         {
             key: 'samplecode',
             invalidates: [
                 'tokencode',
                 'selection'
-            ],
+            ]
         },
         {
             key: 'tokencode',
             invalidates: [
                 'selection'
-            ],
-        },
+            ]
+        }
     ];
     this.refresh_settings();
     this.view.plot.set_curves({maxx: 1, maxy: 1, data: [{data: []}]});
@@ -991,7 +991,7 @@ Controller.prototype.find_changed = function(old) {
     var changes = {
         changed: {},
         invalid: {},
-        count: 0,
+        count: 0
     };
     for (var i = 0; i < this.fields.length; ++i) {
         var f = this.fields[i];
@@ -1230,7 +1230,7 @@ Database.prototype.setup_statcodes = function() {
                 y: y,
                 xlabel: xlabel,
                 ylabel: ylabel,
-                label: ylabel + " / " + xlabel,
+                label: ylabel + " / " + xlabel
             };
             this.statcodes.push(stat);
             this.statcode_map[statcode] = stat;
@@ -1315,7 +1315,7 @@ Database.prototype.setup_tokens_1 = function(tokenmap, corpuscode, datasetcode) 
             description: sample.description,
             wordcount: sample.wordcount,
             link: sample.link,
-            tokenmap: {},
+            tokenmap: {}
         };
         set3(this.sample_data, corpuscode, datasetcode, samplecode, s);
         var t = get3list(this.data.token, corpuscode, datasetcode, samplecode);
@@ -1518,7 +1518,7 @@ var Model = function() {
         collectioncode: null,
         statcode: null,
         samplecode: null,
-        tokencode: null,
+        tokencode: null
     };
 };
 
