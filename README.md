@@ -102,9 +102,53 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+### Web user interface
+
+The following libraries are used to build the web user interface.
+They are not bundled with the source code; we use Bower package
+manager to install them.
+
+Bootstrap:
+
+  - Available at http://getbootstrap.com/
+  - Copyright (c) 2011-2015 Twitter, Inc
+  - MIT License
+  - https://github.com/twbs/bootstrap/blob/master/LICENSE
+
+  - Includes icons from Glyphicon Halflings: http://glyphicons.com/
+
+D3.js:
+
+  - Available at http://d3js.org/
+  - Copyright 2015 Mike Bostock
+  - BSD license
+  - http://opensource.org/licenses/BSD-3-Clause
+
+jQuery:
+
+  - Available at https://jquery.com/
+  - Copyright 2014 jQuery Foundation and other contributors
+  - MIT license
+  - https://tldrlegal.com/license/mit-license
+
+HTML5 Shiv:
+
+  - Available at https://github.com/aFarkas/html5shiv/
+  - Copyright (c) 2014 Alexander Farkas (aFarkas)
+  - MIT or GPL version 2
+  - https://github.com/aFarkas/html5shiv/blob/master/MIT%20and%20GPL2%20licenses.md
+
+Respond.js:
+
+  - Available at https://github.com/scottjehl/Respond
+  - Copyright 2011: Scott Jehl, scottjehl.com
+  - MIT license
+  - https://github.com/scottjehl/Respond/blob/master/LICENSE-MIT
+
+
 ### Other parts
 
-Copyright (c) 2014, Jukka Suomela.
+Copyright (c) 2014-2015, Jukka Suomela.
 
 Enjoy, use at your own risk.
 
