@@ -193,7 +193,7 @@ var set_options = function(sel, key, control, data, hide, setter, override) {
     sel[key] = got;
 };
 
-var textmaker = function(e, t) {
+var compactify = function(t) {
     var compact = [];
     var cur = null;
     for (var i = 0; i < t.length; ++i) {
@@ -213,6 +213,11 @@ var textmaker = function(e, t) {
     if (cur) {
         compact.push(cur);
     }
+    return compact;
+};
+
+var textmaker = function(e, t) {
+    var compact = compactify(t);
     for (var i = 0; i < compact.length; ++i) {
         var x = compact[i];
         e.append(x[0]).text(x[1]);
@@ -254,7 +259,7 @@ var Plot = function(ctrl) {
         .attr("id", "plotclip").append("rect").attr("class", "bg");
     this.clippedg = this.curveareag.append("g")
         .attr("clip-path", "url(#plotclip)");
-    this.textbgareag = []
+    this.textbgareag = [];
     for (var i = 0; i < 2; ++i) {
         this.textbgareag.push(this.curveareag.append("g"));
     }
@@ -314,7 +319,7 @@ Plot.prototype.recalc_axes = function() {
     }
     var fullheight = d3.round(config.aspect * fullwidth);
     var plotwidth = fullwidth - margin.left - margin.right;
-    var plotheight = fullheight - margin.top - margin.bottom;;
+    var plotheight = fullheight - margin.top - margin.bottom;
     this.plot.style('width', fullwidth + 'px');
     this.plot.style('height', fullheight + 'px');
     this.bg.attr('width', plotwidth);
@@ -376,7 +381,7 @@ Plot.prototype.recalc_points = function() {
         var x = plot.xscale(d.x);
         var y = plot.yscale(d.y);
         var bounds = (x0 <= x && x <= x1 && y0 <= y && y <= y1);
-        var vis = bounds ? "visible" : "hidden"
+        var vis = bounds ? "visible" : "hidden";
         return {x: x, y: y, vis: vis};
     };
     var plot = this;
@@ -452,11 +457,11 @@ Plot.prototype.set_points = function(points) {
         .attr("class", "pointlabel")
         .on("click", ctrl.ev_point_click.bind(ctrl));
     this.textbgs = [null, null];
-    for (var i = 0; i < 2; ++i) {
-        this.textbgs[i] = this.textbgareag[i].selectAll("rect").data(this.points);
-        this.textbgs[i].exit().remove();
-        this.textbgs[i].enter().append("rect")
-            .attr("class", i ? "pointlabelbg2" : "pointlabelbg1")
+    for (var j = 0; j < 2; ++j) {
+        this.textbgs[j] = this.textbgareag[j].selectAll("rect").data(this.points);
+        this.textbgs[j].exit().remove();
+        this.textbgs[j].enter().append("rect")
+            .attr("class", j ? "pointlabelbg2" : "pointlabelbg1")
             .attr("rx", config.label_corner_radius)
             .attr("ry", config.label_corner_radius)
             .on("click", ctrl.ev_point_click.bind(ctrl));
@@ -507,9 +512,11 @@ Indicator.prototype.set_info = function(model) {
     if (stat) {
         this.plot_title.text(stat.label);
     }
+    var par;
+    var t;
     if (p) {
-        var par = this.info.append("p");
-        var t = [];
+        par = this.info.append("p");
+        t = [];
         t.push("This collection contains ");
         t.push(f_large(p.x) + " " + stat.xlabel);
         t.push(" and ");
@@ -520,7 +527,7 @@ Indicator.prototype.set_info = function(model) {
         } else {
             t.push(" Approx. ");
         }
-        t.push(["strong", f_fraction(100 * p.fraction) + "%"])
+        t.push(["strong", f_fraction(100 * p.fraction) + "%"]);
         t.push(" of random collections with ");
         t.push(f_large(p.x) + " " + stat.xlabel);
         t.push(" contain ");
@@ -535,33 +542,33 @@ Indicator.prototype.set_info = function(model) {
                 t.push(" This finding is probably not interesting:");
                 t.push(" the false discovery rate is larger than ");
                 t.push(config.fdr_threshold);
-                t.push(".")
+                t.push(".");
             } else {
                 t.push(" This finding is probably interesting:");
                 t.push(" the false discovery rate is approx. ");
                 t.push(["strong", f_fraction(p.fdr)]);
-                t.push(".")
+                t.push(".");
             }
         }
         textmaker(par, t);
     } else if (corpus) {
-        var par = this.info.append("p");
-        var t = [];
+        par = this.info.append("p");
+        t = [];
         t.push("This corpus contains ");
         t.push(f_large(corpus.samplecount) + " samples");
         t.push(" and ");
-        t.push(f_large(corpus.wordcount) + " " + model.db.data.label["word"].labeltext);
+        t.push(f_large(corpus.wordcount) + " " + model.db.data.label.word.labeltext);
         t.push(".");
         textmaker(par, t);
         if (dataset) {
-            var par = this.info.append("p");
-            var t = [];
+            par = this.info.append("p");
+            t = [];
             t.push("This dataset contains ");
-            t.push(f_large(dataset.hapaxes) + " " + model.db.data.label["hapax"].labeltext);
+            t.push(f_large(dataset.hapaxes) + " " + model.db.data.label.hapax.labeltext);
             t.push(", ");
-            t.push(f_large(dataset.tokens) + " " + model.db.data.label["type"].labeltext);
+            t.push(f_large(dataset.tokens) + " " + model.db.data.label.type.labeltext);
             t.push(", and ");
-            t.push(f_large(dataset.types) + " " + model.db.data.label["token"].labeltext);
+            t.push(f_large(dataset.types) + " " + model.db.data.label.token.labeltext);
             t.push(".");
             textmaker(par, t);
         }
@@ -602,20 +609,20 @@ var btn_up = '<span class="glyphicon glyphicon-sort-by-attributes-alt"></span> '
 var td_builder = function(d) {
     var kind = d.column.kind;
     var val = kind === 'pad' ? null : d.column.val(d.row);
+    var e;
     if (!val) {
-        return document.createTextNode('');
+        e = document.createTextNode('');
     } else if (kind == 'link') {
-        var e = document.createElement('a');
+        e = document.createElement('a');
         e.appendChild(document.createTextNode('link'));
         e.setAttribute('href', val);
-        return e;
     } else if (kind == 'wrap') {
-        var e = document.createElement('span');
+        e = document.createElement('span');
         e.appendChild(document.createTextNode(val));
-        return e;
     } else {
-        return document.createTextNode(val);
+        e = document.createTextNode(val);
     }
+    return e;
 };
 
 var table_builder = function(columns, data, table, row_hook) {
@@ -676,14 +683,14 @@ View.prototype.set_samples = function(model) {
             key: function(p) { return p.description; },
         },
         {
-            html: btn_up + model.db.data.label["word"].labeltext,
+            html: btn_up + model.db.data.label.word.labeltext,
             kind: 'plain',
             val: function(p) { return f_large(p.wordcount); },
             key: function(p) { return -p.wordcount; },
             right: true,
         },
         {
-            html: btn_up + model.db.data.label["token"].labeltext,
+            html: btn_up + model.db.data.label.token.labeltext,
             kind: 'plain',
             val: function(p) { return f_large(p.tokens); },
             key: function(p) { return -p.tokens; },
@@ -697,14 +704,14 @@ View.prototype.set_samples = function(model) {
             right: true,
         },
         {
-            html: btn_up + model.db.data.label["type"].labeltext,
+            html: btn_up + model.db.data.label.type.labeltext,
             kind: 'plain',
             val: function(p) { return f_large(p.types); },
             key: function(p) { return -p.types; },
             right: true,
         },
         {
-            html: btn_up + model.db.data.label["hapax"].labeltext,
+            html: btn_up + model.db.data.label.hapax.labeltext,
             kind: 'plain',
             val: function(p) { return f_large(p.hapaxes); },
             key: function(p) { return -p.hapaxes; },
@@ -817,7 +824,7 @@ View.prototype.update_results = function(model) {
         .data(columns).enter()
         .append("th").text(function(d) {
             return d[0];
-        })
+        });
     var body = table.append("tbody");
     this.result_rows = body.selectAll("tr")
         .data(db.point_ordered).enter()
@@ -1005,6 +1012,7 @@ var Database = function(data) {
     this.setup_results();
     this.setup_samples();
     this.setup_tokens();
+    this.setup_context();
 };
 
 Database.prototype.setup_group_maps = function() {
@@ -1024,8 +1032,7 @@ Database.prototype.setup_group_map = function(corpuscode) {
     for (var collectioncode in collections) {
         var collection = collections[collectioncode];
         if (collection.groupcode) {
-            var groupcode = collection.groupcode;
-            push1(x, groupcode, collectioncode);
+            push1(x, collection.groupcode, collectioncode);
         } else {
             other.push(collectioncode);
         }
@@ -1094,8 +1101,7 @@ Database.prototype.setup_results = function() {
     var qq = null;
     this.point_ordered = [];
     for (var j = 0; j < indexes.length; ++j) {
-        var i = indexes[j];
-        var r = this.data.result_q[i];
+        var r = this.data.result_q[indexes[j]];
         if (qq === null || qq < r.q) {
             qq = r.q;
         }
@@ -1133,56 +1139,62 @@ Database.prototype.setup_samples = function() {
     }
 };
 
+Database.prototype.setup_tokens_1 = function(tokenmap, corpuscode, datasetcode) {
+    for (var samplecode in this.data.sample[corpuscode]) {
+        var sample = this.data.sample[corpuscode][samplecode];
+        var s = {
+            corpuscode: corpuscode,
+            datasetcode: datasetcode,
+            samplecode: samplecode,
+            description: sample.description,
+            wordcount: sample.wordcount,
+            link: sample.link,
+            tokenmap: {},
+        };
+        set3(this.sample_data, corpuscode, datasetcode, samplecode, s);
+        var t = get3list(this.data.token, corpuscode, datasetcode, samplecode);
+        for (var tokencode in t) {
+            var token = t[tokencode];
+            add1(tokenmap, tokencode, token.tokencount);
+            add1(s.tokenmap, tokencode, token.tokencount);
+        }
+    }
+};
+
+Database.prototype.setup_tokens_2 = function(tokenmap, corpuscode, datasetcode) {
+    for (var samplecode in this.data.sample[corpuscode]) {
+        var s = this.sample_data[corpuscode][datasetcode][samplecode];
+        s.unique = [];
+        s.hapaxes = 0;
+        s.tokens = 0;
+        s.types = 0;
+        for (var tokencode in s.tokenmap) {
+            var gc = tokenmap[tokencode];
+            var sc = s.tokenmap[tokencode];
+            s.tokens += sc;
+            s.types += 1;
+            if (gc == 1) {
+                s.hapaxes += 1;
+            }
+            if (gc == sc) {
+                var l = get4(this.data.tokeninfo, corpuscode, datasetcode, tokencode, "shortlabel");
+                if (!l) {
+                    l = tokencode;
+                }
+                s.unique.push(l);
+            }
+        }
+    }
+};
+
 Database.prototype.setup_tokens = function() {
     this.sample_data = {};
     for (var corpuscode in this.data.token) {
         for (var datasetcode in this.data.dataset[corpuscode]) {
             var dataset = this.data.dataset[corpuscode][datasetcode];
             var tokenmap = {};
-            for (var samplecode in this.data.sample[corpuscode]) {
-                var sample = this.data.sample[corpuscode][samplecode];
-                var s = {
-                    corpuscode: corpuscode,
-                    datasetcode: datasetcode,
-                    samplecode: samplecode,
-                    description: sample.description,
-                    wordcount: sample.wordcount,
-                    link: sample.link,
-                    tokenmap: {},
-                };
-                set3(this.sample_data, corpuscode, datasetcode, samplecode, s);
-                var t = get3list(this.data.token, corpuscode, datasetcode, samplecode);
-                for (var tokencode in t) {
-                    var token = t[tokencode];
-                    add1(tokenmap, tokencode, token.tokencount);
-                    add1(s.tokenmap, tokencode, token.tokencount);
-                }
-            }
-
-            for (var samplecode in this.data.sample[corpuscode]) {
-                var s = this.sample_data[corpuscode][datasetcode][samplecode];
-                s.unique = [];
-                s.hapaxes = 0;
-                s.tokens = 0;
-                s.types = 0;
-                for (var tokencode in s.tokenmap) {
-                    var gc = tokenmap[tokencode];
-                    var sc = s.tokenmap[tokencode];
-                    s.tokens += sc;
-                    s.types += 1;
-                    if (gc == 1) {
-                        s.hapaxes += 1;
-                    }
-                    if (gc == sc) {
-                        var l = get4(this.data.tokeninfo, corpuscode, datasetcode, tokencode, "shortlabel");
-                        if (!l) {
-                            l = tokencode;
-                        }
-                        s.unique.push(l);
-                    }
-                }
-            }
-
+            this.setup_tokens_1(tokenmap, corpuscode, datasetcode);
+            this.setup_tokens_2(tokenmap, corpuscode, datasetcode);
             dataset.hapaxes = 0;
             dataset.tokens = 0;
             dataset.types = 0;
@@ -1196,7 +1208,9 @@ Database.prototype.setup_tokens = function() {
             }
         }
     }
+};
 
+Database.prototype.setup_context = function() {
     for (var corpuscode in this.data.context) {
         var t1 = this.data.context[corpuscode];
         for (var datasetcode in t1) {
@@ -1261,8 +1275,8 @@ Database.prototype.get_curves = function(sel) {
 };
 
 Database.prototype.get_one_curve = function(curves, input, level) {
-    var curve_lower = input[level]['lower'].id;
-    var curve_upper = input[level]['upper'].id;
+    var curve_lower = input[level].lower.id;
+    var curve_upper = input[level].upper.id;
     var data_lower = this.data.result_curve_point[curve_lower];
     var data_upper = this.data.result_curve_point[curve_upper];
     var i = 0;

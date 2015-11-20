@@ -1,0 +1,6 @@
+{
+    "browser": true,
+    "globals": {
+        "d3": false
+    }
+}
