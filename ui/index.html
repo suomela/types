@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>types2</title>
+    <link href="bootstrap.min.css" rel="stylesheet">
+    <!--[if lt IE 9]>
+    <script src="html5shiv.min.js"></script>
+    <script src="respond.min.js"></script>
+    <![endif]-->
+    <link href="types.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="container">
+
+    <div id="indicator_loading" class="alert alert-info">
+        <strong class="panel-title">Loading...</strong>
+    </div>
+
+    <div id="indicator_error" class="alert alert-danger" style="display: none">
+        <strong id="indicator_msg_title" class="panel-title">Error</strong>
+        <span id="indicator_msg"></span>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-5">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title"><i>types</i>2</h2>
+                </div>
+                <div class="panel-body">
+                    <div class="form-horizontal">
+                        <div class="form-group">
+                            <label for="input_corpus" class="control-label col-md-3">Corpus</label>
+                            <div class="col-md-9">
+                                <select id="input_corpus" class="form-control">
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="input_dataset" class="control-label col-md-3">Dataset</label>
+                            <div class="col-md-9">
+                                <select id="input_dataset" class="form-control">
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="input_group" class="control-label col-md-3">Group</label>
+                            <div class="col-md-9">
+                                <select id="input_group" class="form-control">
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="input_collection" class="control-label col-md-3">Collection</label>
+                            <div class="col-md-9">
+                                <select id="input_collection" class="form-control">
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="input_stat" class="control-label col-md-3">Axes</label>
+                            <div class="col-md-9">
+                                <select id="input_stat" class="form-control">
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="info">
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div role="button" class="panel-heading" data-toggle="collapse" data-target="#setting_panel_body">
+                    <h2 class="panel-title">
+                        <span class="glyphicon glyphicon-menu-down"></span>
+                        Plot settings
+                    </h2>
+                </div>
+                <div class="panel-body form-horizontal collapse" id="setting_panel_body">
+                    <div class="form-group">
+                        <label for="settings_xticks" class="control-label col-md-3">X ticks</label>
+                        <div class="col-md-9">
+                            <input type="range" min="0" max="10" value="5" id="settings_xticks" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="settings_yticks" class="control-label col-md-3">Y ticks</label>
+                        <div class="col-md-9">
+                            <input type="range" min="0" max="10" value="5" id="settings_yticks" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="settings_margin" class="control-label col-md-3">Margin</label>
+                        <div class="col-md-9">
+                            <input type="range" min="0" max="40" value="20" id="settings_margin" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-offset-3 col-md-9">
+                            <button type="button" class="btn btn-default navbar-btn" id="settings_reset" disabled>Reset</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-7">
+            <div class="panel panel-default">
+                <button type="button" class="btn btn-primary btn-sm float_button" id="zoom_reset">Reset zoom &amp; pan</button>
+                <div role="button" class="panel-heading" data-toggle="collapse" data-target="#fig_panel_body">
+                    <h2 class="panel-title">
+                        <span class="glyphicon glyphicon-menu-down"></span>
+                        <span id="plot_title"></span>
+                    </h2>
+                </div>
+                <div class="panel-body collapse in" id="fig_panel_body">
+                    <div id="plot"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="panel panel-default">
+                <div role="button" class="panel-heading" data-toggle="collapse" data-target="#result_container">
+                    <h2 class="panel-title">
+                        <span class="glyphicon glyphicon-menu-down"></span>
+                        All findings
+                    </h2>
+                </div>
+                <div class="collapse in table_container" id="result_container">
+                    <table class="table table-hover table-condensed" id="result_table">
+                    </table>
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div role="button" class="panel-heading" data-toggle="collapse" data-target="#sample_container">
+                    <h2 class="panel-title">
+                        <span class="glyphicon glyphicon-menu-down"></span>
+                        Samples
+                    </h2>
+                </div>
+                <div class="collapse in table_container" id="sample_container">
+                    <table class="table table-hover table-condensed" id="sample_table">
+                    </table>
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div role="button" class="panel-heading" data-toggle="collapse" data-target="#context_container">
+                    <h2 class="panel-title">
+                        <span class="glyphicon glyphicon-menu-down"></span>
+                        Context
+                    </h2>
+                </div>
+                <div class="collapse in table_container" id="context_container">
+                    <table class="table table-hover table-condensed" id="context_table">
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="jquery.min.js"></script>
+<script src="bootstrap.min.js"></script>
+<script src="d3.min.js"></script>
+<script src="types.js"></script>
+<script src="types-data.js"></script>
+<script>
+$(function() { $.support.transition = false; });
+</script>
+</body>
+</html>

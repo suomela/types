@@ -1,0 +1,10 @@
+{
+    "name": "test",
+    "dependencies": {
+        "bootstrap": "latest",
+        "jquery": "latest",
+        "html5shiv": "latest",
+        "respond": "latest",
+        "d3": "latest"
+    }
+}

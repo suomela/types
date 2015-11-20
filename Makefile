@@ -10,6 +10,7 @@ config = etc/config.inc
 include $(config)
 
 sfmt = external/SFMT-src-1.4
+uicomp = external-ui/bower_components
 
 ### Modules
 
@@ -67,9 +68,9 @@ template_dump = template/types.sql
 
 ### Targets
 
-.PHONY: build debug bin check debug-check valgrind-check unittest debug-unittest valgrind-unittest jumptable version clean veryclean
+.PHONY: all build web debug bin check debug-check valgrind-check unittest debug-unittest valgrind-unittest jumptable version clean veryclean
 
-all: build
+all: build web
 
 build: $(bin) $(state) $(template_db) $(template_dump)
 
@@ -210,6 +211,15 @@ version:
 	mkdir -p $(@D)
 	touch $@
 
+### Web user interface
+
+web: ui/bootstrap.min.css
+
+ui/bootstrap.min.css:
+	(cd external-ui && bower install)
+	cp -p $(uicomp)/bootstrap/dist/css/bootstrap.min.css $(uicomp)/bootstrap/dist/fonts/glyphicons* $(uicomp)/html5shiv/dist/html5shiv.min.js $(uicomp)/respond/dest/respond.min.js $(uicomp)/jquery/dist/jquery.min.js $(uicomp)/bootstrap/dist/js/bootstrap.min.js $(uicomp)/d3/d3.min.js ui/
+	sed 's,../fonts/,,g' < $(uicomp)/bootstrap/dist/css/bootstrap.min.css > ui/bootstrap.min.css
+
 ### Testing
 
 unittest: build/unittest $(state)
@@ -239,6 +249,7 @@ clean:
 	rm -f code-gen/*.pyc lib/*.pyc
 	rm -f $(gensrc) $(sfmt)/jump/calc-jump
 	rm -rf bin build debug dep tmp
+	rm -f ui/bootstrap.* ui/d3.* ui/jquery.* ui/html5shiv.* ui/respond.* ui/glyphicons-*
 
 ifneq ($(MAKECMDGOALS),clean)
   ifneq ($(MAKECMDGOALS),veryclean)
