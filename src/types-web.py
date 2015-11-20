@@ -3,12 +3,15 @@
 import json
 import optparse
 import os
+import shutil
 import sqlite3
+import sys
 import TypesDatabase
 
 TOOL = 'types-web'
 BIN_DIR = 'bin'
-DEFAULT_HTML = 'web'
+DEFAULT_SRC = os.path.realpath(os.path.join(sys.path[0], '..', 'ui'))
+DEFAULT_DEST = 'web'
 
 what = [
     ('label', ['labelcode'], [], [], 'normal'),
@@ -38,9 +41,12 @@ def get_args():
     parser.add_option('--db', metavar='FILE', dest='db',
                       help='which database to read [default: %default]',
                       default=TypesDatabase.DEFAULT_FILENAME)
-    parser.add_option('--htmldir', metavar='FILE', dest='htmldir',
-                      help='target directory [default: %default]',
-                      default=DEFAULT_HTML)
+    parser.add_option('--srcdir', metavar='FILE', dest='srcdir',
+                      help='HTML source directory [default: %default]',
+                      default=DEFAULT_SRC)
+    parser.add_option('--destdir', metavar='FILE', dest='destdir',
+                      help='HTML targer directory [default: %default]',
+                      default=DEFAULT_DEST)
     (options, args) = parser.parse_args()
     return options
 
@@ -137,12 +143,24 @@ def main():
     args = get_args()
     conn = TypesDatabase.open_db(args.db)
     data = {}
+
+    s = args.srcdir
+    d = args.destdir
+    if not os.path.exists(d):
+        print d
+        os.makedirs(d)
+
+    for fn in os.listdir(s):
+        if fn.startswith('.'):
+            continue
+        print fn
+        shutil.copy2(os.path.join(s, fn), os.path.join(d, fn))
+
     for w in what:
         dump(data, conn, *w)
-    d = args.htmldir
-    if not os.path.exists(d):
-        os.makedirs(d)
-    jsfile = os.path.join(d, "types-data.js")
+    fn = "types-data.js"
+    print(fn)
+    jsfile = os.path.join(d, fn)
     with open(jsfile, "w") as f:
         f.write('types.data(')
         f.write(json.dumps(data, sort_keys=True, separators=(',', ':')))
