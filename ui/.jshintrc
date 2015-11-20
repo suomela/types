@@ -3,7 +3,15 @@
     "curly": true,
     "eqeqeq": true,
     "es3": true,
+    "freeze": true,
+    "futurehostile": true,
+    "latedef": true,
+    "nocomma": true,
+    "nonbsp": true,
+    "nonew": true,
     "browser": true,
+    "undef": true,
+    // "unused": true,
     "globals": {
         "d3": false
     }

@@ -75,13 +75,6 @@ var get2obj = function(a, k1, k2) {
     return get0obj(get2(a, k1, k2));
 };
 
-var set2 = function(a, k1, k2, v) {
-    if (!a[k1]) {
-        a[k1] = {};
-    }
-    a[k1][k2] = v;
-};
-
 var set3 = function(a, k1, k2, k3, v) {
     if (!a[k1]) {
         a[k1] = {};
@@ -347,7 +340,6 @@ Plot.prototype.recalc_points = function() {
 
     var pointset = function(d) {
         var c = coord(d);
-        var sym;
         d3.select(this)
             .attr("transform", translate(c.x, c.y))
             .attr("d", d3.svg.symbol().size(d.area).type(d.sym))
@@ -600,7 +592,7 @@ var table_builder = function(columns, data, table, row_hook) {
         tr.attr("role", "button");
     }
     var td = tr.selectAll("td")
-        .data(function(row, i) {
+        .data(function(row) {
             return columns.map(function(c) {
                 return { row: row, column: c };
             });
@@ -795,7 +787,7 @@ View.prototype.update_results = function(model) {
         .append("tr")
         .attr("role", "button");
     this.result_rows.selectAll("td")
-        .data(function(row, i) {
+        .data(function(row) {
             return columns.map(function(c) {
                 return { row: row, column: c };
             });
@@ -1073,7 +1065,7 @@ Controller.prototype.ev_input_changed = function() {
     this.recalc_sel(this.input.get_options());
 };
 
-Controller.prototype.ev_point_click = function(d, i) {
+Controller.prototype.ev_point_click = function(d) {
     if (this.model.all_set(d)) {
         this.recalc_sel({ collectioncode: null });
     } else {
@@ -1081,7 +1073,7 @@ Controller.prototype.ev_point_click = function(d, i) {
     }
 };
 
-Controller.prototype.ev_result_cell_click = function(d, i) {
+Controller.prototype.ev_result_cell_click = function(d) {
     if (this.model.all_set(d.row)) {
         this.recalc_sel({ collectioncode: null });
     } else {
@@ -1089,7 +1081,7 @@ Controller.prototype.ev_result_cell_click = function(d, i) {
     }
 };
 
-Controller.prototype.ev_sample_cell_click = function(d, i) {
+Controller.prototype.ev_sample_cell_click = function(d) {
     if (this.model.all_set(d.row)) {
         this.recalc_sel({ samplecode: null });
     } else {
@@ -1125,7 +1117,7 @@ Controller.prototype.try_parse_hash = function() {
     return x;
 };
 
-Controller.prototype.ev_hashchange = function(d, i) {
+Controller.prototype.ev_hashchange = function() {
     var x = this.try_parse_hash();
     if (x) {
         this.recalc_sel(x);
@@ -1380,7 +1372,6 @@ Database.prototype.setup_context = function() {
     for (var corpuscode in this.data.context) {
         var t1 = this.data.context[corpuscode];
         for (var datasetcode in t1) {
-            var tokenmap = {};
             var t2 = t1[datasetcode];
             for (var samplecode in t2) {
                 var t3 = t2[samplecode];
