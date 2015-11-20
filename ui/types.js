@@ -136,6 +136,22 @@ var opt_encode = function(x) {
     }
 };
 
+var hash_decode = function(x) {
+    if (!x) {
+        return null;
+    } else {
+        return decodeURIComponent(x);
+    }
+};
+
+var hash_encode = function(x) {
+    if (!x) {
+        return "";
+    } else {
+        return encodeURIComponent(x);
+    }
+};
+
 var compactify = function(t) {
     var compact = [];
     var cur = null;
@@ -850,6 +866,7 @@ var Controller = function() {
     this.settings = new Settings(this);
     this.input = new Input(this);
     var model = this.model;
+    this.expected_hash = null;
     this.fields = [
         {
             key: 'corpuscode',
@@ -913,7 +930,9 @@ var Controller = function() {
     this.view.plot.set_curves({maxx: 1, maxy: 1, data: [{data: []}]});
     this.view.plot.set_points([]);
     this.view.plot.recalc_plot();
-    d3.select(window).on('resize', this.view.ev_resize.bind(this.view));
+    d3.select(window)
+        .on('resize', this.view.ev_resize.bind(this.view))
+        .on('hashchange', this.ev_hashchange.bind(this));
 };
 
 Controller.prototype.refresh_settings = function() {
@@ -972,16 +991,14 @@ Controller.prototype.find_changed = function(old) {
     var changes = {
         changed: {},
         invalid: {},
-        level: 0,
+        count: 0,
     };
     for (var i = 0; i < this.fields.length; ++i) {
         var f = this.fields[i];
         var k = f.key;
         if (this.model.sel[k] !== old[k]) {
             changes.changed[k] = true;
-            if (f.level > changes.level) {
-                changes.level = f.level;
-            }
+            ++changes.count;
             for (var j = 0; j < f.invalidates.length; ++j) {
                 changes.invalid[f.invalidates[j]] = true;
             }
@@ -1008,6 +1025,15 @@ Controller.prototype.update_inputs = function(changes) {
     }
 };
 
+Controller.prototype.update_hash = function() {
+    var x = [];
+    for (var i = 0; i < this.fields.length; ++i) {
+        x.push(hash_encode(this.model.sel[this.fields[i].key]));
+    }
+    this.expected_hash = x.join("/");
+    location.hash = this.expected_hash;
+};
+
 Controller.prototype.recalc_sel = function(x, force) {
     var model = this.model;
     var old = model.sel;
@@ -1016,15 +1042,19 @@ Controller.prototype.recalc_sel = function(x, force) {
     model.fix_sel();
     var changes = this.find_changed(old);
     changes.force = force;
+    if (!changes.force && !changes.count) {
+        return;
+    }
     this.update_inputs(changes);
     this.update_sel(changes);
+    this.update_hash();
 };
 
 Controller.prototype.data = function(data) {
     this.view.indicator.set_loading(false);
     this.model.set_data(data);
     this.view.update_results(this.model);
-    this.recalc_sel({}, true);
+    this.recalc_sel(this.parse_hash(), true);
 };
 
 Controller.prototype.ev_settings_reset = function() {
@@ -1064,6 +1094,41 @@ Controller.prototype.ev_sample_cell_click = function(d, i) {
         this.recalc_sel({ samplecode: null });
     } else {
         this.recalc_sel(d.row);
+    }
+};
+
+Controller.prototype.parse_hash = function() {
+    var x = this.try_parse_hash();
+    if (x) {
+        return x;
+    } else {
+        return {};
+    }
+};
+
+Controller.prototype.try_parse_hash = function() {
+    var hash = location.hash;
+    if (hash.length <= 1) {
+        return null;
+    }
+    hash = hash.substring(1);
+    if (hash === this.expected_hash) {
+        return null;
+    }
+    var f = location.hash.substring(1).split('/');
+    var x = {};
+    for (var i = 0; i < f.length; ++i) {
+        if (i < this.fields.length) {
+            x[this.fields[i].key] = hash_decode(f[i]);
+        }
+    }
+    return x;
+};
+
+Controller.prototype.ev_hashchange = function(d, i) {
+    var x = this.try_parse_hash();
+    if (x) {
+        this.recalc_sel(x);
     }
 };
 
@@ -1110,15 +1175,15 @@ Database.prototype.setup_group_map = function(corpuscode) {
     this.group_map_map[corpuscode] = {};
     this.group_reverse_map[corpuscode] = {};
     this.group_list[corpuscode] = [];
-    this.add_group(corpuscode, '1all', all);
+    this.add_group(corpuscode, '-all', all);
     var normal_groups = Object.keys(x);
     normal_groups.sort();
     for (var i = 0; i < normal_groups.length; ++i) {
         var groupcode = normal_groups[i];
-        this.add_group(corpuscode, '0' + groupcode, x[groupcode]);
+        this.add_group(corpuscode, '.' + groupcode, x[groupcode]);
     }
     if (other.length > 0 && other.length < all.length) {
-        this.add_group(corpuscode, '1other', other);
+        this.add_group(corpuscode, '-other', other);
     }
 };
 
