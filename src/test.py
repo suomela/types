@@ -6,6 +6,7 @@ import multiprocessing
 import optparse
 import os
 import os.path
+import shutil
 import sqlite3
 import subprocess
 import sys
