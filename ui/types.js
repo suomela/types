@@ -486,9 +486,11 @@ Indicator.prototype.set_info = function(model) {
     var dataset = model.get_dataset();
     var p = model.get_point();
 
-    this.plot_title.text(model.sel.datasetcode && stat
-        ? model.sel.datasetcode + ": " + stat.label
-        : "");
+    if (model.sel.datasetcode && stat) {
+        this.plot_title.text(model.sel.datasetcode + ": " + stat.label);
+    } else {
+        this.plot_title.text("");
+    }
 
     var parts;
     var set_title = function(t) {
@@ -496,7 +498,7 @@ Indicator.prototype.set_info = function(model) {
         sel.enter().append("span");
         sel.exit().remove();
         sel.text(function(d) { return d; });
-    }
+    };
 
     parts = [];
     if (model.sel.collectioncode) {
