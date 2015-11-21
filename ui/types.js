@@ -641,6 +641,10 @@ View.prototype.set_sel = function(model) {
 var btn_down = '<span class="glyphicon glyphicon-sort-by-attributes"></span> ';
 var btn_up = '<span class="glyphicon glyphicon-sort-by-attributes-alt"></span> ';
 
+var stop_propagation = function(e) {
+    e.stopPropagation();
+};
+
 var td_builder = function(d) {
     var kind = d.column.kind;
     var val = kind === 'pad' ? null : d.column.val(d.row);
@@ -651,6 +655,8 @@ var td_builder = function(d) {
         e = document.createElement('a');
         e.appendChild(document.createTextNode('link'));
         e.setAttribute('href', val);
+        e.setAttribute('target', '_blank');
+        e.onclick = stop_propagation;
     } else if (kind === 'wrap') {
         e = document.createElement('span');
         e.appendChild(document.createTextNode(val));
