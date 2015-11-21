@@ -510,6 +510,9 @@ Indicator.prototype.set_info = function(model) {
     parts = [];
     if (model.sel.datasetcode) {
         parts.push("dataset: " + model.sel.datasetcode);
+        if (model.sel.collectioncode) {
+            parts.push("collection: " + model.sel.collectioncode);
+        }
         if (model.sel.tokencode) {
             parts.push("selected: " + model.sel.tokencode);
         }
