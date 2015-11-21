@@ -802,12 +802,24 @@ View.prototype.set_tokens = function(model) {
 };
 
 View.prototype.set_context = function(model) {
+    var sample_data = model.db.sample_data[model.sel.corpuscode][model.sel.datasetcode];
     var columns = [
         {
             html: btn_down + 'sample',
             kind: 'plain',
             val: function(p) { return p.samplecode; },
             key: function(p) { return p.samplecode; }
+        },
+        {
+            html: btn_down + 'description',
+            kind: 'plain',
+            val: function(p) { return sample_data[p.samplecode].description; },
+            key: function(p) { return sample_data[p.samplecode].description; }
+        },
+        {
+            html: 'link',
+            kind: 'link',
+            val: function(p) { return sample_data[p.samplecode].link; }
         },
         {
             html: btn_down + 'token',
