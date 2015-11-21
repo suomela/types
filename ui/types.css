@@ -42,6 +42,18 @@ body {
     padding-right: 3px;
 }
 
+.bar0 {
+    border-right: 0px solid #337ab7;
+}
+
+.bar1 {
+    border-right: 0px solid #eee;
+}
+
+.bar2 {
+    border-right: 0px solid #aaa;
+}
+
 text.pointlabel {
     font: 14px sans-serif;
     cursor: pointer;

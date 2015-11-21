@@ -18,7 +18,8 @@ var config = {
     label_corner_radius: 4,
     label_x_offset: 16,
     label_y_offset: 5,
-    label_x_margin: 2
+    label_x_margin: 2,
+    bar_width: 50
 };
 
 //// Auxiliary functions
@@ -182,6 +183,14 @@ var textmaker = function(e, t) {
         var x = compact[i];
         e.append(x[0]).text(x[1]);
     }
+};
+
+var calc_score = function(a, b) {
+    return [
+        (a+0) / (b+2),
+        (a+1) / (b+2),
+        (a+2) / (b+2)
+    ];
 };
 
 var f_large = d3.format("n");
@@ -664,6 +673,15 @@ var td_builder = function(d) {
     } else if (kind === 'wrap') {
         e = document.createElement('span');
         e.appendChild(document.createTextNode(val));
+    } else if (kind === 'score') {
+        e = document.createElement('span');
+        var w = [val[0], val[2]-val[0], 1-val[2]];
+        for (var i = 0; i < 3; ++i) {
+            var ee = document.createElement('span');
+            ee.setAttribute('class', 'bar' + i);
+            ee.setAttribute('style', 'border-right-width: ' + config.bar_width * w[i] + 'px');
+            e.appendChild(ee);
+        }
     } else {
         e = document.createTextNode(val);
     }
@@ -811,10 +829,10 @@ View.prototype.set_tokens = function(model) {
         },
         {
             html: btn_up + 'score',
-            kind: 'plain',
+            kind: 'score',
             right: true,
-            val: function(p) { return f_empty(f_fraction3, p.tokencount_score); },
-            key: function(p) { return -p.tokencount_score; }
+            val: function(p) { return p.tokencount_score; },
+            key: function(p) { return -p.tokencount_score[1]; }
         },
         {
             html: btn_up + 'samples',
@@ -839,10 +857,10 @@ View.prototype.set_tokens = function(model) {
         },
         {
             html: btn_up + 'score',
-            kind: 'plain',
+            kind: 'score',
             right: true,
-            val: function(p) { return f_empty(f_fraction3, p.samplecount_score); },
-            key: function(p) { return -p.samplecount_score; }
+            val: function(p) { return p.samplecount_score; },
+            key: function(p) { return -p.samplecount_score[1]; }
         }
     ];
 
@@ -1853,7 +1871,6 @@ Model.prototype.get_tokens = function() {
     var c_samplecount = get1(dataset.collection_samplecount, sel.collectioncode);
     var tokencodes = Object.keys(dataset.tokencount);
     tokencodes.sort();
-    var adj = 1;
     for (var i = 0; i < tokencodes.length; ++i) {
         var tokencode = tokencodes[i];
         var tokeninfo = get3(this.db.data.tokeninfo, sel.corpuscode, sel.datasetcode, tokencode);
@@ -1869,10 +1886,10 @@ Model.prototype.get_tokens = function() {
         if (sel.collectioncode) {
             t.tokencount_collection = get1num(c_tokencount, tokencode);
             t.tokencount_fraction = t.tokencount_collection / t.tokencount;
-            t.tokencount_score = (t.tokencount_collection + adj) / (t.tokencount + 2 * adj);
+            t.tokencount_score = calc_score(t.tokencount_collection, t.tokencount);
             t.samplecount_collection = get1num(c_samplecount, tokencode);
             t.samplecount_fraction = t.samplecount_collection / t.samplecount;
-            t.samplecount_score = (t.samplecount_collection + adj) / (t.samplecount + 2 * adj);
+            t.samplecount_score = calc_score(t.samplecount_collection, t.samplecount);
         }
         if (tokeninfo && tokeninfo.shortlabel) {
             t.shortlabel = tokeninfo.shortlabel;
