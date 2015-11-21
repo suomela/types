@@ -582,6 +582,12 @@ View.prototype.set_sel = function(model) {
                 model.sel.tokencode === d.tokencode;
         });
     }
+    if (this.context_rows) {
+        var samplecodes = get2obj(model.db.sample_collection_map, model.sel.corpuscode, model.sel.collectioncode);
+        this.context_rows.classed("info", function(d) {
+            return model.sel.tokencode && d.samplecode in samplecodes;
+        });
+    }
 };
 
 var btn_down = '<span class="glyphicon glyphicon-sort-by-attributes"></span> ';
@@ -1823,8 +1829,6 @@ Model.prototype.get_context = function() {
     var samplecodes = [];
     if (sel.samplecode) {
         samplecodes = [sel.samplecode];
-    } else if (sel.collectioncode) {
-        samplecodes = this.db.data.sample_collection[sel.corpuscode][sel.collectioncode];
     } else {
         samplecodes = Object.keys(this.db.data.sample[sel.corpuscode]);
     }
