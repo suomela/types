@@ -42,16 +42,21 @@ body {
     padding-right: 3px;
 }
 
-.bar0 {
-    border-right: 0px solid #337ab7;
+.bar_pad {
+    margin-left: 10px;
 }
 
-.bar1 {
+.bar0 {
+    border-left: 0px solid #337ab7;
     border-right: 0px solid #eee;
 }
 
+.bar1 {
+    border-left: 0px solid #eee;
+}
+
 .bar2 {
-    border-right: 0px solid #aaa;
+    border-left: 0px solid #aaa;
 }
 
 text.pointlabel {

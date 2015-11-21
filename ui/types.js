@@ -19,7 +19,8 @@ var config = {
     label_x_offset: 16,
     label_y_offset: 5,
     label_x_margin: 2,
-    bar_width: 50
+    bar_width: 50,
+    sbar_width: 20
 };
 
 //// Auxiliary functions
@@ -658,7 +659,8 @@ var td_builder = function(d) {
     var kind = d.column.kind;
     var val = kind === 'pad' ? null : d.column.val(d.row);
     var e;
-    if (!val) {
+    var w;
+    if (val === null || val === undefined) {
         e = document.createTextNode('');
     } else if (kind === 'link') {
         if (val.link) {
@@ -675,13 +677,26 @@ var td_builder = function(d) {
         e.appendChild(document.createTextNode(val));
     } else if (kind === 'score') {
         e = document.createElement('span');
-        var w = [val[0], val[2]-val[0], 1-val[2]];
+        w = [val[0], val[2]-val[0], 1-val[2]];
         for (var i = 0; i < 3; ++i) {
             var ee = document.createElement('span');
             ee.setAttribute('class', 'bar' + i);
-            ee.setAttribute('style', 'border-right-width: ' + config.bar_width * w[i] + 'px');
+            ee.setAttribute('style', 'border-left-width: ' + config.bar_width * w[i] + 'px');
             e.appendChild(ee);
         }
+    } else if (kind === 'num') {
+        e = document.createElement('span');
+        var e1 = document.createElement('span');
+        var e2 = document.createElement('span');
+        e1.appendChild(document.createTextNode(d.column.format(val)));
+        w = val / (d.max ? d.max : 1);
+        e2.setAttribute('class', 'bar0 bar_pad');
+        e2.setAttribute('style',
+            'border-left-width: ' + config.sbar_width * w + 'px' + ';' +
+            'border-right-width: ' + config.sbar_width * (1 - w) + 'px'
+        );
+        e.appendChild(e1);
+        e.appendChild(e2);
     } else {
         e = document.createTextNode(val);
     }
@@ -689,6 +704,13 @@ var td_builder = function(d) {
 };
 
 var table_builder = function(columns, data, table, row_hook) {
+    var get_max = function(c) {
+        if (c.kind !== 'num') {
+            return null;
+        }
+        return d3.max(data, function(v) { return c.val(v); });
+    };
+    var max = columns.map(get_max);
     table.selectAll("*").remove();
     var head = table.append("thead");
     var body = table.append("tbody");
@@ -700,8 +722,8 @@ var table_builder = function(columns, data, table, row_hook) {
     }
     var td = tr.selectAll("td")
         .data(function(row) {
-            return columns.map(function(c) {
-                return { row: row, column: c };
+            return columns.map(function(c,i) {
+                return { row: row, column: c, max: max[i] };
             });
         }).enter().append("td");
     if (row_hook) {
@@ -747,37 +769,42 @@ View.prototype.set_samples = function(model) {
         },
         {
             html: btn_up + model.db.data.label.word.labeltext,
-            kind: 'plain',
+            kind: 'num',
+            format: f_large,
             right: true,
-            val: function(p) { return f_large(p.wordcount); },
+            val: function(p) { return p.wordcount; },
             key: function(p) { return -p.wordcount; }
         },
         {
             html: btn_up + model.db.data.label.token.labeltext,
-            kind: 'plain',
+            kind: 'num',
+            format: f_large,
             right: true,
-            val: function(p) { return f_large(p.tokens); },
+            val: function(p) { return p.tokens; },
             key: function(p) { return -p.tokens; }
         },
         {
             html: btn_up + "/1000",
-            kind: 'plain',
+            kind: 'num',
+            format: f_fraction,
             right: true,
-            val: function(p) { return f_fraction(p.tokens/p.wordcount*1000); },
+            val: function(p) { return p.tokens/p.wordcount*1000; },
             key: function(p) { return -p.tokens/p.wordcount; }
         },
         {
             html: btn_up + model.db.data.label.type.labeltext,
-            kind: 'plain',
+            kind: 'num',
+            format: f_large,
             right: true,
-            val: function(p) { return f_large(p.types); },
+            val: function(p) { return p.types; },
             key: function(p) { return -p.types; }
         },
         {
             html: btn_up + model.db.data.label.hapax.labeltext,
-            kind: 'plain',
+            kind: 'num',
+            format: f_large,
             right: true,
-            val: function(p) { return f_large(p.hapaxes); },
+            val: function(p) { return p.hapaxes; },
             key: function(p) { return -p.hapaxes; }
         },
         { kind: 'pad' },
@@ -808,23 +835,26 @@ View.prototype.set_tokens = function(model) {
         },
         {
             html: btn_up + model.db.data.label.token.labeltext,
-            kind: 'plain',
+            kind: 'num',
+            format: f_large,
             right: true,
-            val: function(p) { return f_large(p.tokencount); },
+            val: function(p) { return p.tokencount; },
             key: function(p) { return -p.tokencount; }
         },
         {
             html: btn_up + 'in collection',
-            kind: 'plain',
+            kind: 'num',
+            format: f_large,
             right: true,
-            val: function(p) { return f_empty(f_large, p.tokencount_collection); },
+            val: function(p) { return p.tokencount_collection; },
             key: function(p) { return -p.tokencount_collection; }
         },
         {
             html: btn_up + 'fraction',
-            kind: 'plain',
+            kind: 'num',
+            format: f_fraction3,
             right: true,
-            val: function(p) { return f_empty(f_fraction3, p.tokencount_fraction); },
+            val: function(p) { return p.tokencount_fraction; },
             key: function(p) { return -p.tokencount_fraction; }
         },
         {
@@ -836,23 +866,26 @@ View.prototype.set_tokens = function(model) {
         },
         {
             html: btn_up + 'samples',
-            kind: 'plain',
+            kind: 'num',
+            format: f_large,
             right: true,
-            val: function(p) { return f_large(p.samplecount); },
+            val: function(p) { return p.samplecount; },
             key: function(p) { return -p.samplecount; }
         },
         {
             html: btn_up + 'in collection',
-            kind: 'plain',
+            kind: 'num',
+            format: f_large,
             right: true,
-            val: function(p) { return f_empty(f_large, p.samplecount_collection); },
+            val: function(p) { return p.samplecount_collection; },
             key: function(p) { return -p.samplecount_collection; }
         },
         {
             html: btn_up + 'fraction',
-            kind: 'plain',
+            kind: 'num',
+            format: f_fraction3,
             right: true,
-            val: function(p) { return f_empty(f_fraction3, p.samplecount_fraction); },
+            val: function(p) { return p.samplecount_fraction; },
             key: function(p) { return -p.samplecount_fraction; }
         },
         {
