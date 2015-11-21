@@ -724,7 +724,7 @@ View.prototype.set_samples = function(model) {
 View.prototype.set_tokens = function(model) {
     var columns = [
         {
-            html: btn_down + 'token',
+            html: btn_down + 'type',
             kind: 'plain',
             val: function(p) { return p.shortlabel; },
             key: function(p) { return p.shortlabel; }
