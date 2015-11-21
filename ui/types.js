@@ -1755,8 +1755,14 @@ Model.prototype.fix_sel = function() {
     if (sel.collectioncode && !(sel.collectioncode in get2obj(this.db.group_map_map, sel.corpuscode, sel.groupcode))) {
         sel.collectioncode = null;
     }
-    if (sel.samplecode && !(sel.samplecode in get2obj(this.db.sample_collection_map, sel.corpuscode, sel.collectioncode))) {
-        sel.samplecode = null;
+    if (sel.collectioncode) {
+        if (sel.samplecode && !(sel.samplecode in get2obj(this.db.sample_collection_map, sel.corpuscode, sel.collectioncode))) {
+            sel.samplecode = null;
+        }
+    } else {
+        if (sel.samplecode && !(sel.samplecode in get1obj(this.db.data.sample, sel.corpuscode))) {
+            sel.samplecode = null;
+        }
     }
     if (sel.samplecode && sel.tokencode) {
         sel.tokencode = null;
