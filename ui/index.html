@@ -28,13 +28,14 @@
     <div class="row">
         <div class="col-sm-12">
             <div class="panel panel-default">
-                <div role="button" class="panel-heading" data-toggle="collapse" data-target="#result_container">
+                <div class="panel-heading">
                     <h2 class="panel-title">
-                        <span class="glyphicon glyphicon-menu-down"></span>
+                        <span role="button" class="title_button glyphicon glyphicon-resize-full" onclick="$('#result_container').toggleClass('limit_height')"></span>
+                        <span role="button" data-toggle="collapse" data-target="#result_container" class="title_button glyphicon glyphicon-resize-small"></span>
                         All findings
                     </h2>
                 </div>
-                <div class="collapse in table_container" id="result_container">
+                <div class="collapse in table_container limit_height" id="result_container">
                     <table class="table table-hover table-condensed" id="result_table">
                     </table>
                 </div>
@@ -92,9 +93,9 @@
             </div>
 
             <div class="panel panel-default">
-                <div role="button" class="panel-heading" data-toggle="collapse" data-target="#setting_panel_body">
+                <div class="panel-heading">
                     <h2 class="panel-title">
-                        <span class="glyphicon glyphicon-menu-down"></span>
+                        <span role="button" data-toggle="collapse" data-target="#setting_panel_body" class="title_button glyphicon glyphicon-resize-small"></span>
                         Plot settings
                     </h2>
                 </div>
@@ -128,9 +129,9 @@
         <div class="col-sm-7">
             <div class="panel panel-default">
                 <button type="button" class="btn btn-primary btn-sm float_button" id="zoom_reset">Reset zoom &amp; pan</button>
-                <div role="button" class="panel-heading" data-toggle="collapse" data-target="#fig_panel_body">
+                <div class="panel-heading">
                     <h2 class="panel-title">
-                        <span class="glyphicon glyphicon-menu-down"></span>
+                        <span role="button" data-toggle="collapse" data-target="#fig_panel_body" class="title_button glyphicon glyphicon-resize-small"></span>
                         <span id="plot_title"></span>
                     </h2>
                 </div>
@@ -144,39 +145,42 @@
     <div class="row">
         <div class="col-sm-12">
             <div class="panel panel-default">
-                <div role="button" class="panel-heading" data-toggle="collapse" data-target="#sample_container">
+                <div class="panel-heading">
                     <h2 class="panel-title">
-                        <span class="glyphicon glyphicon-menu-down"></span>
+                        <span role="button" class="title_button glyphicon glyphicon-resize-full" onclick="$('#sample_container').toggleClass('limit_height')"></span>
+                        <span role="button" data-toggle="collapse" data-target="#sample_container" class="title_button glyphicon glyphicon-resize-small"></span>
                         Samples
                     </h2>
                 </div>
-                <div class="collapse in table_container" id="sample_container">
+                <div class="collapse in table_container limit_height" id="sample_container">
                     <table class="table table-hover table-condensed" id="sample_table">
                     </table>
                 </div>
             </div>
 
             <div class="panel panel-default">
-                <div role="button" class="panel-heading" data-toggle="collapse" data-target="#token_container">
+                <div class="panel-heading">
                     <h2 class="panel-title">
-                        <span class="glyphicon glyphicon-menu-down"></span>
+                        <span role="button" class="title_button glyphicon glyphicon-resize-full" onclick="$('#token_container').toggleClass('limit_height')"></span>
+                        <span role="button" data-toggle="collapse" data-target="#token_container" class="title_button glyphicon glyphicon-resize-small"></span>
                         Types
                     </h2>
                 </div>
-                <div class="collapse in table_container" id="token_container">
+                <div class="collapse in table_container limit_height" id="token_container">
                     <table class="table table-hover table-condensed" id="token_table">
                     </table>
                 </div>
             </div>
 
             <div class="panel panel-default">
-                <div role="button" class="panel-heading" data-toggle="collapse" data-target="#context_container">
+                <div class="panel-heading">
                     <h2 class="panel-title">
-                        <span class="glyphicon glyphicon-menu-down"></span>
+                        <span role="button" class="title_button glyphicon glyphicon-resize-full" onclick="$('#context_container').toggleClass('limit_height')"></span>
+                        <span role="button" data-toggle="collapse" data-target="#context_container" class="title_button glyphicon glyphicon-resize-small"></span>
                         Context
                     </h2>
                 </div>
-                <div class="collapse in table_container" id="context_container">
+                <div class="collapse in table_container limit_height" id="context_container">
                     <table class="table table-hover table-condensed" id="context_table">
                     </table>
                 </div>

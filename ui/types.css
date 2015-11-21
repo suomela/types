@@ -13,9 +13,12 @@ body {
 }
 
 .table_container {
-    height: 40ex;
-    overflow: auto;
     white-space: nowrap;
+}
+
+.limit_height {
+    height: 31ex;
+    overflow: auto;
 }
 
 .wrap {
@@ -31,6 +34,10 @@ body {
     margin-right: 15px;
     margin-top: 15px;
     visibility: hidden;
+}
+
+.title_button {
+    padding-right: 3px;
 }
 
 text.pointlabel {
