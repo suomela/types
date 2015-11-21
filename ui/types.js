@@ -1274,7 +1274,7 @@ Controller.prototype.ev_token_cell_click = function(d) {
 
 Controller.prototype.ev_context_cell_click = function(d) {
     if (this.model.sel.tokencode) {
-        this.recalc_sel({ samplecode: d.row.samplecode, tokencode: null });
+        this.recalc_sel({ samplecode: d.row.samplecode, tokencode: null, collectioncode: null });
     } else {
         this.recalc_sel({ tokencode: d.row.tokencode, samplecode: null });
     }
