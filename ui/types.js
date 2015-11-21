@@ -51,6 +51,10 @@ var get0first = function(a) {
     return (a && a.length) ? a[0] : null;
 };
 
+var get0num = function(a) {
+    return a ? +a : 0;
+};
+
 var get1list = function(a, k1) {
     return get0list(get1(a, k1));
 };
@@ -65,6 +69,10 @@ var get3list = function(a, k1, k2, k3) {
 
 var get1first = function(a, k1) {
     return get0first(get1(a, k1));
+};
+
+var get1num = function(a, k1) {
+    return get0num(get1(a, k1));
 };
 
 var get1obj = function(a, k1) {
@@ -178,6 +186,15 @@ var textmaker = function(e, t) {
 
 var f_large = d3.format("n");
 var f_fraction = d3.format(".2r");
+var f_fraction3 = d3.format(".3f");
+
+var f_empty = function(f, x) {
+    if (x === null || x === undefined) {
+        return '';
+    } else {
+        return f(x);
+    }
+};
 
 //// View: Plot
 
@@ -539,6 +556,7 @@ var View = function(ctrl) {
     this.indicator = new Indicator();
     this.result_table = d3.select("#result_table");
     this.sample_table = d3.select("#sample_table");
+    this.token_table = d3.select("#token_table");
     this.context_table = d3.select("#context_table");
 };
 
@@ -555,6 +573,13 @@ View.prototype.set_sel = function(model) {
         this.sample_rows.classed("info", function(d) {
             return model.sel.corpuscode === d.corpuscode &&
                 model.sel.samplecode === d.samplecode;
+        });
+    }
+    if (this.token_rows) {
+        this.token_rows.classed("info", function(d) {
+            return model.sel.corpuscode === d.corpuscode &&
+                model.sel.datasetcode === d.datasetcode &&
+                model.sel.tokencode === d.tokencode;
         });
     }
 };
@@ -694,7 +719,59 @@ View.prototype.set_samples = function(model) {
         this.sample_table,
         this.ctrl.ev_sample_cell_click.bind(this.ctrl)
     );
-    this.set_sel(model);
+};
+
+View.prototype.set_tokens = function(model) {
+    var columns = [
+        {
+            html: btn_down + 'token',
+            kind: 'plain',
+            val: function(p) { return p.shortlabel; },
+            key: function(p) { return p.shortlabel; }
+        },
+        {
+            html: btn_up + 'in dataset',
+            kind: 'plain',
+            right: true,
+            val: function(p) { return f_large(p.tokencount); },
+            key: function(p) { return -p.tokencount; }
+        },
+        {
+            html: btn_up + 'in collection',
+            kind: 'plain',
+            right: true,
+            val: function(p) { return f_empty(f_large, p.tokencount_collection); },
+            key: function(p) { return -p.tokencount_collection; }
+        },
+        {
+            html: btn_up + 'fraction',
+            kind: 'plain',
+            right: true,
+            val: function(p) { return f_empty(f_fraction3, p.fraction_collection); },
+            key: function(p) { return -p.fraction_collection; }
+        },
+        {
+            html: btn_up + 'in sample',
+            kind: 'plain',
+            right: true,
+            val: function(p) { return f_empty(f_large, p.tokencount_sample); },
+            key: function(p) { return -p.tokencount_sample; }
+        },
+        {
+            html: btn_up + 'in sample',
+            kind: 'plain',
+            right: true,
+            val: function(p) { return f_empty(f_fraction3, p.fraction_sample); },
+            key: function(p) { return -p.fraction_sample; }
+        }
+    ];
+
+    this.token_rows = table_builder(
+        columns,
+        model.get_tokens(),
+        this.token_table,
+        this.ctrl.ev_token_cell_click.bind(this.ctrl)
+    );
 };
 
 View.prototype.set_context = function(model) {
@@ -796,7 +873,6 @@ View.prototype.update_results = function(model) {
             return d.column[1](d.row);
         })
         .on("click", ctrl.ev_result_cell_click.bind(ctrl));
-    this.set_sel(model);
 };
 
 View.prototype.ev_resize = function() {
@@ -866,7 +942,8 @@ var Controller = function() {
             set: set_option,
             invalidates: [
                 'datasetcode', 'groupcode', 'collectioncode', 'samplecode', 'tokencode',
-                'curves', 'points', 'selection'
+                'curves', 'points', 'selection',
+                'sample_table', 'token_table', 'context_table'
             ]
         },
         {
@@ -875,7 +952,8 @@ var Controller = function() {
             set: set_option,
             invalidates: [
                 'tokencode',
-                'curves', 'points', 'selection'
+                'curves', 'points', 'selection',
+                'sample_table', 'token_table', 'context_table'
             ]
         },
         {
@@ -893,7 +971,8 @@ var Controller = function() {
             set: set_option,
             invalidates: [
                 'samplecode', 'tokencode',
-                'points', 'selection'
+                'points', 'selection',
+                'sample_table', 'token_table', 'context_table'
             ]
         },
         {
@@ -908,13 +987,15 @@ var Controller = function() {
             key: 'samplecode',
             invalidates: [
                 'tokencode',
-                'selection'
+                'selection',
+                'token_table', 'context_table'
             ]
         },
         {
             key: 'tokencode',
             invalidates: [
-                'selection'
+                'selection',
+                'context_table'
             ]
         }
     ];
@@ -943,11 +1024,18 @@ Controller.prototype.update_sel = function(changes) {
     if (changes.force || changes.invalid.points) {
         this.view.plot.set_points(this.model.get_points());
         this.view.plot.recalc_points();
+    }
+    if (changes.force || changes.invalid.sample_table) {
         this.view.set_samples(this.model);
+    }
+    if (changes.force || changes.invalid.token_table) {
+        this.view.set_tokens(this.model);
+    }
+    if (changes.force || changes.invalid.context_table) {
+        this.view.set_context(this.model);
     }
     if (changes.force || changes.invalid.selection) {
         this.view.indicator.set_info(this.model);
-        this.view.set_context(this.model);
         this.view.set_sel(this.model);
     }
 };
@@ -1086,6 +1174,14 @@ Controller.prototype.ev_sample_cell_click = function(d) {
         this.recalc_sel({ samplecode: null });
     } else {
         this.recalc_sel(d.row);
+    }
+};
+
+Controller.prototype.ev_token_cell_click = function(d) {
+    if (this.model.all_set(d.row)) {
+        this.recalc_sel({ tokencode: null });
+    } else {
+        this.recalc_sel({ tokencode: d.row.tokencode, samplecode: null });
     }
 };
 
@@ -1297,7 +1393,9 @@ Database.prototype.setup_collections = function() {
     }
 };
 
-Database.prototype.setup_tokens_1 = function(tokenmap, corpuscode, datasetcode) {
+Database.prototype.setup_tokens_sample1 = function(corpuscode, datasetcode) {
+    var dataset = this.data.dataset[corpuscode][datasetcode];
+    dataset.tokenmap = {};
     for (var samplecode in this.data.sample[corpuscode]) {
         var sample = this.data.sample[corpuscode][samplecode];
         var s = {
@@ -1313,13 +1411,14 @@ Database.prototype.setup_tokens_1 = function(tokenmap, corpuscode, datasetcode) 
         var t = get3list(this.data.token, corpuscode, datasetcode, samplecode);
         for (var tokencode in t) {
             var token = t[tokencode];
-            add1(tokenmap, tokencode, token.tokencount);
+            add1(dataset.tokenmap, tokencode, token.tokencount);
             add1(s.tokenmap, tokencode, token.tokencount);
         }
     }
 };
 
-Database.prototype.setup_tokens_2 = function(tokenmap, corpuscode, datasetcode) {
+Database.prototype.setup_tokens_sample2 = function(corpuscode, datasetcode) {
+    var dataset = this.data.dataset[corpuscode][datasetcode];
     for (var samplecode in this.data.sample[corpuscode]) {
         var s = this.sample_data[corpuscode][datasetcode][samplecode];
         s.unique = [];
@@ -1327,7 +1426,7 @@ Database.prototype.setup_tokens_2 = function(tokenmap, corpuscode, datasetcode) 
         s.tokens = 0;
         s.types = 0;
         for (var tokencode in s.tokenmap) {
-            var gc = tokenmap[tokencode];
+            var gc = dataset.tokenmap[tokencode];
             var sc = s.tokenmap[tokencode];
             s.tokens += sc;
             s.types += 1;
@@ -1345,25 +1444,46 @@ Database.prototype.setup_tokens_2 = function(tokenmap, corpuscode, datasetcode) 
     }
 };
 
+Database.prototype.setup_tokens_collection1 = function(corpuscode, datasetcode) {
+    var dataset = this.data.dataset[corpuscode][datasetcode];
+    dataset.collection_tokens = {};
+    for (var collectioncode in this.data.collection[corpuscode]) {
+        var x = {};
+        dataset.collection_tokens[collectioncode] = x;
+        var sc = this.data.sample_collection[corpuscode][collectioncode];
+        for (var i = 0; i < sc.length; ++i) {
+            var samplecode = sc[i];
+            var s = this.sample_data[corpuscode][datasetcode][samplecode];
+            for (var tokencode in s.tokenmap) {
+                add1(x, tokencode, s.tokenmap[tokencode]);
+            }
+        }
+    }
+};
+
+Database.prototype.setup_tokens_dataset1 = function(corpuscode, datasetcode) {
+    var dataset = this.data.dataset[corpuscode][datasetcode];
+    dataset.hapaxes = 0;
+    dataset.tokens = 0;
+    dataset.types = 0;
+    for (var tokencode in dataset.tokenmap) {
+        var count = dataset.tokenmap[tokencode];
+        dataset.tokens += count;
+        dataset.types += 1;
+        if (count === 1) {
+            dataset.hapaxes += 1;
+        }
+    }
+};
+
 Database.prototype.setup_tokens = function() {
     this.sample_data = {};
     for (var corpuscode in this.data.token) {
         for (var datasetcode in this.data.dataset[corpuscode]) {
-            var dataset = this.data.dataset[corpuscode][datasetcode];
-            var tokenmap = {};
-            this.setup_tokens_1(tokenmap, corpuscode, datasetcode);
-            this.setup_tokens_2(tokenmap, corpuscode, datasetcode);
-            dataset.hapaxes = 0;
-            dataset.tokens = 0;
-            dataset.types = 0;
-            for (var tokencode in tokenmap) {
-                var count = tokenmap[tokencode];
-                dataset.tokens += count;
-                dataset.types += 1;
-                if (count === 1) {
-                    dataset.hapaxes += 1;
-                }
-            }
+            this.setup_tokens_sample1(corpuscode, datasetcode);
+            this.setup_tokens_sample2(corpuscode, datasetcode);
+            this.setup_tokens_collection1(corpuscode, datasetcode);
+            this.setup_tokens_dataset1(corpuscode, datasetcode);
         }
     }
 };
@@ -1540,6 +1660,9 @@ Model.prototype.fix_sel = function() {
     if (sel.samplecode && !(sel.samplecode in get2obj(this.db.sample_collection_map, sel.corpuscode, sel.collectioncode))) {
         sel.samplecode = null;
     }
+    if (sel.samplecode && sel.tokencode) {
+        sel.tokencode = null;
+    }
     if (!sel.statcode || !(sel.statcode in this.db.statcode_map)) {
         sel.statcode = get1(get0first(this.db.statcodes), "code");
     }
@@ -1616,21 +1739,76 @@ Model.prototype.get_samples = function() {
     }
 };
 
-Model.prototype.get_context = function() {
+Model.prototype.get_tokens = function() {
     var sel = this.sel;
-    var data = this.db.data;
-    var t = get3(data.context, sel.corpuscode, sel.datasetcode, sel.samplecode);
-    if (!t) {
-        return [];
-    } else if (sel.tokencode) {
-        return get1list(t, sel.tokencode);
-    } else {
-        var r = [];
-        for (var tokencode in t) {
-            r = r.concat(get1list(t, tokencode));
-        }
+    var r = [];
+    var dataset = get2(this.db.data.dataset, sel.corpuscode, sel.datasetcode);
+    if (!dataset) {
         return r;
     }
+    var sample = get3(this.db.sample_data, sel.corpuscode, sel.datasetcode, sel.samplecode);
+    var ctokens = get1(dataset.collection_tokens, sel.collectioncode);
+    var tokencodes = Object.keys(dataset.tokenmap);
+    tokencodes.sort();
+    for (var i = 0; i < tokencodes.length; ++i) {
+        var tokencode = tokencodes[i];
+        var tokeninfo = get3(this.db.data.tokeninfo, sel.corpuscode, sel.datasetcode, tokencode);
+        var t = {
+            corpuscode: sel.corpuscode,
+            datasetcode: sel.datasetcode,
+            tokencode: tokencode,
+            shortlabel: tokencode,
+            longlabel: tokencode
+        };
+        t.tokencount = dataset.tokenmap[tokencode];
+        if (sel.collectioncode) {
+            t.tokencount_collection = get1num(ctokens, tokencode);
+            t.fraction_collection = t.tokencount_collection / t.tokencount;
+        }
+        if (sel.samplecode) {
+            t.tokencount_sample = get1num(sample.tokenmap, tokencode);
+            t.fraction_sample = t.tokencount_sample / t.tokencount;
+        }
+        if (tokeninfo && tokeninfo.shortlabel) {
+            t.shortlabel = tokeninfo.shortlabel;
+        }
+        if (tokeninfo && tokeninfo.longlabel) {
+            t.longlabel = tokeninfo.longlabel;
+        }
+        r.push(t);
+    }
+    return r;
+};
+
+Model.prototype.get_context = function() {
+    var sel = this.sel;
+    if (!sel.samplecode && !sel.tokencode) {
+        return [];
+    }
+    var data = this.db.data;
+    var t = get2(data.context, sel.corpuscode, sel.datasetcode);
+
+    var r = [];
+    var samplecodes = [];
+    if (sel.samplecode) {
+        samplecodes = [sel.samplecode];
+    } else if (sel.collectioncode) {
+        samplecodes = this.db.data.sample_collection[sel.corpuscode][sel.collectioncode];
+    } else {
+        samplecodes = Object.keys(this.db.data.sample[sel.corpuscode]);
+    }
+    for (var i = 0; i < samplecodes.length; ++i) {
+        var tt = get1(t, samplecodes[i]);
+        if (!tt) {
+        } else if (sel.tokencode) {
+            r = r.concat(get1list(tt, sel.tokencode));
+        } else {
+            for (var tokencode in tt) {
+                r = r.concat(get1list(tt, tokencode));
+            }
+        }
+    }
+    return r;
 };
 
 
