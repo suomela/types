@@ -652,11 +652,15 @@ var td_builder = function(d) {
     if (!val) {
         e = document.createTextNode('');
     } else if (kind === 'link') {
-        e = document.createElement('a');
-        e.appendChild(document.createTextNode('link'));
-        e.setAttribute('href', val);
-        e.setAttribute('target', '_blank');
-        e.onclick = stop_propagation;
+        if (val.link) {
+            e = document.createElement('a');
+            e.appendChild(document.createTextNode(val.label));
+            e.setAttribute('href', val.link);
+            e.setAttribute('target', '_blank');
+            e.onclick = stop_propagation;
+        } else {
+            e = document.createTextNode(val.label);
+        }
     } else if (kind === 'wrap') {
         e = document.createElement('span');
         e.appendChild(document.createTextNode(val));
@@ -713,8 +717,8 @@ View.prototype.set_samples = function(model) {
     var columns = [
         {
             html: btn_down + 'sample',
-            kind: 'plain',
-            val: function(p) { return p.samplecode; },
+            kind: 'link',
+            val: function(p) { return { label: p.samplecode, link: p.link }; },
             key: function(p) { return p.samplecode; }
         },
         {
@@ -765,11 +769,6 @@ View.prototype.set_samples = function(model) {
             classed: 'wrap small',
             val: function(p) { return p.unique.join(" "); },
             key: function(p) { return -p.unique.length; }
-        },
-        {
-            html: 'link',
-            kind: 'link',
-            val: function(p) { return p.link; }
         }
     ];
 
@@ -860,8 +859,8 @@ View.prototype.set_context = function(model) {
     var columns = [
         {
             html: btn_down + 'sample',
-            kind: 'plain',
-            val: function(p) { return p.samplecode; },
+            kind: 'link',
+            val: function(p) { return { label: p.samplecode, link: sample_data[p.samplecode].link }; },
             key: function(p) { return p.samplecode; }
         },
         {
@@ -869,11 +868,6 @@ View.prototype.set_context = function(model) {
             kind: 'plain',
             val: function(p) { return sample_data[p.samplecode].description; },
             key: function(p) { return sample_data[p.samplecode].description; }
-        },
-        {
-            html: 'link',
-            kind: 'link',
-            val: function(p) { return sample_data[p.samplecode].link; }
         },
         {
             html: btn_down + 'token',
@@ -892,9 +886,9 @@ View.prototype.set_context = function(model) {
         { kind: 'pad' },
         {
             html: btn_down + 'word',
-            kind: 'plain',
+            kind: 'link',
             classed: 'word',
-            val: function(p) { return p.word; },
+            val: function(p) { return { label: p.word, link: p.link }; },
             key: function(p) { return p.word_sort; }
         },
         { kind: 'pad' },
@@ -904,12 +898,6 @@ View.prototype.set_context = function(model) {
             classed: 'after',
             val: function(p) { return p.after; },
             key: function(p) { return p.after_sort; }
-        },
-        { kind: 'pad' },
-        {
-            html: 'link',
-            kind: 'link',
-            val: function(p) { return p.link; }
         }
     ];
 
