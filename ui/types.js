@@ -730,7 +730,7 @@ View.prototype.set_tokens = function(model) {
             key: function(p) { return p.shortlabel; }
         },
         {
-            html: btn_up + 'in dataset',
+            html: btn_up + model.db.data.label.token.labeltext,
             kind: 'plain',
             right: true,
             val: function(p) { return f_large(p.tokencount); },
@@ -747,15 +747,43 @@ View.prototype.set_tokens = function(model) {
             html: btn_up + 'fraction',
             kind: 'plain',
             right: true,
-            val: function(p) { return f_empty(f_fraction3, p.fraction); },
-            key: function(p) { return -p.fraction; }
+            val: function(p) { return f_empty(f_fraction3, p.tokencount_fraction); },
+            key: function(p) { return -p.tokencount_fraction; }
         },
         {
             html: btn_up + 'score',
             kind: 'plain',
             right: true,
-            val: function(p) { return f_empty(f_fraction3, p.score); },
-            key: function(p) { return -p.score; }
+            val: function(p) { return f_empty(f_fraction3, p.tokencount_score); },
+            key: function(p) { return -p.tokencount_score; }
+        },
+        {
+            html: btn_up + 'samples',
+            kind: 'plain',
+            right: true,
+            val: function(p) { return f_large(p.samplecount); },
+            key: function(p) { return -p.samplecount; }
+        },
+        {
+            html: btn_up + 'in collection',
+            kind: 'plain',
+            right: true,
+            val: function(p) { return f_empty(f_large, p.samplecount_collection); },
+            key: function(p) { return -p.samplecount_collection; }
+        },
+        {
+            html: btn_up + 'fraction',
+            kind: 'plain',
+            right: true,
+            val: function(p) { return f_empty(f_fraction3, p.samplecount_fraction); },
+            key: function(p) { return -p.samplecount_fraction; }
+        },
+        {
+            html: btn_up + 'score',
+            kind: 'plain',
+            right: true,
+            val: function(p) { return f_empty(f_fraction3, p.samplecount_score); },
+            key: function(p) { return -p.samplecount_score; }
         }
     ];
 
@@ -1388,7 +1416,8 @@ Database.prototype.setup_collections = function() {
 
 Database.prototype.setup_tokens_sample1 = function(corpuscode, datasetcode) {
     var dataset = this.data.dataset[corpuscode][datasetcode];
-    dataset.tokenmap = {};
+    dataset.tokencount = {};
+    dataset.samplecount = {};
     for (var samplecode in this.data.sample[corpuscode]) {
         var sample = this.data.sample[corpuscode][samplecode];
         var s = {
@@ -1398,14 +1427,17 @@ Database.prototype.setup_tokens_sample1 = function(corpuscode, datasetcode) {
             description: sample.description,
             wordcount: sample.wordcount,
             link: sample.link,
-            tokenmap: {}
+            tokencount: {}
         };
         set3(this.sample_data, corpuscode, datasetcode, samplecode, s);
         var t = get3list(this.data.token, corpuscode, datasetcode, samplecode);
         for (var tokencode in t) {
             var token = t[tokencode];
-            add1(dataset.tokenmap, tokencode, token.tokencount);
-            add1(s.tokenmap, tokencode, token.tokencount);
+            if (token.tokencount) {
+                add1(dataset.tokencount, tokencode, token.tokencount);
+                add1(dataset.samplecount, tokencode, 1);
+                add1(s.tokencount, tokencode, token.tokencount);
+            }
         }
     }
 };
@@ -1418,9 +1450,9 @@ Database.prototype.setup_tokens_sample2 = function(corpuscode, datasetcode) {
         s.hapaxes = 0;
         s.tokens = 0;
         s.types = 0;
-        for (var tokencode in s.tokenmap) {
-            var gc = dataset.tokenmap[tokencode];
-            var sc = s.tokenmap[tokencode];
+        for (var tokencode in s.tokencount) {
+            var gc = dataset.tokencount[tokencode];
+            var sc = s.tokencount[tokencode];
             s.tokens += sc;
             s.types += 1;
             if (gc === 1) {
@@ -1439,16 +1471,20 @@ Database.prototype.setup_tokens_sample2 = function(corpuscode, datasetcode) {
 
 Database.prototype.setup_tokens_collection1 = function(corpuscode, datasetcode) {
     var dataset = this.data.dataset[corpuscode][datasetcode];
-    dataset.collection_tokens = {};
+    dataset.collection_tokencount = {};
+    dataset.collection_samplecount = {};
     for (var collectioncode in this.data.collection[corpuscode]) {
-        var x = {};
-        dataset.collection_tokens[collectioncode] = x;
+        var xt = {};
+        var xs = {};
+        dataset.collection_tokencount[collectioncode] = xt;
+        dataset.collection_samplecount[collectioncode] = xs;
         var sc = this.data.sample_collection[corpuscode][collectioncode];
         for (var i = 0; i < sc.length; ++i) {
             var samplecode = sc[i];
             var s = this.sample_data[corpuscode][datasetcode][samplecode];
-            for (var tokencode in s.tokenmap) {
-                add1(x, tokencode, s.tokenmap[tokencode]);
+            for (var tokencode in s.tokencount) {
+                add1(xt, tokencode, s.tokencount[tokencode]);
+                add1(xs, tokencode, 1);
             }
         }
     }
@@ -1459,8 +1495,8 @@ Database.prototype.setup_tokens_dataset1 = function(corpuscode, datasetcode) {
     dataset.hapaxes = 0;
     dataset.tokens = 0;
     dataset.types = 0;
-    for (var tokencode in dataset.tokenmap) {
-        var count = dataset.tokenmap[tokencode];
+    for (var tokencode in dataset.tokencount) {
+        var count = dataset.tokencount[tokencode];
         dataset.tokens += count;
         dataset.types += 1;
         if (count === 1) {
@@ -1739,8 +1775,9 @@ Model.prototype.get_tokens = function() {
     if (!dataset) {
         return r;
     }
-    var ctokens = get1(dataset.collection_tokens, sel.collectioncode);
-    var tokencodes = Object.keys(dataset.tokenmap);
+    var c_tokencount = get1(dataset.collection_tokencount, sel.collectioncode);
+    var c_samplecount = get1(dataset.collection_samplecount, sel.collectioncode);
+    var tokencodes = Object.keys(dataset.tokencount);
     tokencodes.sort();
     var adj = 1;
     for (var i = 0; i < tokencodes.length; ++i) {
@@ -1753,11 +1790,15 @@ Model.prototype.get_tokens = function() {
             shortlabel: tokencode,
             longlabel: tokencode
         };
-        t.tokencount = dataset.tokenmap[tokencode];
+        t.tokencount = dataset.tokencount[tokencode];
+        t.samplecount = dataset.samplecount[tokencode];
         if (sel.collectioncode) {
-            t.tokencount_collection = get1num(ctokens, tokencode);
-            t.fraction = t.tokencount_collection / t.tokencount;
-            t.score = (t.tokencount_collection + adj) / (t.tokencount + 2 * adj);
+            t.tokencount_collection = get1num(c_tokencount, tokencode);
+            t.tokencount_fraction = t.tokencount_collection / t.tokencount;
+            t.tokencount_score = (t.tokencount_collection + adj) / (t.tokencount + 2 * adj);
+            t.samplecount_collection = get1num(c_samplecount, tokencode);
+            t.samplecount_fraction = t.samplecount_collection / t.samplecount;
+            t.samplecount_score = (t.samplecount_collection + adj) / (t.samplecount + 2 * adj);
         }
         if (tokeninfo && tokeninfo.shortlabel) {
             t.shortlabel = tokeninfo.shortlabel;
