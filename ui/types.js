@@ -747,22 +747,15 @@ View.prototype.set_tokens = function(model) {
             html: btn_up + 'fraction',
             kind: 'plain',
             right: true,
-            val: function(p) { return f_empty(f_fraction3, p.fraction_collection); },
-            key: function(p) { return -p.fraction_collection; }
+            val: function(p) { return f_empty(f_fraction3, p.fraction); },
+            key: function(p) { return -p.fraction; }
         },
         {
-            html: btn_up + 'in sample',
+            html: btn_up + 'score',
             kind: 'plain',
             right: true,
-            val: function(p) { return f_empty(f_large, p.tokencount_sample); },
-            key: function(p) { return -p.tokencount_sample; }
-        },
-        {
-            html: btn_up + 'in sample',
-            kind: 'plain',
-            right: true,
-            val: function(p) { return f_empty(f_fraction3, p.fraction_sample); },
-            key: function(p) { return -p.fraction_sample; }
+            val: function(p) { return f_empty(f_fraction3, p.score); },
+            key: function(p) { return -p.score; }
         }
     ];
 
@@ -988,7 +981,7 @@ var Controller = function() {
             invalidates: [
                 'tokencode',
                 'selection',
-                'token_table', 'context_table'
+                'context_table'
             ]
         },
         {
@@ -1746,10 +1739,10 @@ Model.prototype.get_tokens = function() {
     if (!dataset) {
         return r;
     }
-    var sample = get3(this.db.sample_data, sel.corpuscode, sel.datasetcode, sel.samplecode);
     var ctokens = get1(dataset.collection_tokens, sel.collectioncode);
     var tokencodes = Object.keys(dataset.tokenmap);
     tokencodes.sort();
+    var adj = 1;
     for (var i = 0; i < tokencodes.length; ++i) {
         var tokencode = tokencodes[i];
         var tokeninfo = get3(this.db.data.tokeninfo, sel.corpuscode, sel.datasetcode, tokencode);
@@ -1763,11 +1756,8 @@ Model.prototype.get_tokens = function() {
         t.tokencount = dataset.tokenmap[tokencode];
         if (sel.collectioncode) {
             t.tokencount_collection = get1num(ctokens, tokencode);
-            t.fraction_collection = t.tokencount_collection / t.tokencount;
-        }
-        if (sel.samplecode) {
-            t.tokencount_sample = get1num(sample.tokenmap, tokencode);
-            t.fraction_sample = t.tokencount_sample / t.tokencount;
+            t.fraction = t.tokencount_collection / t.tokencount;
+            t.score = (t.tokencount_collection + adj) / (t.tokencount + 2 * adj);
         }
         if (tokeninfo && tokeninfo.shortlabel) {
             t.shortlabel = tokeninfo.shortlabel;
