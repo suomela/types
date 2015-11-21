@@ -863,7 +863,7 @@ View.prototype.set_context = function(model) {
         columns, 
         model.get_context(),
         this.context_table,
-        null
+        this.ctrl.ev_context_cell_click.bind(this.ctrl)
     );
 };
 
@@ -1219,6 +1219,14 @@ Controller.prototype.ev_sample_cell_click = function(d) {
 Controller.prototype.ev_token_cell_click = function(d) {
     if (this.model.all_set(d.row)) {
         this.recalc_sel({ tokencode: null });
+    } else {
+        this.recalc_sel({ tokencode: d.row.tokencode, samplecode: null });
+    }
+};
+
+Controller.prototype.ev_context_cell_click = function(d) {
+    if (this.model.sel.tokencode) {
+        this.recalc_sel({ samplecode: d.row.samplecode, tokencode: null });
     } else {
         this.recalc_sel({ tokencode: d.row.tokencode, samplecode: null });
     }
