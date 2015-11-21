@@ -464,6 +464,9 @@ var Indicator = function() {
     this.msg = d3.select("#indicator_msg");
     this.info = d3.select("#info");
     this.plot_title = d3.select("#plot_title");
+    this.sample_title = d3.select("#sample_title");
+    this.token_title = d3.select("#token_title");
+    this.context_title = d3.select("#context_title");
 };
 
 Indicator.prototype.set_loading = function(f) {
@@ -482,9 +485,49 @@ Indicator.prototype.set_info = function(model) {
     var corpus = model.get_corpus();
     var dataset = model.get_dataset();
     var p = model.get_point();
-    if (stat) {
-        this.plot_title.text(stat.label);
+
+    this.plot_title.text(model.sel.datasetcode && stat
+        ? model.sel.datasetcode + ": " + stat.label
+        : "");
+
+    var parts;
+    var set_title = function(t) {
+        var sel = t.selectAll("span").data(parts);
+        sel.enter().append("span");
+        sel.exit().remove();
+        sel.text(function(d) { return d; });
     }
+
+    parts = [];
+    if (model.sel.collectioncode) {
+        parts.push("collection: " + model.sel.collectioncode);
+        if (model.sel.samplecode) {
+            parts.push("selected: " + model.sel.samplecode);
+        }
+    }
+    set_title(this.sample_title);
+
+    parts = [];
+    if (model.sel.datasetcode) {
+        parts.push("dataset: " + model.sel.datasetcode);
+        if (model.sel.tokencode) {
+            parts.push("selected: " + model.sel.tokencode);
+        }
+    }
+    set_title(this.token_title);
+
+    parts = [];
+    if (model.sel.tokencode) {
+        parts.push("token: " + model.sel.tokencode);
+        if (model.sel.collectioncode) {
+            parts.push("highlighted: " + model.sel.collectioncode);
+        }
+    } else if (model.sel.datasetcode && model.sel.samplecode) {
+        parts.push("dataset: " + model.sel.datasetcode);
+        parts.push("sample: " + model.sel.samplecode);
+    }
+    set_title(this.context_title);
+
     var par;
     var t;
     if (p) {

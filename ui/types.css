@@ -21,12 +21,13 @@ body {
     overflow: auto;
 }
 
-.wrap {
-    white-space: normal;
+.subtitle span {
+    font-weight: normal;
+    padding-left: 20px;
 }
 
-.small {
-    font-size: smaller;
+.wrap {
+    white-space: normal;
 }
 
 .float_button {
