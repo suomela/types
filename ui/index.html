@@ -30,8 +30,10 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h2 class="panel-title">
-                        <span role="button" class="title_button glyphicon glyphicon-resize-full" onclick="$('#result_container').toggleClass('limit_height')"></span>
-                        <span role="button" data-toggle="collapse" data-target="#result_container" class="title_button glyphicon glyphicon-resize-small"></span>
+                        <span class="title_buttons">
+                            <span role="button" class="title_button glyphicon glyphicon-plus" onclick="$('#result_container').toggleClass('limit_height')"></span>
+                            <span role="button" data-toggle="collapse" data-target="#result_container" class="title_button glyphicon glyphicon-minus"></span>
+                        </span>
                         All findings
                     </h2>
                 </div>
@@ -95,7 +97,9 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h2 class="panel-title">
-                        <span role="button" data-toggle="collapse" data-target="#setting_panel_body" class="title_button glyphicon glyphicon-resize-small"></span>
+                        <span class="title_buttons">
+                            <span role="button" data-toggle="collapse" data-target="#setting_panel_body" class="title_button glyphicon glyphicon-minus"></span>
+                        </span>
                         Plot settings
                     </h2>
                 </div>
@@ -131,7 +135,9 @@
                 <button type="button" class="btn btn-primary btn-sm float_button" id="zoom_reset">Reset zoom &amp; pan</button>
                 <div class="panel-heading">
                     <h2 class="panel-title">
-                        <span role="button" data-toggle="collapse" data-target="#fig_panel_body" class="title_button glyphicon glyphicon-resize-small"></span>
+                        <span class="title_buttons">
+                            <span role="button" data-toggle="collapse" data-target="#fig_panel_body" class="title_button glyphicon glyphicon-minus"></span>
+                        </span>
                         <span id="plot_title"></span>
                     </h2>
                 </div>
@@ -147,8 +153,10 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h2 class="panel-title">
-                        <span role="button" class="title_button glyphicon glyphicon-resize-full" onclick="$('#sample_container').toggleClass('limit_height')"></span>
-                        <span role="button" data-toggle="collapse" data-target="#sample_container" class="title_button glyphicon glyphicon-resize-small"></span>
+                        <span class="title_buttons">
+                            <span role="button" class="title_button glyphicon glyphicon-plus" onclick="$('#sample_container').toggleClass('limit_height')"></span>
+                            <span role="button" data-toggle="collapse" data-target="#sample_container" class="title_button glyphicon glyphicon-minus"></span>
+                        </span>
                         Samples<span class="subtitle" id="sample_title"></span>
                     </h2>
                 </div>
@@ -161,8 +169,10 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h2 class="panel-title">
-                        <span role="button" class="title_button glyphicon glyphicon-resize-full" onclick="$('#token_container').toggleClass('limit_height')"></span>
-                        <span role="button" data-toggle="collapse" data-target="#token_container" class="title_button glyphicon glyphicon-resize-small"></span>
+                        <span class="title_buttons">
+                            <span role="button" class="title_button glyphicon glyphicon-plus" onclick="$('#token_container').toggleClass('limit_height')"></span>
+                            <span role="button" data-toggle="collapse" data-target="#token_container" class="title_button glyphicon glyphicon-minus"></span>
+                        </span>
                         Types<span class="subtitle" id="token_title"></span>
                     </h2>
                 </div>
@@ -175,8 +185,10 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h2 class="panel-title">
-                        <span role="button" class="title_button glyphicon glyphicon-resize-full" onclick="$('#context_container').toggleClass('limit_height')"></span>
-                        <span role="button" data-toggle="collapse" data-target="#context_container" class="title_button glyphicon glyphicon-resize-small"></span>
+                        <span class="title_buttons">
+                            <span role="button" class="title_button glyphicon glyphicon-plus" onclick="$('#context_container').toggleClass('limit_height')"></span>
+                            <span role="button" data-toggle="collapse" data-target="#context_container" class="title_button glyphicon glyphicon-minus"></span>
+                        </span>
                         Context<span class="subtitle" id="context_title"></span>
                     </h2>
                 </div>

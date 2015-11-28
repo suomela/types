@@ -39,7 +39,11 @@ body {
 }
 
 .title_button {
-    padding-right: 3px;
+    padding-right: 2px;
+}
+
+.title_buttons {
+    padding-right: 6px;
 }
 
 .bar_pad {
