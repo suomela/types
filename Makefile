@@ -251,8 +251,9 @@ veryclean: clean $(config)
 clean:
 	rm -f code-gen/*.pyc lib/*.pyc
 	rm -f $(gensrc) $(sfmt)/jump/calc-jump
-	rm -rf bin build debug dep tmp
+	rm -rf bin build debug dep tmp template
 	rm -f ui/bootstrap.* ui/d3.* ui/jquery.* ui/html5shiv.* ui/respond.* ui/glyphicons-*
+	rm -rf external-ui/bower_components
 
 ifneq ($(MAKECMDGOALS),clean)
   ifneq ($(MAKECMDGOALS),veryclean)
