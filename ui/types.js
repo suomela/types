@@ -1799,8 +1799,8 @@ Model.prototype.fix_sel = function() {
     if (!sel.datasetcode || !(sel.datasetcode in get1obj(data.dataset, sel.corpuscode))) {
         sel.datasetcode = get1first(this.db.datasetcodes, sel.corpuscode);
     }
-    if (!sel.groupcode || !(sel.groupcode in get1obj(this.db.group_map, sel.corpuscode))) {
-        sel.groupcode = get1first(this.db.group_list, sel.corpuscode);
+    if (sel.groupcode && !(sel.groupcode in get1obj(this.db.group_map, sel.corpuscode))) {
+        sel.groupcode = null;
     }
     if (sel.collectioncode && !(sel.collectioncode in get2obj(this.db.group_map_map, sel.corpuscode, sel.groupcode))) {
         sel.collectioncode = null;
