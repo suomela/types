@@ -1820,6 +1820,8 @@ var add_structure = function(x) {
     }
 };
 
+var just_none = [add_structure(null)];
+
 Model.prototype.get_corpuscodes = function() {
     return this.db.corpuscodes.map(add_structure);
 };
@@ -1830,16 +1832,16 @@ Model.prototype.get_datasetcodes = function() {
 
 Model.prototype.get_groupcodes = function() {
     if (!this.sel.corpuscode) {
-        return [];
+        return just_none;
     }
-    return this.db.group_list[this.sel.corpuscode].concat([add_structure(null)]);
+    return this.db.group_list[this.sel.corpuscode].concat(just_none);
 };
 
 Model.prototype.get_collectioncodes = function() {
     if (!this.sel.corpuscode || !this.sel.groupcode) {
-        return [];
+        return just_none;
     }
-    return [null].concat(this.db.group_map[this.sel.corpuscode][this.sel.groupcode]).map(add_structure);
+    return just_none.concat(this.db.group_map[this.sel.corpuscode][this.sel.groupcode].map(add_structure));
 };
 
 Model.prototype.get_statcodes = function() {
