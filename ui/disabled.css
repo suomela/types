@@ -60,50 +60,6 @@
     border-left: 0px solid #aaa;
 }
 
-text.pointlabel {
-    font: 14px sans-serif;
-    cursor: pointer;
-}
-
-.axis text {
-    font: 14px sans-serif;
-}
-
-rect.pointlabelbg1 {
-    fill: #fff;
-    stroke: #000;
-    stroke-width: 0.5px;
-    cursor: pointer;
-}
-
-rect.pointlabelbg2 {
-    fill: #fff;
-    stroke-width: 5px;
-    cursor: pointer;
-}
-
-path.point {
-    stroke: #fff;
-    fill: #000;
-    stroke-width: 1.5px;
-    cursor: pointer;
-}
-
-path.curve {
-    stroke: #fff;
-    stroke-width: 0.7px;
-}
-
-.axis path, .axis line {
-    fill: none;
-    stroke: #000;
-    shape-rendering: crispEdges;
-}
-
-rect.bg {
-    fill: #fff;
-}
-
 .right {
     text-align: right;
 }

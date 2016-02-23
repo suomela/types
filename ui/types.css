@@ -88,9 +88,74 @@ h1 + p, p + p {
 }
 
 .main {
-    margin-left: 220px;
+    margin: 20px;
+    margin-left: 240px;
 }
 
 .message {
-    margin: 20px;
+}
+
+.plot, .plotcontrol {
+    max-width: 1000px;
+}
+
+.plotcontrol {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.plotcontrol label {
+    display: inline-block;
+    margin: 10px;
+}
+
+.plotcontrol label input {
+    margin-left: 10px;
+}
+
+
+/* plots */
+
+text.pointlabel {
+    font: 16px 'Source Sans Pro', sans-serif;
+    cursor: pointer;
+}
+
+.axis text {
+    font: 16px 'Source Sans Pro', sans-serif;
+}
+
+rect.pointlabelbg1 {
+    fill: #fff;
+    stroke: #000;
+    stroke-width: 0.5px;
+    cursor: pointer;
+}
+
+rect.pointlabelbg2 {
+    fill: #fff;
+    stroke-width: 5px;
+    cursor: pointer;
+}
+
+path.point {
+    stroke: #fff;
+    fill: #000;
+    stroke-width: 1.5px;
+    cursor: pointer;
+}
+
+path.curve {
+    stroke: #fff;
+    stroke-width: 0.7px;
+}
+
+.axis path, .axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+
+rect.bg {
+    fill: #fff;
 }

@@ -228,9 +228,9 @@ var f_empty = function(f, x) {
         g#yaxisg                    (translated)
 */
 
-var Plot = function(ctrl) {
+var Plot = function(ctrl, view) {
     this.ctrl = ctrl;
-    this.plotdiv = d3.select("#plot");
+    this.plotdiv = view.content.append("div").attr("class", "plot");
     this.plot = this.plotdiv.append("svg");
     this.curveareag = this.plot.append("g");
     this.bg = this.curveareag.append("rect").attr("class", "bg");
@@ -260,6 +260,40 @@ var Plot = function(ctrl) {
     this.zoom_reset.on('click', this.ev_reset_zoom.bind(this));
     this.zoom.on('zoom', this.ev_zoom.bind(this));
     this.oldwidth = 0;
+
+    this.ctrldiv = view.content.append("div").attr("class", "plotcontrol");
+    var on_settings = {
+        'change': this.ev_settings_changed.bind(this),
+        'input': this.ev_settings_changed.bind(this)
+    };
+    var label;
+    label = this.ctrldiv.append("label").text("X ticks:");
+    this.settings_yticks = label.append("input")
+        .attr("type", "range")
+        .attr("min", "0")
+        .attr("max", "10")
+        .attr("value", "5")
+        .on(on_settings);
+    label = this.ctrldiv.append("label").text("Y ticks:");
+    this.settings_xticks = label.append("input")
+        .attr("type", "range")
+        .attr("min", "0")
+        .attr("max", "10")
+        .attr("value", "5")
+        .on(on_settings);
+    label = this.ctrldiv.append("label").text("Margins:");
+    this.settings_margin = label.append("input")
+        .attr("type", "range")
+        .attr("min", "0")
+        .attr("max", "40")
+        .attr("value", "20")
+        .on(on_settings);
+    this.settings_reset = this.ctrldiv.append("button")
+        .attr("type", "button")
+        .attr("disabled", null)
+        .text("Reset")
+        .on('click', this.ev_settings_reset.bind(this));
+    this.refresh_settings();
 };
 
 Plot.prototype.setaxis = function() {
@@ -465,6 +499,33 @@ Plot.prototype.ev_reset_zoom = function() {
     this.recalc_points();
 };
 
+Plot.prototype.reset_all = function() {
+    var inputs = [this.settings_xticks, this.settings_yticks, this.settings_margin]
+    for (var i = 0; i < inputs.length; ++i) {
+        inputs[i].property("value", inputs[i].attr("value"));
+    }
+    this.settings_reset.attr('disabled', 'disabled');
+};
+
+Plot.prototype.refresh_settings = function() {
+    this.marginbase = +this.settings_margin.property("value");
+    this.xticks = +this.settings_xticks.property("value");
+    this.yticks = +this.settings_yticks.property("value");
+};
+
+Plot.prototype.ev_settings_reset = function() {
+    this.reset_all();
+    this.refresh_settings();
+    this.recalc_plot();
+};
+
+Plot.prototype.ev_settings_changed = function() {
+    this.refresh_settings();
+    this.recalc_plot();
+    this.settings_reset.attr('disabled', null);
+};
+
+
 //// View: Indicator
 
 var Indicator = function() {
@@ -611,7 +672,7 @@ Indicator.prototype.set_info = function(model) {
 var View = function(ctrl) {
     this.ctrl = ctrl;
     this.content = d3.select("#content");
-    // this.plot = new Plot(ctrl);
+    this.plot = null;
     // this.indicator = new Indicator();
     // this.result_table = d3.select("#result_table");
     // this.sample_table = d3.select("#sample_table");
@@ -621,10 +682,16 @@ var View = function(ctrl) {
 
 View.prototype.set_page = function(model) {
     this.content.selectAll("*").remove();
+    this.plot = null;
+    if (!model.sel.pagecode) {
+        // FIXME
+    } else if (model.sel.pagecode === 'plot') {
+        this.plot = new Plot(this.ctrl, this);
+    } else {
+        // FIXME
+        console.log("unimplemented");
+    }
 };
-
-
-
 
 View.prototype.set_sel = function(model) {
     if (this.result_rows) {
@@ -1017,39 +1084,17 @@ View.prototype.update_results = function(model) {
 };
 
 View.prototype.ev_resize = function() {
-    this.plot.recalc_plot();
-};
-
-//// Controller: Settings
-
-var Settings = function(ctrl) {
-    this.xticks = d3.select("#settings_xticks");
-    this.yticks = d3.select("#settings_yticks");
-    this.margin = d3.select("#settings_margin");
-    this.reset = d3.select("#settings_reset");
-    this.inputs = [this.xticks, this.yticks, this.margin];
-    for (var i = 0; i < this.inputs.length; ++i) {
-        this.inputs[i].on({
-            'change': ctrl.ev_settings_changed.bind(ctrl),
-            'input': ctrl.ev_settings_changed.bind(ctrl)
-        });
+    if (this.plot) {
+        this.plot.recalc_plot();
     }
-    this.reset.on('click', ctrl.ev_settings_reset.bind(ctrl));
 };
 
-Settings.prototype.reset_all = function() {
-    for (var i = 0; i < this.inputs.length; ++i) {
-        this.inputs[i].property("value", this.inputs[i].attr("value"));
-    }
-    this.reset.attr('disabled', 'disabled');
-};
 
 //// Controller
 
 var Controller = function(model) {
     this.model = model;
     this.view = new View(this);
-    // this.settings = new Settings(this);
     this.expected_hash = null;
     this.fields = [
         {
@@ -1057,7 +1102,8 @@ var Controller = function(model) {
             key: 'pagecode',
             get: model.get_pagecodes.bind(model),
             invalidates: [
-                'page'
+                'page',
+                'curves', 'points'
             ]
         },
         {
@@ -1123,37 +1169,29 @@ var Controller = function(model) {
             ]
         }
     ];
-    // this.refresh_settings();
-    // this.view.plot.set_curves({maxx: 1, maxy: 1, data: [{data: []}]});
-    // this.view.plot.set_points([]);
-    // this.view.plot.recalc_plot();
     d3.select(window)
-        // .on('resize', this.view.ev_resize.bind(this.view))
+        .on('resize', this.view.ev_resize.bind(this.view))
         .on('hashchange', this.ev_hashchange.bind(this));
-};
-
-Controller.prototype.refresh_settings = function() {
-    var plot = this.view.plot;
-    plot.marginbase = +this.settings.margin.property("value");
-    plot.xticks = +this.settings.xticks.property("value");
-    plot.yticks = +this.settings.yticks.property("value");
 };
 
 Controller.prototype.update_sel = function(changes) {
     if (changes.force || changes.invalid.page) {
         this.view.set_page(this.model);
     }
-
-    /*
     if (changes.force || changes.invalid.curves) {
-        this.view.plot.set_curves(this.model.get_curves());
-        this.view.plot.recalc_axes();
-        this.view.plot.recalc_curves();
+        if (this.view.plot) {
+            this.view.plot.set_curves(this.model.get_curves());
+            this.view.plot.recalc_axes();
+            this.view.plot.recalc_curves();
+        }
     }
     if (changes.force || changes.invalid.points) {
-        this.view.plot.set_points(this.model.get_points());
-        this.view.plot.recalc_points();
+        if (this.view.plot) {
+            this.view.plot.set_points(this.model.get_points());
+            this.view.plot.recalc_points();
+        }
     }
+    /*
     if (changes.force || changes.invalid.sample_table) {
         this.view.set_samples(this.model);
     }
@@ -1271,18 +1309,6 @@ Controller.prototype.data = function(data) {
     this.model.set_data(data);
     // this.view.update_results(this.model);
     this.recalc_sel(this.parse_hash(), true);
-};
-
-Controller.prototype.ev_settings_reset = function() {
-    this.settings.reset_all();
-    this.refresh_settings();
-    this.view.plot.recalc_plot();
-};
-
-Controller.prototype.ev_settings_changed = function() {
-    this.refresh_settings();
-    this.view.plot.recalc_plot();
-    this.settings.reset.attr('disabled', null);
 };
 
 Controller.prototype.ev_point_click = function(d) {
