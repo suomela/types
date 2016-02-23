@@ -37,24 +37,18 @@ You will need:
   - a modern C compiler (GCC or Clang)
   - Python 2
   - SQLite 3
-  - Bower
 
 
 ### OS X 10.11
 
-First, install Homebrew as usual, and make sure it is fine and up-to-date:
+First, install Homebrew as usual, and make sure it is up-to-date:
 
     ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-    brew doctor
     brew update
 
-Then install GCC and Node.js:
+Then install GCC:
 
-    brew install gcc node
-
-Then install Bower:
-
-    npm install -g bower
+    brew install gcc
 
 
 License
@@ -102,48 +96,14 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-### Web user interface
+### D3.js
 
-The following libraries are used to build the web user interface.
-They are not bundled with the source code; we use Bower package
-manager to install them.
+Available at http://d3js.org/
 
-Bootstrap:
+Copyright 2015 Mike Bostock.
 
-  - Available at http://getbootstrap.com/
-  - Copyright (c) 2011-2015 Twitter, Inc
-  - MIT License
-  - https://github.com/twbs/bootstrap/blob/master/LICENSE
-
-  - Includes icons from Glyphicon Halflings: http://glyphicons.com/
-
-D3.js:
-
-  - Available at http://d3js.org/
-  - Copyright 2015 Mike Bostock
-  - BSD license
-  - http://opensource.org/licenses/BSD-3-Clause
-
-jQuery:
-
-  - Available at https://jquery.com/
-  - Copyright 2014 jQuery Foundation and other contributors
-  - MIT license
-  - https://tldrlegal.com/license/mit-license
-
-HTML5 Shiv:
-
-  - Available at https://github.com/aFarkas/html5shiv/
-  - Copyright (c) 2014 Alexander Farkas (aFarkas)
-  - MIT or GPL version 2
-  - https://github.com/aFarkas/html5shiv/blob/master/MIT%20and%20GPL2%20licenses.md
-
-Respond.js:
-
-  - Available at https://github.com/scottjehl/Respond
-  - Copyright 2011: Scott Jehl, scottjehl.com
-  - MIT license
-  - https://github.com/scottjehl/Respond/blob/master/LICENSE-MIT
+Released under BSD license:
+http://opensource.org/licenses/BSD-3-Clause
 
 
 ### Other parts
