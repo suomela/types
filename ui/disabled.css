@@ -1,33 +1,4 @@
 
-
-.navbar {
-    margin-bottom: 20px;
-}
-
-#info {
-    margin-top: 3ex;
-    min-height: 14ex;
-}
-
-.table_container {
-    white-space: nowrap;
-}
-
-.limit_height {
-    height: 31ex;
-    overflow: auto;
-}
-
-.subtitle span {
-    font-weight: normal;
-    font-size: 95%;
-    padding-left: 20px;
-}
-
-.wrap {
-    white-space: normal;
-}
-
 .float_button {
     float: right;
     margin-right: 15px;
@@ -43,49 +14,3 @@
     padding-right: 6px;
 }
 
-.bar_pad {
-    margin-left: 10px;
-}
-
-.bar0 {
-    border-left: 0px solid #337ab7;
-    border-right: 0px solid #eee;
-}
-
-.bar1 {
-    border-left: 0px solid #eee;
-}
-
-.bar2 {
-    border-left: 0px solid #aaa;
-}
-
-.right {
-    text-align: right;
-}
-
-td.word {
-    text-align: center;
-}
-
-td.before, td.after {
-    min-width: 300px;
-    max-width: 300px;
-    overflow: hidden;
-    position: relative;
-}
-
-td.before span {
-    position: absolute;
-    right: 0px;
-}
-
-td.after span {
-    position: absolute;
-    left: 0px;
-}
-
-.footer {
-    margin-top: 10px;
-    font-size: 90%;
-}
