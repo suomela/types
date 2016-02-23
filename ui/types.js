@@ -500,7 +500,7 @@ Plot.prototype.ev_reset_zoom = function() {
 };
 
 Plot.prototype.reset_all = function() {
-    var inputs = [this.settings_xticks, this.settings_yticks, this.settings_margin]
+    var inputs = [this.settings_xticks, this.settings_yticks, this.settings_margin];
     for (var i = 0; i < inputs.length; ++i) {
         inputs[i].property("value", inputs[i].attr("value"));
     }
@@ -689,7 +689,6 @@ View.prototype.set_page = function(model) {
         this.plot = new Plot(this.ctrl, this);
     } else {
         // FIXME
-        console.log("unimplemented");
     }
 };
 
@@ -1260,10 +1259,10 @@ Controller.prototype.update_inputs = function(changes) {
         var sel = submenu.selectAll("div").data(values)
             .enter().append("div");
         sel.classed("menuitem", true);
-        sel.classed("active", function(d) { return model.sel[k] === d.code });
-        sel.classed("inactive", function(d) { return model.sel[k] !== d.code });
+        sel.classed("active", function(d) { return model.sel[k] === d.code; });
+        sel.classed("inactive", function(d) { return model.sel[k] !== d.code; });
         sel.text(function(d) {
-            if (d == null) {
+            if (d === null) {
                 return "none";
             } else {
                 return d.label;
@@ -1274,7 +1273,7 @@ Controller.prototype.update_inputs = function(changes) {
             x[k] = d.code;
             ctrl.recalc_sel(x);
         });
-    }
+    };
     for (var i = 0; i < this.fields.length; ++i) {
         update_one(this.fields[i]);
     }
@@ -1813,7 +1812,7 @@ var Model = function() {
         { label: "Types", code: "types" },
         { label: "Context", code: "context" }
     ];
-    this.pagecodemap = {}
+    this.pagecodemap = {};
     for (var i = 0; i < this.pagecodes.length; ++i) {
         var p = this.pagecodes[i];
         if (p.code) {
