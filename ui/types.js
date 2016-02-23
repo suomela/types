@@ -1045,7 +1045,9 @@ var Controller = function(model) {
     this.expected_hash = null;
     this.fields = [
         {
-            key: 'page',
+            key: 'pagecode',
+            get: model.get_pagecodes.bind(model),
+            menu: true,
             invalidates: []
         },
         {
@@ -1749,6 +1751,7 @@ Database.prototype.get_points = function(sel) {
 var Model = function() {
     this.db = null;
     this.sel = {
+        pagecode: null,
         corpuscode: null,
         datasetcode: null,
         groupcode: null,
@@ -1757,6 +1760,20 @@ var Model = function() {
         samplecode: null,
         tokencode: null
     };
+    this.pagecodes = [
+        { label: "Overview", code: null },
+        { label: "Plot", code: "plot" },
+        { label: "Samples", code: "samples" },
+        { label: "Types", code: "types" },
+        { label: "Context", code: "context" }
+    ];
+    this.pagecodemap = {}
+    for (var i = 0; i < this.pagecodes.length; ++i) {
+        var p = this.pagecodes[i];
+        if (p.code) {
+            this.pagecodemap[p.code] = true;
+        }
+    }
 };
 
 Model.prototype.all_set = function(x) {
@@ -1771,6 +1788,9 @@ Model.prototype.all_set = function(x) {
 Model.prototype.fix_sel = function() {
     var sel = this.sel;
     var data = this.db.data;
+    if (!sel.pagecode || !(sel.pagecode in this.pagecodemap)) {
+        sel.pagecode = null;
+    }
     if (!sel.corpuscode || !(sel.corpuscode in data.corpus)) {
         sel.corpuscode = get0first(this.db.corpuscodes);
     }
@@ -1821,6 +1841,10 @@ var add_structure = function(x) {
 };
 
 var just_none = [add_structure(null)];
+
+Model.prototype.get_pagecodes = function() {
+    return this.pagecodes;
+};
 
 Model.prototype.get_corpuscodes = function() {
     return this.db.corpuscodes.map(add_structure);
