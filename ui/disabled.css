@@ -1,0 +1,135 @@
+
+
+.navbar {
+    margin-bottom: 20px;
+}
+
+#info {
+    margin-top: 3ex;
+    min-height: 14ex;
+}
+
+.table_container {
+    white-space: nowrap;
+}
+
+.limit_height {
+    height: 31ex;
+    overflow: auto;
+}
+
+.subtitle span {
+    font-weight: normal;
+    font-size: 95%;
+    padding-left: 20px;
+}
+
+.wrap {
+    white-space: normal;
+}
+
+.float_button {
+    float: right;
+    margin-right: 15px;
+    margin-top: 15px;
+    visibility: hidden;
+}
+
+.title_button {
+    padding-right: 2px;
+}
+
+.title_buttons {
+    padding-right: 6px;
+}
+
+.bar_pad {
+    margin-left: 10px;
+}
+
+.bar0 {
+    border-left: 0px solid #337ab7;
+    border-right: 0px solid #eee;
+}
+
+.bar1 {
+    border-left: 0px solid #eee;
+}
+
+.bar2 {
+    border-left: 0px solid #aaa;
+}
+
+text.pointlabel {
+    font: 14px sans-serif;
+    cursor: pointer;
+}
+
+.axis text {
+    font: 14px sans-serif;
+}
+
+rect.pointlabelbg1 {
+    fill: #fff;
+    stroke: #000;
+    stroke-width: 0.5px;
+    cursor: pointer;
+}
+
+rect.pointlabelbg2 {
+    fill: #fff;
+    stroke-width: 5px;
+    cursor: pointer;
+}
+
+path.point {
+    stroke: #fff;
+    fill: #000;
+    stroke-width: 1.5px;
+    cursor: pointer;
+}
+
+path.curve {
+    stroke: #fff;
+    stroke-width: 0.7px;
+}
+
+.axis path, .axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+
+rect.bg {
+    fill: #fff;
+}
+
+.right {
+    text-align: right;
+}
+
+td.word {
+    text-align: center;
+}
+
+td.before, td.after {
+    min-width: 300px;
+    max-width: 300px;
+    overflow: hidden;
+    position: relative;
+}
+
+td.before span {
+    position: absolute;
+    right: 0px;
+}
+
+td.after span {
+    position: absolute;
+    left: 0px;
+}
+
+.footer {
+    margin-top: 10px;
+    font-size: 90%;
+}

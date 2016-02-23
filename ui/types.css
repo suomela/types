@@ -1,138 +1,84 @@
+@charset "utf-8";
+@import url(https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300,600,600italic,400italic,300italic);
+
 body {
-    padding-top: 20px;
-    padding-bottom: 20px;
+    color: #000;
+    background-color: #fff;
+    font-family: 'Source Sans Pro', sans-serif;
+    padding: 0;
+    margin: 0;
+    border: 0;
 }
 
-.navbar {
-    margin-bottom: 20px;
+p, ul, li, table, tr, td {
+    margin: 0;
+    padding: 0;
+    border: 0;
 }
 
-#info {
-    margin-top: 3ex;
-    min-height: 14ex;
-}
-
-.table_container {
-    white-space: nowrap;
-}
-
-.limit_height {
-    height: 31ex;
+.sidemenu {
+    background-color: #ddd;
+    width: 240px;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
     overflow: auto;
 }
 
-.subtitle span {
-    font-weight: normal;
-    font-size: 95%;
-    padding-left: 20px;
+.sidemenu ul {
+    list-style-type: none;
 }
 
-.wrap {
-    white-space: normal;
+.sidemenu ul li {
+    font-weight: 600;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-left: 10px;
 }
 
-.float_button {
-    float: right;
-    margin-right: 15px;
-    margin-top: 15px;
-    visibility: hidden;
+.sidemenu ul li.title {
+    color: #777;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    background-color: #ddd;
 }
 
-.title_button {
-    padding-right: 2px;
+.sidemenu ul li.spacer {
+    height: 2px;
 }
 
-.title_buttons {
-    padding-right: 6px;
+.sidemenu ul li.active, .sidemenu ul li.inactive, .sidemenu ul li.control {
+    background-color: #eee;
 }
 
-.bar_pad {
-    margin-left: 10px;
+.sidemenu ul li.active {
+    color: #fff;
+    background-color: #337ab7;
 }
 
-.bar0 {
-    border-left: 0px solid #337ab7;
-    border-right: 0px solid #eee;
+.sidemenu ul li.inactive {
+    color: #337ab7;
 }
 
-.bar1 {
-    border-left: 0px solid #eee;
+.sidemenu ul li.inactive:hover {
+    color: #fff;
+    background-color: #000;
 }
 
-.bar2 {
-    border-left: 0px solid #aaa;
+.sidemenu ul li.control {
+    font-weight: 400;
 }
 
-text.pointlabel {
-    font: 14px sans-serif;
-    cursor: pointer;
+.sidemenu ul li select {
+    display: block;
+    margin-top: 5px;
+    margin-bottom: 2px;
+    color: #000;
+    background-color: #fff;
 }
 
-.axis text {
-    font: 14px sans-serif;
+.main {
+    margin-left: 260px;
 }
 
-rect.pointlabelbg1 {
-    fill: #fff;
-    stroke: #000;
-    stroke-width: 0.5px;
-    cursor: pointer;
-}
-
-rect.pointlabelbg2 {
-    fill: #fff;
-    stroke-width: 5px;
-    cursor: pointer;
-}
-
-path.point {
-    stroke: #fff;
-    fill: #000;
-    stroke-width: 1.5px;
-    cursor: pointer;
-}
-
-path.curve {
-    stroke: #fff;
-    stroke-width: 0.7px;
-}
-
-.axis path, .axis line {
-    fill: none;
-    stroke: #000;
-    shape-rendering: crispEdges;
-}
-
-rect.bg {
-    fill: #fff;
-}
-
-.right {
-    text-align: right;
-}
-
-td.word {
-    text-align: center;
-}
-
-td.before, td.after {
-    min-width: 300px;
-    max-width: 300px;
-    overflow: hidden;
-    position: relative;
-}
-
-td.before span {
-    position: absolute;
-    right: 0px;
-}
-
-td.after span {
-    position: absolute;
-    left: 0px;
-}
-
-.footer {
-    margin-top: 10px;
-    font-size: 90%;
-}
