@@ -10,10 +10,19 @@ body {
     border: 0;
 }
 
-p, ul, li, table, tr, td {
+p, h1, ul, li, table, tr, td {
     margin: 0;
     padding: 0;
     border: 0;
+}
+
+h1 {
+    font-size: 2em;
+    font-weight: 400;
+}
+
+h1 + p, p + p {
+    margin-top: 15px;
 }
 
 .sidemenu {
@@ -79,6 +88,9 @@ p, ul, li, table, tr, td {
 }
 
 .main {
-    margin-left: 260px;
+    margin-left: 240px;
 }
 
+.message {
+    margin: 20px;
+}
