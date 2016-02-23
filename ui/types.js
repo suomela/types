@@ -1045,15 +1045,15 @@ var Controller = function(model) {
     this.expected_hash = null;
     this.fields = [
         {
+            menu: '<i>types</i>2',
             key: 'pagecode',
             get: model.get_pagecodes.bind(model),
-            menu: true,
             invalidates: []
         },
         {
+            menu: 'Corpus',
             key: 'corpuscode',
             get: model.get_corpuscodes.bind(model),
-            menu: true,
             invalidates: [
                 'datasetcode', 'groupcode', 'collectioncode', 'samplecode', 'tokencode',
                 'curves', 'points', 'selection',
@@ -1061,9 +1061,9 @@ var Controller = function(model) {
             ]
         },
         {
+            menu: 'Dataset',
             key: 'datasetcode',
             get: model.get_datasetcodes.bind(model),
-            menu: true,
             invalidates: [
                 'tokencode',
                 'curves', 'points', 'selection',
@@ -1071,18 +1071,18 @@ var Controller = function(model) {
             ]
         },
         {
+            menu: 'Group',
             key: 'groupcode',
             get: model.get_groupcodes.bind(model),
-            menu: true,
             invalidates: [
                 'collectioncode', 'samplecode', 'tokencode',
                 'points', 'selection'
             ]
         },
         {
+            menu: 'Collection',
             key: 'collectioncode',
             get: model.get_collectioncodes.bind(model),
-            menu: true,
             invalidates: [
                 'samplecode', 'tokencode',
                 'points', 'selection',
@@ -1090,9 +1090,9 @@ var Controller = function(model) {
             ]
         },
         {
+            menu: 'Statistics',
             key: 'statcode',
             get: model.get_statcodes.bind(model),
-            menu: true,
             invalidates: [
                 'curves', 'points', 'selection'
             ]
@@ -1191,15 +1191,21 @@ Controller.prototype.find_changed = function(old) {
 Controller.prototype.update_inputs = function(changes) {
     var ctrl = this;
     var model = this.model;
+    var mainmenu = d3.select("#mainmenu");
+    mainmenu.selectAll("*").remove();
+
     var update_one = function(f) {
         if (!f.menu) {
             return;
         }
         var k = f.key;
-        var control = d3.select("#menu_" + k);
         var values = f.get();
-        control.selectAll("div").remove();
-        var sel = control.selectAll("div").data(values)
+
+        var menutitle = mainmenu.append("div");
+        var submenu = mainmenu.append("div");
+        menutitle.classed("title", true).html(f.menu);
+        submenu.classed("submenu", true);
+        var sel = submenu.selectAll("div").data(values)
             .enter().append("div");
         sel.classed("menuitem", true);
         sel.classed("active", function(d) { return model.sel[k] === d.code });
