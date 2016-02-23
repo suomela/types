@@ -26,8 +26,10 @@ h1 + p, p + p {
 }
 
 .sidemenu {
+    font-weight: 400;
     background-color: #ddd;
-    width: 240px;
+    color: #777;
+    width: 220px;
     height: 100%;
     position: fixed;
     top: 0;
@@ -35,42 +37,40 @@ h1 + p, p + p {
     overflow: auto;
 }
 
-.sidemenu ul {
-    list-style-type: none;
-}
-
-.sidemenu ul li {
+.sidemenu .title {
     font-weight: 600;
     padding-top: 5px;
     padding-bottom: 5px;
     padding-left: 10px;
 }
 
-.sidemenu ul li.title {
-    color: #777;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    background-color: #ddd;
-}
-
-.sidemenu ul li.spacer {
-    height: 2px;
-}
-
-.sidemenu ul li.active, .sidemenu ul li.inactive, .sidemenu ul li.control {
+.sidemenu .submenu {
     background-color: #eee;
+    padding-top: 2px;
+    padding-bottom: 2px;
 }
 
-.sidemenu ul li.active {
+.sidemenu .menuitem {
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 15px;
+}
+
+.sidemenu .menuitem {
+}
+
+.sidemenu .active {
+    cursor: pointer;
     color: #fff;
     background-color: #337ab7;
 }
 
-.sidemenu ul li.inactive {
+.sidemenu .inactive {
+    cursor: pointer;
     color: #337ab7;
 }
 
-.sidemenu ul li.inactive:hover {
+.sidemenu .inactive:hover {
     color: #fff;
     background-color: #000;
 }
@@ -88,7 +88,7 @@ h1 + p, p + p {
 }
 
 .main {
-    margin-left: 240px;
+    margin-left: 220px;
 }
 
 .message {

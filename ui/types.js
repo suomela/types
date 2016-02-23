@@ -1012,29 +1012,6 @@ View.prototype.ev_resize = function() {
     this.plot.recalc_plot();
 };
 
-//// Controller: Input
-
-var Input = function(ctrl) {
-    this.inputs = ['corpuscode', 'datasetcode', 'groupcode', 'collectioncode', 'statcode'];
-    for (var i = 0; i < this.inputs.length; ++i) {
-        var l = this.inputs[i];
-        this[l] = d3.select("#input_" + l);
-        this[l].on({
-            'change': ctrl.ev_input_changed.bind(ctrl),
-            'input': ctrl.ev_input_changed.bind(ctrl)
-        });
-    }
-};
-
-Input.prototype.get_options = function() {
-    var x = {};
-    for (var i = 0; i < this.inputs.length; ++i) {
-        var l = this.inputs[i];
-        x[l] = opt_decode(this[l].property("value"));
-    }
-    return x;
-};
-
 //// Controller: Settings
 
 var Settings = function(ctrl) {
@@ -1061,32 +1038,20 @@ Settings.prototype.reset_all = function() {
 
 //// Controller
 
-var set_option = function(sel) {
-    sel.attr("value", function(d) { return opt_encode(d); });
-    sel.text(function(d) { return (d === null) ? "none" : d; });
-};
-
-var set_option_hide = function(sel) {
-    sel.attr("value", function(d) { return opt_encode(d); });
-    sel.text(function(d) { return (d === null) ? "none" : d.substring(1); });
-};
-
-var set_option_obj = function(sel) {
-    sel.attr("value", function(d) { return opt_encode(d ? d.code : null); });
-    sel.text(function(d) { return (d === null) ? "none" : d.label; });
-};
-
 var Controller = function(model) {
     this.model = model;
-    this.view = new View(this);
-    this.settings = new Settings(this);
-    this.input = new Input(this);
+    // this.view = new View(this);
+    // this.settings = new Settings(this);
     this.expected_hash = null;
     this.fields = [
         {
+            key: 'page',
+            invalidates: []
+        },
+        {
             key: 'corpuscode',
             get: model.get_corpuscodes.bind(model),
-            set: set_option,
+            menu: true,
             invalidates: [
                 'datasetcode', 'groupcode', 'collectioncode', 'samplecode', 'tokencode',
                 'curves', 'points', 'selection',
@@ -1096,7 +1061,7 @@ var Controller = function(model) {
         {
             key: 'datasetcode',
             get: model.get_datasetcodes.bind(model),
-            set: set_option,
+            menu: true,
             invalidates: [
                 'tokencode',
                 'curves', 'points', 'selection',
@@ -1106,7 +1071,7 @@ var Controller = function(model) {
         {
             key: 'groupcode',
             get: model.get_groupcodes.bind(model),
-            set: set_option_hide,
+            menu: true,
             invalidates: [
                 'collectioncode', 'samplecode', 'tokencode',
                 'points', 'selection'
@@ -1115,7 +1080,7 @@ var Controller = function(model) {
         {
             key: 'collectioncode',
             get: model.get_collectioncodes.bind(model),
-            set: set_option,
+            menu: true,
             invalidates: [
                 'samplecode', 'tokencode',
                 'points', 'selection',
@@ -1125,7 +1090,7 @@ var Controller = function(model) {
         {
             key: 'statcode',
             get: model.get_statcodes.bind(model),
-            set: set_option_obj,
+            menu: true,
             invalidates: [
                 'curves', 'points', 'selection'
             ]
@@ -1146,12 +1111,12 @@ var Controller = function(model) {
             ]
         }
     ];
-    this.refresh_settings();
-    this.view.plot.set_curves({maxx: 1, maxy: 1, data: [{data: []}]});
-    this.view.plot.set_points([]);
-    this.view.plot.recalc_plot();
+    // this.refresh_settings();
+    // this.view.plot.set_curves({maxx: 1, maxy: 1, data: [{data: []}]});
+    // this.view.plot.set_points([]);
+    // this.view.plot.recalc_plot();
     d3.select(window)
-        .on('resize', this.view.ev_resize.bind(this.view))
+        // .on('resize', this.view.ev_resize.bind(this.view))
         .on('hashchange', this.ev_hashchange.bind(this));
 };
 
@@ -1163,6 +1128,7 @@ Controller.prototype.refresh_settings = function() {
 };
 
 Controller.prototype.update_sel = function(changes) {
+    /*
     if (changes.force || changes.invalid.curves) {
         this.view.plot.set_curves(this.model.get_curves());
         this.view.plot.recalc_axes();
@@ -1185,6 +1151,7 @@ Controller.prototype.update_sel = function(changes) {
         this.view.indicator.set_info(this.model);
         this.view.set_sel(this.model);
     }
+    */
 };
 
 Controller.prototype.set_sel_raw = function(old, x) {
@@ -1220,20 +1187,36 @@ Controller.prototype.find_changed = function(old) {
 };
 
 Controller.prototype.update_inputs = function(changes) {
-    for (var i = 0; i < this.fields.length; ++i) {
-        var f = this.fields[i];
-        var k = f.key;
-        if (k in this.input) {
-            var control = this.input[k];
-            if (changes.force || changes.invalid[k]) {
-                var values = f.get();
-                var opt = control.selectAll("option").data(values);
-                opt.exit().remove();
-                f.set(opt.enter().append("option"));
-                f.set(opt);
-            }
-            control.property("value", opt_encode(this.model.sel[k]));
+    var ctrl = this;
+    var model = this.model;
+    var update_one = function(f) {
+        if (!f.menu) {
+            return;
         }
+        var k = f.key;
+        var control = d3.select("#menu_" + k);
+        var values = f.get();
+        control.selectAll("div").remove();
+        var sel = control.selectAll("div").data(values)
+            .enter().append("div");
+        sel.classed("menuitem", true);
+        sel.classed("active", function(d) { return model.sel[k] === d.code });
+        sel.classed("inactive", function(d) { return model.sel[k] !== d.code });
+        sel.text(function(d) {
+            if (d == null) {
+                return "none";
+            } else {
+                return d.label;
+            }
+        });
+        sel.on('click', function(d) {
+            var x = {};
+            x[k] = d.code;
+            ctrl.recalc_sel(x);
+        });
+    }
+    for (var i = 0; i < this.fields.length; ++i) {
+        update_one(this.fields[i]);
     }
 };
 
@@ -1263,9 +1246,8 @@ Controller.prototype.recalc_sel = function(x, force) {
 };
 
 Controller.prototype.data = function(data) {
-    this.view.indicator.set_loading(false);
     this.model.set_data(data);
-    this.view.update_results(this.model);
+    // this.view.update_results(this.model);
     this.recalc_sel(this.parse_hash(), true);
 };
 
@@ -1279,10 +1261,6 @@ Controller.prototype.ev_settings_changed = function() {
     this.refresh_settings();
     this.view.plot.recalc_plot();
     this.settings.reset.attr('disabled', null);
-};
-
-Controller.prototype.ev_input_changed = function() {
-    this.recalc_sel(this.input.get_options());
 };
 
 Controller.prototype.ev_point_click = function(d) {
@@ -1404,21 +1382,21 @@ Database.prototype.setup_group_map = function(corpuscode) {
     this.group_map_map[corpuscode] = {};
     this.group_reverse_map[corpuscode] = {};
     this.group_list[corpuscode] = [];
-    this.add_group(corpuscode, '-all', all);
+    this.add_group(corpuscode, 'all', 'all', all);
     var normal_groups = Object.keys(x);
     normal_groups.sort();
     for (var i = 0; i < normal_groups.length; ++i) {
         var groupcode = normal_groups[i];
-        this.add_group(corpuscode, '.' + groupcode, x[groupcode]);
+        this.add_group(corpuscode, '.' + groupcode, groupcode, x[groupcode]);
     }
     if (other.length > 0 && other.length < all.length) {
-        this.add_group(corpuscode, '-other', other);
+        this.add_group(corpuscode, 'other', 'orher', other);
     }
 };
 
-Database.prototype.add_group = function(corpuscode, groupcode, collections) {
+Database.prototype.add_group = function(corpuscode, groupcode, grouplabel, collections) {
     collections.sort();
-    this.group_list[corpuscode].push(groupcode);
+    this.group_list[corpuscode].push({code: groupcode, label: grouplabel});
     this.group_map[corpuscode][groupcode] = collections;
     this.group_map_map[corpuscode][groupcode] = {};
     for (var i = 0; i < collections.length; ++i) {
@@ -1834,26 +1812,34 @@ Model.prototype.get_points = function() {
     return this.db.get_points(this.sel);
 };
 
+var add_structure = function(x) {
+    if (x) {
+        return {label: x, code: x};
+    } else {
+        return {label: "none", code: null};
+    }
+};
+
 Model.prototype.get_corpuscodes = function() {
-    return this.db.corpuscodes;
+    return this.db.corpuscodes.map(add_structure);
 };
 
 Model.prototype.get_datasetcodes = function() {
-    return get1list(this.db.datasetcodes, this.sel.corpuscode);
+    return get1list(this.db.datasetcodes, this.sel.corpuscode).map(add_structure);
 };
 
 Model.prototype.get_groupcodes = function() {
     if (!this.sel.corpuscode) {
         return [];
     }
-    return this.db.group_list[this.sel.corpuscode].concat([null]);
+    return this.db.group_list[this.sel.corpuscode].concat([add_structure(null)]);
 };
 
 Model.prototype.get_collectioncodes = function() {
     if (!this.sel.corpuscode || !this.sel.groupcode) {
         return [];
     }
-    return [null].concat(this.db.group_map[this.sel.corpuscode][this.sel.groupcode]);
+    return [null].concat(this.db.group_map[this.sel.corpuscode][this.sel.groupcode]).map(add_structure);
 };
 
 Model.prototype.get_statcodes = function() {
