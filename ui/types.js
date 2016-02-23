@@ -253,11 +253,9 @@ var Plot = function(ctrl, view) {
     this.yaxis = d3.svg.axis().scale(this.yscale).orient("left");
     this.zoom = d3.behavior.zoom().scaleExtent([1,10]);
     this.curveareag.call(this.zoom);
-    this.zoom_reset = d3.select("#zoom_reset");
     this.marginbase = 0;
     this.xticks = 0;
     this.yticks = 0;
-    this.zoom_reset.on('click', this.ev_reset_zoom.bind(this));
     this.zoom.on('zoom', this.ev_zoom.bind(this));
     this.oldwidth = 0;
 
@@ -308,7 +306,6 @@ Plot.prototype.setscale = function() {
     this.yscale.domain([0, this.curves.maxy]);
     this.zoom.x(this.xscale).y(this.yscale);
     this.setaxis();
-    this.zoom_reset.style("visibility", "hidden");
 };
 
 Plot.prototype.recalc_axes = function() {
@@ -489,14 +486,7 @@ Plot.prototype.ev_zoom = function() {
     this.curveg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
     this.setaxis();
     this.recalc_points();
-    this.zoom_reset.style("visibility", "visible");
-};
-
-Plot.prototype.ev_reset_zoom = function() {
-    d3.event.preventDefault();
-    d3.event.stopPropagation();
-    this.setscale();
-    this.recalc_points();
+    this.settings_reset.attr('disabled', null);
 };
 
 Plot.prototype.reset_all = function() {
