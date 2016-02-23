@@ -672,7 +672,6 @@ Indicator.prototype.set_info = function(model) {
 var View = function(ctrl) {
     this.ctrl = ctrl;
     this.content = d3.select("#content");
-    this.plot = null;
     // this.indicator = new Indicator();
     // this.result_table = d3.select("#result_table");
     // this.sample_table = d3.select("#sample_table");
@@ -683,14 +682,30 @@ var View = function(ctrl) {
 View.prototype.set_page = function(model) {
     this.content.selectAll("*").remove();
     this.plot = null;
+    this.result_table = null;
     if (!model.sel.pagecode) {
-        // FIXME
+        this.result_table = this.content.append("table").classed("results", true);
     } else if (model.sel.pagecode === 'plot') {
         this.plot = new Plot(this.ctrl, this);
     } else {
         // FIXME
     }
 };
+
+View.prototype.set_curves = function(model) {
+    if (this.plot) {
+        this.plot.set_curves(model.get_curves());
+        this.plot.recalc_axes();
+        this.plot.recalc_curves();
+    }
+};
+
+View.prototype.set_points = function(model) {
+    if (this.plot) {
+        this.plot.set_points(model.get_points());
+        this.plot.recalc_points();
+    }
+}
 
 View.prototype.set_sel = function(model) {
     if (this.result_rows) {
@@ -1035,10 +1050,14 @@ View.prototype.set_context = function(model) {
     );
 };
 
-View.prototype.update_results = function(model) {
+View.prototype.set_results = function(model) {
+    var table = this.result_table;
+    if (!table) {
+        return;
+    }
+
     var ctrl = this.ctrl;
     var db = model.db;
-    var table = this.result_table;
     table.selectAll("*").remove();
 
     var columns = [
@@ -1102,7 +1121,7 @@ var Controller = function(model) {
             get: model.get_pagecodes.bind(model),
             invalidates: [
                 'page',
-                'curves', 'points'
+                'curves', 'points', 'results'
             ]
         },
         {
@@ -1178,17 +1197,13 @@ Controller.prototype.update_sel = function(changes) {
         this.view.set_page(this.model);
     }
     if (changes.force || changes.invalid.curves) {
-        if (this.view.plot) {
-            this.view.plot.set_curves(this.model.get_curves());
-            this.view.plot.recalc_axes();
-            this.view.plot.recalc_curves();
-        }
+        this.view.set_curves(this.model);
     }
     if (changes.force || changes.invalid.points) {
-        if (this.view.plot) {
-            this.view.plot.set_points(this.model.get_points());
-            this.view.plot.recalc_points();
-        }
+        this.view.set_points(this.model);
+    }
+    if (changes.force || changes.invalid.results) {
+        this.view.set_results(this.model);
     }
     /*
     if (changes.force || changes.invalid.sample_table) {
@@ -1306,7 +1321,6 @@ Controller.prototype.recalc_sel = function(x, force) {
 
 Controller.prototype.data = function(data) {
     this.model.set_data(data);
-    // this.view.update_results(this.model);
     this.recalc_sel(this.parse_hash(), true);
 };
 
