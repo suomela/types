@@ -610,13 +610,21 @@ Indicator.prototype.set_info = function(model) {
 
 var View = function(ctrl) {
     this.ctrl = ctrl;
-    this.plot = new Plot(ctrl);
-    this.indicator = new Indicator();
-    this.result_table = d3.select("#result_table");
-    this.sample_table = d3.select("#sample_table");
-    this.token_table = d3.select("#token_table");
-    this.context_table = d3.select("#context_table");
+    this.content = d3.select("#content");
+    // this.plot = new Plot(ctrl);
+    // this.indicator = new Indicator();
+    // this.result_table = d3.select("#result_table");
+    // this.sample_table = d3.select("#sample_table");
+    // this.token_table = d3.select("#token_table");
+    // this.context_table = d3.select("#context_table");
 };
+
+View.prototype.set_page = function(model) {
+    this.content.selectAll("*").remove();
+};
+
+
+
 
 View.prototype.set_sel = function(model) {
     if (this.result_rows) {
@@ -1040,7 +1048,7 @@ Settings.prototype.reset_all = function() {
 
 var Controller = function(model) {
     this.model = model;
-    // this.view = new View(this);
+    this.view = new View(this);
     // this.settings = new Settings(this);
     this.expected_hash = null;
     this.fields = [
@@ -1048,7 +1056,9 @@ var Controller = function(model) {
             menu: '<i>types</i>2',
             key: 'pagecode',
             get: model.get_pagecodes.bind(model),
-            invalidates: []
+            invalidates: [
+                'page'
+            ]
         },
         {
             menu: 'Corpus',
@@ -1130,6 +1140,10 @@ Controller.prototype.refresh_settings = function() {
 };
 
 Controller.prototype.update_sel = function(changes) {
+    if (changes.force || changes.invalid.page) {
+        this.view.set_page(this.model);
+    }
+
     /*
     if (changes.force || changes.invalid.curves) {
         this.view.plot.set_curves(this.model.get_curves());
