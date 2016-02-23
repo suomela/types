@@ -290,7 +290,7 @@ var Plot = function(ctrl, view) {
         .on(on_settings);
     this.settings_reset = this.ctrldiv.append("button")
         .attr("type", "button")
-        .attr("disabled", null)
+        .attr("disabled", "disabled")
         .text("Reset")
         .on('click', this.ev_settings_reset.bind(this));
     this.refresh_settings();
