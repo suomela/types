@@ -356,6 +356,7 @@ Plot.prototype.recalc_points = function() {
     var x1 = this.xscale.range()[1];
     var y0 = this.yscale.range()[1];
     var y1 = this.yscale.range()[0];
+    var plot = this;
     var coord = function(d) {
         var x = plot.xscale(d.x);
         var y = plot.yscale(d.y);
@@ -363,7 +364,6 @@ Plot.prototype.recalc_points = function() {
         var vis = bounds ? "visible" : "hidden";
         return {x: x, y: y, vis: vis};
     };
-    var plot = this;
 
     var pointset = function(d) {
         var c = coord(d);
@@ -732,6 +732,7 @@ var table_builder = function(columns, data, table, row_hook) {
     td.append(td_builder);
     td.attr("class", function(d) { return d.column.classed; });
     td.classed("right", function(d) { return d.column.right; });
+    var th;
     var sorter = function(c, i) {
         if (!c.key) {
             return;
@@ -743,7 +744,7 @@ var table_builder = function(columns, data, table, row_hook) {
             return i === i2;
         });
     };
-    var th = head.append("tr").selectAll("th")
+    th = head.append("tr").selectAll("th")
         .data(columns).enter()
         .append("th")
         .attr("role", "button")
@@ -1060,12 +1061,26 @@ Settings.prototype.reset_all = function() {
 
 //// Controller
 
-var Controller = function() {
+var set_option = function(sel) {
+    sel.attr("value", function(d) { return opt_encode(d); });
+    sel.text(function(d) { return (d === null) ? "none" : d; });
+};
+
+var set_option_hide = function(sel) {
+    sel.attr("value", function(d) { return opt_encode(d); });
+    sel.text(function(d) { return (d === null) ? "none" : d.substring(1); });
+};
+
+var set_option_obj = function(sel) {
+    sel.attr("value", function(d) { return opt_encode(d ? d.code : null); });
+    sel.text(function(d) { return (d === null) ? "none" : d.label; });
+};
+
+var Controller = function(model) {
+    this.model = model;
     this.view = new View(this);
-    this.model = new Model();
     this.settings = new Settings(this);
     this.input = new Input(this);
-    var model = this.model;
     this.expected_hash = null;
     this.fields = [
         {
@@ -1170,21 +1185,6 @@ Controller.prototype.update_sel = function(changes) {
         this.view.indicator.set_info(this.model);
         this.view.set_sel(this.model);
     }
-};
-
-var set_option = function(sel) {
-    sel.attr("value", function(d) { return opt_encode(d); });
-    sel.text(function(d) { return (d === null) ? "none" : d; });
-};
-
-var set_option_hide = function(sel) {
-    sel.attr("value", function(d) { return opt_encode(d); });
-    sel.text(function(d) { return (d === null) ? "none" : d.substring(1); });
-};
-
-var set_option_obj = function(sel) {
-    sel.attr("value", function(d) { return opt_encode(d ? d.code : null); });
-    sel.text(function(d) { return (d === null) ? "none" : d.label; });
 };
 
 Controller.prototype.set_sel_raw = function(old, x) {
@@ -1967,5 +1967,5 @@ Model.prototype.get_context = function() {
 
 //// main
 
-return new Controller();
+return new Controller(new Model());
 }());
