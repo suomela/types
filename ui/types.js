@@ -1369,7 +1369,7 @@ Controller.prototype.ev_point_click = function(d) {
 
 Controller.prototype.ev_result_cell_click = function(d) {
     if (this.model.all_set(d.row)) {
-        this.recalc_sel({ collectioncode: null });
+        this.recalc_sel({ groupcode: null });
     } else {
         this.recalc_sel(d.row);
     }
