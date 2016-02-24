@@ -6,7 +6,6 @@ var types = (function() {
 var config = {
     statcodes: ['type-word', 'type-token', 'hapax-word', 'hapax-token', 'token-word'],
     basecolor: '#337ab7',
-    aspect: 0.7,
     axisoffset: 10,
     leftaxisextra: 4,
     bottomaxisextra: 2,
@@ -322,10 +321,6 @@ Plot.prototype.recalc_axes = function() {
     }
     var fullwidth = parseInt(this.plotdiv.style('width'), 10);
     var fullheight = parseInt(this.plotdiv.style('height'), 10);
-    var fullwidth2 = Math.floor(fullheight / config.aspect);
-    var fullheight2 = Math.floor(fullwidth * config.aspect);
-    fullwidth = Math.min(fullwidth, fullwidth2);
-    fullheight = Math.min(fullheight, fullheight2);
 
     var plotwidth = fullwidth - margin.left - margin.right;
     var plotheight = fullheight - margin.top - margin.bottom;
