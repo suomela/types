@@ -27,6 +27,16 @@ h1 + p, p + p {
     margin-top: 15px;
 }
 
+a:link {
+    color: #337ab7;
+    text-decoration: none;
+}
+
+a:link:hover {
+    color: #fff;
+    background-color: #000;
+}
+
 /* menu bar */
 
 .sidemenu {
