@@ -230,7 +230,7 @@ var f_empty = function(f, x) {
 
 var Plot = function(ctrl, view) {
     this.ctrl = ctrl;
-    this.plotdiv = view.content.append("div").attr("class", "plot");
+    this.plotdiv = view.content1.append("div").attr("class", "plot");
     this.plot = this.plotdiv.append("svg");
     this.curveareag = this.plot.append("g");
     this.bg = this.curveareag.append("rect").attr("class", "bg");
@@ -257,9 +257,8 @@ var Plot = function(ctrl, view) {
     this.xticks = 0;
     this.yticks = 0;
     this.zoom.on('zoom', this.ev_zoom.bind(this));
-    this.oldwidth = 0;
 
-    this.ctrldiv = view.content.append("div").attr("class", "plotcontrol");
+    this.ctrldiv = view.content2.append("div").attr("class", "plotcontrol");
     var on_settings = {
         'change': this.ev_settings_changed.bind(this),
         'input': this.ev_settings_changed.bind(this)
@@ -322,12 +321,12 @@ Plot.prototype.recalc_axes = function() {
         margin.left *= config.leftaxisextra;
     }
     var fullwidth = parseInt(this.plotdiv.style('width'), 10);
-    if (!fullwidth) {
-        fullwidth = this.oldwidth;
-    } else {
-        this.oldwidth = fullwidth;
-    }
-    var fullheight = d3.round(config.aspect * fullwidth);
+    var fullheight = parseInt(this.plotdiv.style('height'), 10);
+    var fullwidth2 = Math.floor(fullheight / config.aspect);
+    var fullheight2 = Math.floor(fullwidth * config.aspect);
+    fullwidth = Math.min(fullwidth, fullwidth2);
+    fullheight = Math.min(fullheight, fullheight2);
+
     var plotwidth = fullwidth - margin.left - margin.right;
     var plotheight = fullheight - margin.top - margin.bottom;
     this.plot.style('width', fullwidth + 'px');
@@ -661,24 +660,29 @@ Indicator.prototype.set_info = function(model) {
 
 var View = function(ctrl) {
     this.ctrl = ctrl;
-    this.content = d3.select("#content");
+    this.content1 = d3.select("#content1");
+    this.content2 = d3.select("#content2");
+    this.window1 = d3.select("#window1");
+    this.window2 = d3.select("#window2");
 };
 
 View.prototype.set_page = function(model) {
-    this.content.selectAll("*").remove();
+    this.content1.selectAll("*").remove();
+    this.content2.selectAll("*").remove();
     this.plot = null;
     this.result_table = null;
     if (!model.sel.pagecode) {
-        this.result_table = this.content.append("table").classed("results", true);
+        this.result_table = this.content1.append("table").classed("results", true);
     } else if (model.sel.pagecode === 'plot') {
         this.plot = new Plot(this.ctrl, this);
     } else if (model.sel.pagecode === 'samples') {
-        this.sample_table = this.content.append("table").classed("samples", true);
+        this.sample_table = this.content1.append("table").classed("samples", true);
     } else if (model.sel.pagecode === 'types') {
-        this.token_table = this.content.append("table").classed("types", true);
+        this.token_table = this.content1.append("table").classed("types", true);
     } else if (model.sel.pagecode === 'context') {
-        this.context_table = this.content.append("table").classed("context", true);
+        this.context_table = this.content1.append("table").classed("context", true);
     }
+    this.window1.node().focus();
 };
 
 View.prototype.set_curves = function(model) {
@@ -1365,9 +1369,7 @@ Controller.prototype.ev_point_click = function(d) {
 };
 
 Controller.prototype.ev_result_cell_click = function(d) {
-    var x = d.row;
-    x['pagecode'] = 'plot';
-    this.recalc_sel(x);
+    this.recalc_sel(d.row);
 };
 
 Controller.prototype.ev_sample_cell_click = function(d) {

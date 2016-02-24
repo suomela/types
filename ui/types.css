@@ -5,7 +5,7 @@
 
 body {
     color: #000;
-    background-color: #fff;
+    background-color: #ddd;
     font-family: 'Source Sans Pro', sans-serif;
     padding: 0;
     margin: 0;
@@ -53,18 +53,46 @@ a:link:hover, a:visited:hover {
     background-color: #000;
 }
 
-/* menu bar */
+/* general layout */
 
 .sidemenu {
-    font-weight: 400;
-    background-color: #ddd;
-    color: #777;
     width: 220px;
     height: 100%;
     position: fixed;
     top: 0;
     left: 0;
     overflow: auto;
+}
+
+.top, .bottom {
+    position: fixed;
+    left: 230px;
+    right: 10px;
+    overflow: auto;
+    background-color: #fff;
+}
+
+.top {
+    top: 10px;
+    height: calc(67% - 15px);
+}
+
+.bottom {
+    bottom: 10px;
+    height: calc(33% - 15px);
+}
+
+.content {
+}
+
+
+
+/* menu bar */
+
+.sidemenu {
+    font-weight: 400;
+    background-color: #ddd;
+    color: #777;
 }
 
 .sidemenu .title {
@@ -103,16 +131,19 @@ a:link:hover, a:visited:hover {
 
 /* main content */
 
-.main {
-    margin: 20px;
-    margin-left: 240px;
-}
-
 .message {
 }
 
-.plot, .plotcontrol {
-    max-width: 1000px;
+.plot {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+svg {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .plotcontrol {
@@ -133,6 +164,7 @@ a:link:hover, a:visited:hover {
 
 table {
     border-collapse: collapse;
+    border-bottom: 4px solid #eee;
 }
 
 td, th {
