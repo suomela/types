@@ -726,9 +726,6 @@ View.prototype.set_sel = function(model) {
     }
 };
 
-var btn_down = '<span class="glyphicon glyphicon-sort-by-attributes"></span> ';
-var btn_up = '<span class="glyphicon glyphicon-sort-by-attributes-alt"></span> ';
-
 var stop_propagation = function(e) {
     e.stopPropagation();
 };
@@ -849,19 +846,19 @@ View.prototype.set_samples = function(model) {
 
     var columns = [
         {
-            html: btn_down + 'sample',
+            html: 'sample',
             kind: 'link',
             val: function(p) { return { label: p.samplecode, link: p.link }; },
             key: function(p) { return p.samplecode; }
         },
         {
-            html: btn_down + 'description',
+            html: 'description',
             kind: 'plain',
             val: function(p) { return p.description; },
             key: function(p) { return p.description; }
         },
         {
-            html: btn_up + model.db.data.label.word.labeltext,
+            html: model.db.data.label.word.labeltext,
             kind: 'num',
             format: f_large,
             right: true,
@@ -869,7 +866,7 @@ View.prototype.set_samples = function(model) {
             key: function(p) { return -p.wordcount; }
         },
         {
-            html: btn_up + model.db.data.label.token.labeltext,
+            html: model.db.data.label.token.labeltext,
             kind: 'num',
             format: f_large,
             right: true,
@@ -877,7 +874,7 @@ View.prototype.set_samples = function(model) {
             key: function(p) { return -p.tokens; }
         },
         {
-            html: btn_up + "/1000",
+            html: "/1000",
             kind: 'num',
             format: f_fraction,
             right: true,
@@ -885,7 +882,7 @@ View.prototype.set_samples = function(model) {
             key: function(p) { return -p.tokens/p.wordcount; }
         },
         {
-            html: btn_up + model.db.data.label.type.labeltext,
+            html: model.db.data.label.type.labeltext,
             kind: 'num',
             format: f_large,
             right: true,
@@ -893,7 +890,7 @@ View.prototype.set_samples = function(model) {
             key: function(p) { return -p.types; }
         },
         {
-            html: btn_up + model.db.data.label.hapax.labeltext,
+            html: model.db.data.label.hapax.labeltext,
             kind: 'num',
             format: f_large,
             right: true,
@@ -902,7 +899,7 @@ View.prototype.set_samples = function(model) {
         },
         { kind: 'pad' },
         {
-            html: btn_up + "unique",
+            html: "unique",
             kind: 'plain',
             classed: 'wrap small',
             val: function(p) { return p.unique.join(" "); },
@@ -926,13 +923,13 @@ View.prototype.set_tokens = function(model) {
 
     var columns = [
         {
-            html: btn_down + 'type',
+            html: 'type',
             kind: 'plain',
             val: function(p) { return p.shortlabel; },
             key: function(p) { return p.shortlabel; }
         },
         {
-            html: btn_up + model.db.data.label.token.labeltext,
+            html: model.db.data.label.token.labeltext,
             kind: 'num',
             format: f_large,
             right: true,
@@ -940,7 +937,7 @@ View.prototype.set_tokens = function(model) {
             key: function(p) { return -p.tokencount; }
         },
         {
-            html: btn_up + 'in collection',
+            html: 'in collection',
             kind: 'num',
             format: f_large,
             right: true,
@@ -948,7 +945,7 @@ View.prototype.set_tokens = function(model) {
             key: function(p) { return -p.tokencount_collection; }
         },
         {
-            html: btn_up + 'fraction',
+            html: 'fraction',
             kind: 'num',
             format: f_fraction3,
             right: true,
@@ -956,14 +953,14 @@ View.prototype.set_tokens = function(model) {
             key: function(p) { return -p.tokencount_fraction; }
         },
         {
-            html: btn_up + 'score',
+            html: 'score',
             kind: 'score',
             right: true,
             val: function(p) { return p.tokencount_score; },
             key: function(p) { return -p.tokencount_score[1]; }
         },
         {
-            html: btn_up + 'samples',
+            html: 'samples',
             kind: 'num',
             format: f_large,
             right: true,
@@ -971,7 +968,7 @@ View.prototype.set_tokens = function(model) {
             key: function(p) { return -p.samplecount; }
         },
         {
-            html: btn_up + 'in collection',
+            html: 'in collection',
             kind: 'num',
             format: f_large,
             right: true,
@@ -979,7 +976,7 @@ View.prototype.set_tokens = function(model) {
             key: function(p) { return -p.samplecount_collection; }
         },
         {
-            html: btn_up + 'fraction',
+            html: 'fraction',
             kind: 'num',
             format: f_fraction3,
             right: true,
@@ -987,7 +984,7 @@ View.prototype.set_tokens = function(model) {
             key: function(p) { return -p.samplecount_fraction; }
         },
         {
-            html: btn_up + 'score',
+            html: 'score',
             kind: 'score',
             right: true,
             val: function(p) { return p.samplecount_score; },
@@ -1012,26 +1009,26 @@ View.prototype.set_context = function(model) {
     var sample_data = model.db.sample_data[model.sel.corpuscode][model.sel.datasetcode];
     var columns = [
         {
-            html: btn_down + 'sample',
+            html: 'sample',
             kind: 'link',
             val: function(p) { return { label: p.samplecode, link: sample_data[p.samplecode].link }; },
             key: function(p) { return p.samplecode; }
         },
         {
-            html: btn_down + 'description',
+            html: 'description',
             kind: 'plain',
             val: function(p) { return sample_data[p.samplecode].description; },
             key: function(p) { return sample_data[p.samplecode].description; }
         },
         {
-            html: btn_down + 'token',
+            html: 'token',
             kind: 'plain',
             val: function(p) { return p.shortlabel; },
             key: function(p) { return p.shortlabel; }
         },
         { kind: 'pad' },
         {
-            html: btn_down + 'before',
+            html: 'before',
             kind: 'wrap',
             classed: 'before',
             val: function(p) { return p.before; },
@@ -1039,7 +1036,7 @@ View.prototype.set_context = function(model) {
         },
         { kind: 'pad' },
         {
-            html: btn_down + 'word',
+            html: 'word',
             kind: 'link',
             classed: 'word',
             val: function(p) { return { label: p.word, link: p.link }; },
@@ -1047,7 +1044,7 @@ View.prototype.set_context = function(model) {
         },
         { kind: 'pad' },
         {
-            html: btn_down + 'after',
+            html: 'after',
             kind: 'wrapwrap',
             classed: 'after',
             val: function(p) { return p.after; },
@@ -1344,27 +1341,19 @@ Controller.prototype.ev_point_click = function(d) {
 };
 
 Controller.prototype.ev_result_cell_click = function(d) {
-    if (this.model.all_set(d.row)) {
-        this.recalc_sel({ collectioncode: null });
-    } else {
-        this.recalc_sel(d.row);
-    }
+    var x = d.row;
+    x['pagecode'] = 'plot';
+    this.recalc_sel(x);
 };
 
 Controller.prototype.ev_sample_cell_click = function(d) {
-    if (this.model.all_set(d.row)) {
-        this.recalc_sel({ samplecode: null });
-    } else {
-        this.recalc_sel(d.row);
-    }
+    var x = d.row;
+    x['pagecode'] = 'types';
+    this.recalc_sel(x);
 };
 
 Controller.prototype.ev_token_cell_click = function(d) {
-    if (this.model.all_set(d.row)) {
-        this.recalc_sel({ tokencode: null });
-    } else {
-        this.recalc_sel({ tokencode: d.row.tokencode, samplecode: null });
-    }
+    this.recalc_sel({ tokencode: d.row.tokencode, pagecode: 'context' });
 };
 
 Controller.prototype.ev_context_cell_click = function(d) {

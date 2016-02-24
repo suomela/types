@@ -27,12 +27,12 @@ h1 + p, p + p {
     margin-top: 15px;
 }
 
-a:link {
+a:link, a:visited {
     color: #337ab7;
     text-decoration: none;
 }
 
-a:link:hover {
+a:link:hover, a:visited:hover {
     color: #fff;
     background-color: #000;
 }
@@ -136,6 +136,7 @@ table {
 }
 
 td, th {
+    vertical-align: top;
     white-space: nowrap;
     font-weight: 400;
     text-align: left;
