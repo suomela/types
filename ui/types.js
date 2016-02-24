@@ -662,11 +662,6 @@ Indicator.prototype.set_info = function(model) {
 var View = function(ctrl) {
     this.ctrl = ctrl;
     this.content = d3.select("#content");
-    // this.indicator = new Indicator();
-    // this.result_table = d3.select("#result_table");
-    // this.sample_table = d3.select("#sample_table");
-    // this.token_table = d3.select("#token_table");
-    // this.context_table = d3.select("#context_table");
 };
 
 View.prototype.set_page = function(model) {
@@ -677,8 +672,12 @@ View.prototype.set_page = function(model) {
         this.result_table = this.content.append("table").classed("results", true);
     } else if (model.sel.pagecode === 'plot') {
         this.plot = new Plot(this.ctrl, this);
-    } else {
-        // FIXME
+    } else if (model.sel.pagecode === 'samples') {
+        this.sample_table = this.content.append("table").classed("samples", true);
+    } else if (model.sel.pagecode === 'types') {
+        this.token_table = this.content.append("table").classed("types", true);
+    } else if (model.sel.pagecode === 'context') {
+        this.context_table = this.content.append("table").classed("context", true);
     }
 };
 
@@ -834,6 +833,11 @@ var table_builder = function(columns, data, table, row_hook) {
 };
 
 View.prototype.set_samples = function(model) {
+    var table = this.sample_table;
+    if (!table) {
+        return;
+    }
+
     var columns = [
         {
             html: btn_down + 'sample',
@@ -900,12 +904,17 @@ View.prototype.set_samples = function(model) {
     this.sample_rows = table_builder(
         columns,
         model.get_samples(),
-        this.sample_table,
+        table,
         this.ctrl.ev_sample_cell_click.bind(this.ctrl)
     );
 };
 
 View.prototype.set_tokens = function(model) {
+    var table = this.token_table;
+    if (!table) {
+        return;
+    }
+
     var columns = [
         {
             html: btn_down + 'type',
@@ -980,12 +989,17 @@ View.prototype.set_tokens = function(model) {
     this.token_rows = table_builder(
         columns,
         model.get_tokens(),
-        this.token_table,
+        table,
         this.ctrl.ev_token_cell_click.bind(this.ctrl)
     );
 };
 
 View.prototype.set_context = function(model) {
+    var table = this.context_table;
+    if (!table) {
+        return;
+    }
+
     var sample_data = model.db.sample_data[model.sel.corpuscode][model.sel.datasetcode];
     var columns = [
         {
@@ -1035,7 +1049,7 @@ View.prototype.set_context = function(model) {
     this.context_rows = table_builder(
         columns, 
         model.get_context(),
-        this.context_table,
+        table,
         this.ctrl.ev_context_cell_click.bind(this.ctrl)
     );
 };
@@ -1111,8 +1125,8 @@ var Controller = function(model) {
             get: model.get_pagecodes.bind(model),
             invalidates: [
                 'page',
-                'curves', 'points', 'results'
-            ]
+                'curves', 'points', 'results', 'selection',
+                'sample_table', 'token_table', 'context_table'            ]
         },
         {
             menu: 'Corpus',
@@ -1195,7 +1209,6 @@ Controller.prototype.update_sel = function(changes) {
     if (changes.force || changes.invalid.results) {
         this.view.set_results(this.model);
     }
-    /*
     if (changes.force || changes.invalid.sample_table) {
         this.view.set_samples(this.model);
     }
@@ -1206,10 +1219,9 @@ Controller.prototype.update_sel = function(changes) {
         this.view.set_context(this.model);
     }
     if (changes.force || changes.invalid.selection) {
-        this.view.indicator.set_info(this.model);
+        // this.view.indicator.set_info(this.model);
         this.view.set_sel(this.model);
     }
-    */
 };
 
 Controller.prototype.set_sel_raw = function(old, x) {
