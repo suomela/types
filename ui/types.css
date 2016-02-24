@@ -165,6 +165,15 @@ svg {
 table {
     border-collapse: collapse;
     border-bottom: 4px solid #eee;
+    margin-top: 15px;
+    margin-bottom: 20px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+tr {
+    border-bottom: 1px solid #fff;
+    border-top: 1px solid #fff;
 }
 
 td, th {
@@ -174,8 +183,6 @@ td, th {
     text-align: left;
     padding-left: 8px;
     padding-right: 8px;
-    padding-bottom: 1px;
-    padding-top: 1px;
 }
 
 th {
@@ -233,6 +240,24 @@ td.before span {
 td.after span {
     position: absolute;
     left: 0px;
+}
+
+.clickable {
+    cursor: pointer;
+}
+
+.clickable:hover {
+    background-color: #eee;
+}
+
+.selected {
+    color: #337ab7;
+    background-color: #eee;
+}
+
+.selected td {
+    border-bottom: 1px solid #337ab7;
+    border-top: 1px solid #337ab7;
 }
 
 /* SVG plots */

@@ -702,7 +702,7 @@ View.prototype.set_points = function(model) {
 
 View.prototype.set_sel = function(model) {
     if (this.result_rows) {
-        this.result_rows.classed("info", function(d) {
+        this.result_rows.classed("selected", function(d) {
             return model.sel.corpuscode === d.corpuscode &&
                 model.sel.datasetcode === d.datasetcode &&
                 model.sel.collectioncode === d.collectioncode &&
@@ -710,13 +710,13 @@ View.prototype.set_sel = function(model) {
         });
     }
     if (this.sample_rows) {
-        this.sample_rows.classed("info", function(d) {
+        this.sample_rows.classed("selected", function(d) {
             return model.sel.corpuscode === d.corpuscode &&
                 model.sel.samplecode === d.samplecode;
         });
     }
     if (this.token_rows) {
-        this.token_rows.classed("info", function(d) {
+        this.token_rows.classed("selected", function(d) {
             return model.sel.corpuscode === d.corpuscode &&
                 model.sel.datasetcode === d.datasetcode &&
                 model.sel.tokencode === d.tokencode;
@@ -724,7 +724,7 @@ View.prototype.set_sel = function(model) {
     }
     if (this.context_rows) {
         var samplecodes = get2obj(model.db.sample_collection_map, model.sel.corpuscode, model.sel.collectioncode);
-        this.context_rows.classed("info", function(d) {
+        this.context_rows.classed("selected", function(d) {
             return model.sel.tokencode && d.samplecode in samplecodes;
         });
     }
@@ -807,7 +807,7 @@ var table_builder = function(columns, data, table, row_hook) {
         .data(data).enter()
         .append("tr");
     if (row_hook) {
-        tr.attr("role", "button");
+        tr.classed("clickable", true);
     }
     var td = tr.selectAll("td")
         .data(function(row) {
@@ -844,7 +844,6 @@ var table_builder = function(columns, data, table, row_hook) {
     th = head.append("tr").selectAll("th")
         .data(columns).enter()
         .append("th")
-        .attr("role", "button")
         .on("click", sorter);
     th_style();
     th.html(function(d) { return d.html; });
@@ -1126,7 +1125,7 @@ View.prototype.set_results = function(model) {
     this.result_rows = body.selectAll("tr")
         .data(db.point_ordered).enter()
         .append("tr")
-        .attr("role", "button");
+        .classed("clickable", true);
     this.result_rows.selectAll("td")
         .data(function(row) {
             return columns.map(function(c) {
@@ -1369,7 +1368,11 @@ Controller.prototype.ev_point_click = function(d) {
 };
 
 Controller.prototype.ev_result_cell_click = function(d) {
-    this.recalc_sel(d.row);
+    if (this.model.all_set(d.row)) {
+        this.recalc_sel({ collectioncode: null });
+    } else {
+        this.recalc_sel(d.row);
+    }
 };
 
 Controller.prototype.ev_sample_cell_click = function(d) {
