@@ -20,7 +20,7 @@ var config = {
     label_y_offset: 5,
     label_x_margin: 2,
     bar_width: 50,
-    sbar_width: 20
+    sbar_width: 25
 };
 
 //// Auxiliary functions
@@ -752,11 +752,18 @@ var td_builder = function(d) {
         e.appendChild(document.createTextNode(val));
     } else if (kind === 'score') {
         e = document.createElement('span');
-        w = [val[0], val[2]-val[0], 1-val[2]];
+        w = [];
+        w.push(Math.round(config.bar_width * val[0]));
+        w.push(Math.round(config.bar_width * (val[2] - val[0])));
+        w.push(config.bar_width - w[0] - w[1]);
+        if (w[2] < 0) {
+            w[1] += w[2];
+            w[2] = 0;
+        }
         for (var i = 0; i < 3; ++i) {
             var ee = document.createElement('span');
             ee.setAttribute('class', 'bar' + i);
-            ee.setAttribute('style', 'border-left-width: ' + config.bar_width * w[i] + 'px');
+            ee.setAttribute('style', 'border-left-width: ' + w[i] + 'px');
             e.appendChild(ee);
         }
     } else if (kind === 'num') {
@@ -764,11 +771,14 @@ var td_builder = function(d) {
         var e1 = document.createElement('span');
         var e2 = document.createElement('span');
         e1.appendChild(document.createTextNode(d.column.format(val)));
-        w = val / (d.max ? d.max : 1);
+        var x = val / (d.max ? d.max : 1);
+        w = [];
+        w.push(Math.round(config.sbar_width * x));
+        w.push(config.sbar_width - w[0]);
         e2.setAttribute('class', 'bar0 bar_pad');
         e2.setAttribute('style',
-            'border-left-width: ' + config.sbar_width * w + 'px' + ';' +
-            'border-right-width: ' + config.sbar_width * (1 - w) + 'px'
+            'border-left-width: ' + w[0] + 'px' + ';' +
+            'border-right-width: ' + w[1] + 'px'
         );
         e.appendChild(e1);
         e.appendChild(e2);
