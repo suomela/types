@@ -844,7 +844,8 @@ var table_builder = function(columns, data, table, row_hook) {
         .on("click", sorter);
     th_style();
     th.html(function(d) { return d.html; });
-    th.classed("right", function(d) { return d.right; });
+    th.classed("right", function(d) { return !d.hcenter && (d.right || d.hright); });
+    th.classed("center", function(d) { return d.hcenter; });
     return tr;
 };
 
@@ -871,6 +872,7 @@ View.prototype.set_samples = function(model) {
             html: model.db.data.label.word.labeltext,
             kind: 'num',
             format: f_large,
+            hcenter: true,
             right: true,
             val: function(p) { return p.wordcount; },
             key: function(p) { return -p.wordcount; }
@@ -879,6 +881,7 @@ View.prototype.set_samples = function(model) {
             html: model.db.data.label.token.labeltext,
             kind: 'num',
             format: f_large,
+            hcenter: true,
             right: true,
             val: function(p) { return p.tokens; },
             key: function(p) { return -p.tokens; }
@@ -887,6 +890,7 @@ View.prototype.set_samples = function(model) {
             html: "/1000",
             kind: 'num',
             format: f_fraction,
+            hcenter: true,
             right: true,
             val: function(p) { return p.tokens/p.wordcount*1000; },
             key: function(p) { return -p.tokens/p.wordcount; }
@@ -895,6 +899,7 @@ View.prototype.set_samples = function(model) {
             html: model.db.data.label.type.labeltext,
             kind: 'num',
             format: f_large,
+            hcenter: true,
             right: true,
             val: function(p) { return p.types; },
             key: function(p) { return -p.types; }
@@ -903,6 +908,7 @@ View.prototype.set_samples = function(model) {
             html: model.db.data.label.hapax.labeltext,
             kind: 'num',
             format: f_large,
+            hcenter: true,
             right: true,
             val: function(p) { return p.hapaxes; },
             key: function(p) { return -p.hapaxes; }
@@ -943,6 +949,7 @@ View.prototype.set_tokens = function(model) {
             kind: 'num',
             format: f_large,
             right: true,
+            hcenter: true,
             val: function(p) { return p.tokencount; },
             key: function(p) { return -p.tokencount; }
         },
@@ -951,6 +958,7 @@ View.prototype.set_tokens = function(model) {
             kind: 'num',
             format: f_large,
             right: true,
+            hcenter: true,
             val: function(p) { return p.tokencount_collection; },
             key: function(p) { return -p.tokencount_collection; }
         },
@@ -959,13 +967,14 @@ View.prototype.set_tokens = function(model) {
             kind: 'num',
             format: f_fraction3,
             right: true,
+            hcenter: true,
             val: function(p) { return p.tokencount_fraction; },
             key: function(p) { return -p.tokencount_fraction; }
         },
         {
             html: 'score',
             kind: 'score',
-            right: true,
+            hcenter: true,
             val: function(p) { return p.tokencount_score; },
             key: function(p) { return -p.tokencount_score[1]; }
         },
@@ -974,6 +983,7 @@ View.prototype.set_tokens = function(model) {
             kind: 'num',
             format: f_large,
             right: true,
+            hcenter: true,
             val: function(p) { return p.samplecount; },
             key: function(p) { return -p.samplecount; }
         },
@@ -982,6 +992,7 @@ View.prototype.set_tokens = function(model) {
             kind: 'num',
             format: f_large,
             right: true,
+            hcenter: true,
             val: function(p) { return p.samplecount_collection; },
             key: function(p) { return -p.samplecount_collection; }
         },
@@ -990,13 +1001,14 @@ View.prototype.set_tokens = function(model) {
             kind: 'num',
             format: f_fraction3,
             right: true,
+            hcenter: true,
             val: function(p) { return p.samplecount_fraction; },
             key: function(p) { return -p.samplecount_fraction; }
         },
         {
             html: 'score',
             kind: 'score',
-            right: true,
+            hcenter: true,
             val: function(p) { return p.samplecount_score; },
             key: function(p) { return -p.samplecount_score[1]; }
         }
@@ -1041,6 +1053,7 @@ View.prototype.set_context = function(model) {
             html: 'before',
             kind: 'wrap',
             classed: 'before',
+            hright: true,
             val: function(p) { return p.before; },
             key: function(p) { return p.before_sort; }
         },
@@ -1049,6 +1062,7 @@ View.prototype.set_context = function(model) {
             html: 'word',
             kind: 'link',
             classed: 'word',
+            hcenter: true,
             val: function(p) { return { label: p.word, link: p.link }; },
             key: function(p) { return p.word_sort; }
         },
