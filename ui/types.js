@@ -811,6 +811,15 @@ var table_builder = function(columns, data, table, row_hook) {
     td.attr("class", function(d) { return d.column.classed; });
     td.classed("right", function(d) { return d.column.right; });
     var th;
+    var sort_key = null;
+    var th_style = function() {
+        th.classed("active", function(c, i) {
+            return c.key && (i === sort_key);
+        });
+        th.classed("inactive", function(c, i) {
+            return c.key && (i !== sort_key);
+        });
+    }
     var sorter = function(c, i) {
         if (!c.key) {
             return;
@@ -818,15 +827,15 @@ var table_builder = function(columns, data, table, row_hook) {
         tr.sort(function(a, b) {
             return d3.ascending(c.key(a), c.key(b));
         });
-        th.classed("active", function(c2, i2) {
-            return i === i2;
-        });
+        sort_key = i;
+        th_style();
     };
     th = head.append("tr").selectAll("th")
         .data(columns).enter()
         .append("th")
         .attr("role", "button")
         .on("click", sorter);
+    th_style();
     th.html(function(d) { return d.html; });
     th.classed("right", function(d) { return d.right; });
     return tr;

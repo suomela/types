@@ -37,6 +37,22 @@ a:link:hover {
     background-color: #000;
 }
 
+.active {
+    cursor: pointer;
+    color: #fff;
+    background-color: #337ab7;
+}
+
+.inactive {
+    cursor: pointer;
+    color: #337ab7;
+}
+
+.inactive:hover {
+    color: #fff;
+    background-color: #000;
+}
+
 /* menu bar */
 
 .sidemenu {
@@ -71,22 +87,6 @@ a:link:hover {
 }
 
 .sidemenu .menuitem {
-}
-
-.sidemenu .active {
-    cursor: pointer;
-    color: #fff;
-    background-color: #337ab7;
-}
-
-.sidemenu .inactive {
-    cursor: pointer;
-    color: #337ab7;
-}
-
-.sidemenu .inactive:hover {
-    color: #fff;
-    background-color: #000;
 }
 
 .sidemenu ul li.control {
@@ -139,14 +139,17 @@ td, th {
     white-space: nowrap;
     font-weight: 400;
     text-align: left;
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-bottom: 1px;
+    padding-top: 1px;
 }
 
 th {
+    background-color: #eee;
     font-weight: 600;
-}
-
-td + td, th + th {
-    padding-left: 20px;
+    padding-bottom: 5px;
+    padding-top: 5px;
 }
 
 .wrap {
