@@ -2,12 +2,12 @@
 
 import datetime
 
+copyright = 'Copyright (c)'
 description = "Type and hapax accumulation curves"
 author = "Jukka Suomela"
 now = datetime.date.today()
 version = now.isoformat()
-year1 = 2014
-year2 = now.year
+year = now.year
 
 with open('src/version.c', 'w') as f:
     f.write('''\
@@ -16,13 +16,25 @@ with open('src/version.c', 'w') as f:
 const char * const DESCRIPTION = "%s";
 const char * const AUTHOR = "%s";
 const char * const VERSION = "%s";
-const char * const YEAR = "%d-%d";
-''' % (description, author, version, year1, year2))
+const char * const YEAR = "%d";
+''' % (description, author, version, year))
 
 with open('src/TypesVersion.py', 'w') as f:
     f.write('''\
 DESCRIPTION = "%s"
 AUTHOR = "%s"
 VERSION = "%s"
-YEAR = "%d-%d"
-''' % (description, author, version, year1, year2))
+YEAR = "%d"
+''' % (description, author, version, year))
+
+readme = []
+with open('README.md') as f:
+    for l in f:
+        if copyright in l and author in l:
+            readme.append('%s %d %s.\n' % (copyright, year, author))
+        else:
+            readme.append(l)
+
+with open('README.md', 'w') as f:
+    for l in readme:
+        f.write(l)
