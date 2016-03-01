@@ -1956,9 +1956,14 @@ Model.prototype.get_dataset = function() {
 
 Model.prototype.get_samples = function() {
     var sel = this.sel;
-    if (sel.corpuscode && sel.datasetcode && sel.collectioncode) {
-        var l = this.db.data.sample_collection[sel.corpuscode][sel.collectioncode];
+    if (sel.corpuscode && sel.datasetcode) {
         var m = this.db.sample_data[sel.corpuscode][sel.datasetcode];
+        var l;
+        if (sel.collectioncode) {
+            l = this.db.data.sample_collection[sel.corpuscode][sel.collectioncode];
+        } else {
+            l = Object.keys(m);
+        }
         return l.map(function(samplecode) {
             return m[samplecode];
         });
