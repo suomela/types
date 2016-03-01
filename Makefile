@@ -204,6 +204,11 @@ $(characteristic):
 version:
 	code-gen/update-version
 
+### External libraries
+
+ui-libraries:
+	cd ui && rm -f d3.v3.min.js && wget https://d3js.org/d3.v3.min.js
+
 ### Directory generation
 
 %/.dir:
