@@ -242,7 +242,6 @@ clean:
 	rm -f code-gen/*.pyc lib/*.pyc
 	rm -f $(gensrc) $(sfmt)/jump/calc-jump
 	rm -rf bin build debug dep tmp template
-	rm -f ui/bootstrap.* ui/d3.* ui/jquery.* ui/html5shiv.* ui/respond.* ui/glyphicons-*
 
 ifneq ($(MAKECMDGOALS),clean)
   ifneq ($(MAKECMDGOALS),veryclean)
