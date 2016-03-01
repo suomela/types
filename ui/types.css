@@ -24,7 +24,7 @@ h1 {
 }
 
 h1 + p, p + p {
-    margin-top: 15px;
+    margin-top: 12px;
 }
 
 a:link, a:visited {
@@ -51,6 +51,11 @@ a:link:hover, a:visited:hover {
 .inactive:hover {
     color: #fff;
     background-color: #000;
+}
+
+strong {
+    font-weight: 600;
+    color: #337ab7;
 }
 
 /* general layout */
@@ -131,7 +136,7 @@ a:link:hover, a:visited:hover {
 
 /* main content */
 
-.message {
+.message, .info {
     margin: 20px;
 }
 

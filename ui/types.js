@@ -260,6 +260,8 @@ var Plot = function(view) {
     this.zoom.on('zoom', this.ev_zoom.bind(this));
 
     this.ctrldiv = view.content2.append("div").attr("class", "plotcontrol");
+    view.info = view.content2.append("div").attr("class", "info");
+
     var on_settings = {
         'change': this.ev_settings_changed.bind(this),
         'input': this.ev_settings_changed.bind(this)
@@ -643,6 +645,7 @@ var table_builder = function(columns, data, table, row_hook) {
 var ResultTable = function(view) {
     this.ctrl = view.ctrl;
     this.table = view.content1.append("table").classed("results", true);
+    view.info = view.content2.append("div").attr("class", "info");
 };
 
 var SampleTable = function(view) {
@@ -907,6 +910,7 @@ var View = function(ctrl) {
 View.prototype.set_page = function(model) {
     this.content1.selectAll("*").remove();
     this.content2.selectAll("*").remove();
+    this.info = null;
     var p_main    = !model.sel.pagecode;
     var p_samples = model.sel.pagecode === 'samples';
     var p_types   = model.sel.pagecode === 'types';
@@ -1027,71 +1031,57 @@ View.prototype.set_context = function(model) {
 };
 
 View.prototype.set_info = function(model) {
+    if (!this.info) {
+        return;
+    }
+
     this.info.selectAll("*").remove();
     var stat = model.get_stat();
     var corpus = model.get_corpus();
     var dataset = model.get_dataset();
     var p = model.get_point();
-
-    if (model.sel.datasetcode && stat) {
-        this.plot_title.text(model.sel.datasetcode + ": " + stat.label);
-    } else {
-        this.plot_title.text("");
-    }
-
-    var parts;
-    var set_title = function(t) {
-        var sel = t.selectAll("span").data(parts);
-        sel.enter().append("span");
-        sel.exit().remove();
-        sel.text(function(d) { return d; });
-    };
-
-    parts = [];
-    if (model.sel.collectioncode) {
-        parts.push("collection: " + model.sel.collectioncode);
-        if (model.sel.samplecode) {
-            parts.push("selected: " + model.sel.samplecode);
-        }
-    }
-    set_title(this.sample_title);
-
-    parts = [];
-    if (model.sel.datasetcode) {
-        parts.push("dataset: " + model.sel.datasetcode);
-        if (model.sel.collectioncode) {
-            parts.push("collection: " + model.sel.collectioncode);
-        }
-        if (model.sel.tokencode) {
-            parts.push("selected: " + model.sel.tokencode);
-        }
-    }
-    set_title(this.token_title);
-
-    parts = [];
-    if (model.sel.tokencode) {
-        parts.push("token: " + model.sel.tokencode);
-        if (model.sel.collectioncode) {
-            parts.push("highlighted: " + model.sel.collectioncode);
-        }
-    } else if (model.sel.datasetcode && model.sel.samplecode) {
-        parts.push("dataset: " + model.sel.datasetcode);
-        parts.push("sample: " + model.sel.samplecode);
-    }
-    set_title(this.context_title);
-
-    var par;
     var t;
-    if (p) {
-        par = this.info.append("p");
+
+    if (corpus) {
         t = [];
-        t.push("This collection contains ");
+        t.push("Corpus ");
+        t.push(["strong", model.sel.corpuscode]);
+        t.push(" contains ");
+        t.push(f_large(corpus.samplecount) + " samples");
+        t.push(" and ");
+        t.push(f_large(corpus.wordcount) + " " + model.db.data.label.word.labeltext);
+        t.push(".");
+        textmaker(this.info.append("p"), t);
+    }
+
+    if (dataset) {
+        t = [];
+        t.push("Dataset ");
+        t.push(["strong", model.sel.datasetcode]);
+        t.push(" contains ");
+        t.push(f_large(dataset.hapaxes) + " " + model.db.data.label.hapax.labeltext);
+        t.push(", ");
+        t.push(f_large(dataset.tokens) + " " + model.db.data.label.type.labeltext);
+        t.push(", and ");
+        t.push(f_large(dataset.types) + " " + model.db.data.label.token.labeltext);
+        t.push(".");
+        textmaker(this.info.append("p"), t);
+    }
+
+    if (p) {
+        t = [];
+        t.push("Collection ");
+        t.push(["strong", model.sel.collectioncode]);
+        t.push(" contains ");
         t.push(f_large(p.x) + " " + stat.xlabel);
         t.push(" and ");
         t.push(f_large(p.y) + " " + stat.ylabel);
         t.push(".");
+        textmaker(this.info.append("p"), t);
+
+        t = [];
         if (p.fraction <= config.p_threshold) {
-            t.push(" Only approx. ");
+            t.push("Only approx. ");
         } else {
             t.push(" Approx. ");
         }
@@ -1103,43 +1093,25 @@ View.prototype.set_info = function(model) {
         t.push(" ");
         t.push(f_large(p.y) + " " + stat.ylabel);
         t.push(".");
+        textmaker(this.info.append("p"), t);
+
+        t = [];
         if (p.fraction > config.p_threshold) {
-            t.push(" This seems to be a fairly typical collection.");
+            t.push("This seems to be a fairly typical collection.");
         } else {
             if (p.fdr > config.fdr_threshold) {
-                t.push(" This finding is probably not interesting:");
+                t.push("This finding is probably not interesting:");
                 t.push(" the false discovery rate is larger than ");
                 t.push(config.fdr_threshold);
                 t.push(".");
             } else {
-                t.push(" This finding is probably interesting:");
+                t.push("This finding is probably interesting:");
                 t.push(" the false discovery rate is approx. ");
                 t.push(["strong", f_fraction(p.fdr)]);
                 t.push(".");
             }
         }
-        textmaker(par, t);
-    } else if (corpus) {
-        par = this.info.append("p");
-        t = [];
-        t.push("This corpus contains ");
-        t.push(f_large(corpus.samplecount) + " samples");
-        t.push(" and ");
-        t.push(f_large(corpus.wordcount) + " " + model.db.data.label.word.labeltext);
-        t.push(".");
-        textmaker(par, t);
-        if (dataset) {
-            par = this.info.append("p");
-            t = [];
-            t.push("This dataset contains ");
-            t.push(f_large(dataset.hapaxes) + " " + model.db.data.label.hapax.labeltext);
-            t.push(", ");
-            t.push(f_large(dataset.tokens) + " " + model.db.data.label.type.labeltext);
-            t.push(", and ");
-            t.push(f_large(dataset.types) + " " + model.db.data.label.token.labeltext);
-            t.push(".");
-            textmaker(par, t);
-        }
+        textmaker(this.info.append("p"), t);
     }
 };
 
@@ -1257,7 +1229,7 @@ Controller.prototype.update_sel = function(changes) {
         this.view.set_context(this.model);
     }
     if (changes.force || changes.invalid.selection) {
-        // this.view.set_info(this.model);
+        this.view.set_info(this.model);
         this.view.set_sel(this.model);
     }
 };
