@@ -19,7 +19,9 @@ var config = {
     label_y_offset: 5,
     label_x_margin: 2,
     bar_width: 50,
-    sbar_width: 25
+    sbar_width: 25,
+    max_aspect: 1.75,
+    min_aspect: 1.0
 };
 
 //// Auxiliary functions
@@ -321,6 +323,11 @@ Plot.prototype.recalc_axes = function() {
     }
     var fullwidth = parseInt(this.plotdiv.style('width'), 10);
     var fullheight = parseInt(this.plotdiv.style('height'), 10);
+    if (fullwidth > config.max_aspect * fullheight) {
+        fullwidth = Math.floor(config.max_aspect * fullheight);
+    } else if (fullwidth < config.min_aspect * fullheight) {
+        fullheight = Math.floor(fullwidth / config.min_aspect);
+    }
 
     var plotwidth = fullwidth - margin.left - margin.right;
     var plotheight = fullheight - margin.top - margin.bottom;
