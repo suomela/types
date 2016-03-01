@@ -782,7 +782,7 @@ SampleTable.prototype.set_samples = function(model) {
 };
 
 TypeTable.prototype.set_tokens = function(model) {
-    var columns = [
+    var col1 = [
         {
             html: 'type',
             kind: 'plain',
@@ -797,7 +797,9 @@ TypeTable.prototype.set_tokens = function(model) {
             hcenter: true,
             val: function(p) { return p.tokencount; },
             key: function(p) { return -p.tokencount; }
-        },
+        }
+    ];
+    var col2 = !model.sel.collectioncode ? [] : [
         {
             html: 'in collection',
             kind: 'num',
@@ -823,6 +825,8 @@ TypeTable.prototype.set_tokens = function(model) {
             val: function(p) { return p.tokencount_score; },
             key: function(p) { return -p.tokencount_score[1]; }
         },
+    ];
+    var col3 = [
         {
             html: 'samples',
             kind: 'num',
@@ -832,6 +836,8 @@ TypeTable.prototype.set_tokens = function(model) {
             val: function(p) { return p.samplecount; },
             key: function(p) { return -p.samplecount; }
         },
+    ];
+    var col4 = !model.sel.collectioncode ? [] : [
         {
             html: 'in collection',
             kind: 'num',
@@ -858,6 +864,7 @@ TypeTable.prototype.set_tokens = function(model) {
             key: function(p) { return -p.samplecount_score[1]; }
         }
     ];
+    var columns = col1.concat(col2, col3, col4);
 
     this.rows = table_builder(
         columns,
