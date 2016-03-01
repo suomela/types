@@ -620,7 +620,7 @@ var table_builder = function(columns, data, table, row_hook, default_sort) {
         th.classed("inactive", function(c, i) {
             return c.key && (i !== sort_key);
         });
-    }
+    };
     var sorter = function(c, i) {
         if (!c.key) {
             return;
@@ -831,7 +831,7 @@ TypeTable.prototype.set_tokens = function(model) {
             hcenter: true,
             val: function(p) { return p.tokencount_score; },
             key: function(p) { return -p.tokencount_score[1]; }
-        },
+        }
     ];
     var col3 = [
         {
@@ -842,7 +842,7 @@ TypeTable.prototype.set_tokens = function(model) {
             hcenter: true,
             val: function(p) { return p.samplecount; },
             key: function(p) { return -p.samplecount; }
-        },
+        }
     ];
     var col4 = !coll ? [] : [
         {
