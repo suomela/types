@@ -108,7 +108,7 @@ http://opensource.org/licenses/BSD-3-Clause
 
 ### Other parts
 
-Copyright (c) 2014-2015, Jukka Suomela.
+Copyright (c) 2014-2016, Jukka Suomela.
 
 Enjoy, use at your own risk.
 

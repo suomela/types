@@ -6,7 +6,8 @@ description = "Type and hapax accumulation curves"
 author = "Jukka Suomela"
 now = datetime.date.today()
 version = now.isoformat()
-year = now.year
+year1 = 2014
+year2 = now.year
 
 with open('src/version.c', 'w') as f:
     f.write('''\
@@ -15,13 +16,13 @@ with open('src/version.c', 'w') as f:
 const char * const DESCRIPTION = "%s";
 const char * const AUTHOR = "%s";
 const char * const VERSION = "%s";
-const char * const YEAR = "%d";
-''' % (description, author, version, year))
+const char * const YEAR = "%d-%d";
+''' % (description, author, version, year1, year2))
 
 with open('src/TypesVersion.py', 'w') as f:
     f.write('''\
 DESCRIPTION = "%s"
 AUTHOR = "%s"
 VERSION = "%s"
-YEAR = "%d"
-''' % (description, author, version, year))
+YEAR = "%d-%d"
+''' % (description, author, version, year1, year2))

@@ -1,4 +1,4 @@
 DESCRIPTION = "Type and hapax accumulation curves"
 AUTHOR = "Jukka Suomela"
-VERSION = "2014-05-15"
-YEAR = "2014"
+VERSION = "2016-03-01"
+YEAR = "2014-2016"
