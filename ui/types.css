@@ -58,6 +58,10 @@ strong {
     color: #337ab7;
 }
 
+.small {
+    font-size: 0.85em;
+}
+
 /* general layout */
 
 .sidemenu {
@@ -189,8 +193,8 @@ td, th {
     white-space: nowrap;
     font-weight: 400;
     text-align: left;
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: 5px;
+    padding-right: 5px;
 }
 
 th {
@@ -242,7 +246,7 @@ td.before, td.after {
 
 td.before span {
     position: absolute;
-    right: 0px;
+    right: 5px;
 }
 
 td.after span {

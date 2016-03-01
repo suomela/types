@@ -651,11 +651,13 @@ var ResultTable = function(view) {
 var SampleTable = function(view) {
     this.ctrl = view.ctrl;
     this.table = view.content1.append("table").classed("samples", true);
+    this.context = view.content2.append("table").classed("context", true);
 };
 
 var TypeTable = function(view) {
     this.ctrl = view.ctrl;
     this.table = view.content1.append("table").classed("types", true);
+    this.context = view.content2.append("table").classed("context", true);
 };
 
 ResultTable.prototype.set_results = function(model) {
@@ -874,6 +876,114 @@ TypeTable.prototype.set_tokens = function(model) {
     );
 };
 
+SampleTable.prototype.set_sample_context = function(model) {
+    var table = this.context;
+    var context = model.get_sample_context();
+    table.selectAll("*").remove();
+    if (!context.length) {
+        return;
+    }
+
+    var sample_data = model.db.sample_data[model.sel.corpuscode][model.sel.datasetcode];
+    var columns = [
+        {
+            html: 'token',
+            kind: 'plain',
+            val: function(p) { return p.shortlabel; },
+            key: function(p) { return p.shortlabel; }
+        },
+        { kind: 'pad' },
+        {
+            html: 'before',
+            kind: 'wrap',
+            classed: 'before',
+            hright: true,
+            val: function(p) { return p.before; },
+            key: function(p) { return p.before_sort; }
+        },
+        { kind: 'pad' },
+        {
+            html: 'word',
+            kind: 'link',
+            classed: 'word',
+            hcenter: true,
+            val: function(p) { return { label: p.word, link: p.link }; },
+            key: function(p) { return p.word_sort; }
+        },
+        { kind: 'pad' },
+        {
+            html: 'after',
+            kind: 'wrapwrap',
+            classed: 'after',
+            val: function(p) { return p.after; },
+            key: function(p) { return p.after_sort; }
+        }
+    ];
+
+    table_builder(
+        columns, 
+        context,
+        table
+    );
+};
+
+TypeTable.prototype.set_token_context = function(model) {
+    var table = this.context;
+    var context = model.get_token_context();
+    table.selectAll("*").remove();
+    if (!context.length) {
+        return;
+    }
+
+    var sample_data = model.db.sample_data[model.sel.corpuscode][model.sel.datasetcode];
+    var columns = [
+        {
+            html: 'sample',
+            kind: 'link',
+            val: function(p) { return { label: p.samplecode, link: sample_data[p.samplecode].link }; },
+            key: function(p) { return p.samplecode; }
+        },
+        {
+            html: 'description',
+            kind: 'plain',
+            val: function(p) { return sample_data[p.samplecode].description; },
+            key: function(p) { return sample_data[p.samplecode].description; }
+        },
+        { kind: 'pad' },
+        {
+            html: 'before',
+            kind: 'wrap',
+            classed: 'before',
+            hright: true,
+            val: function(p) { return p.before; },
+            key: function(p) { return p.before_sort; }
+        },
+        { kind: 'pad' },
+        {
+            html: 'word',
+            kind: 'link',
+            classed: 'word',
+            hcenter: true,
+            val: function(p) { return { label: p.word, link: p.link }; },
+            key: function(p) { return p.word_sort; }
+        },
+        { kind: 'pad' },
+        {
+            html: 'after',
+            kind: 'wrapwrap',
+            classed: 'after',
+            val: function(p) { return p.after; },
+            key: function(p) { return p.after_sort; }
+        }
+    ];
+
+    table_builder(
+        columns, 
+        context,
+        table
+    );
+};
+
 ResultTable.prototype.set_sel = function(model) {
     if (this.rows) {
         this.rows.classed("selected", function(d) {
@@ -974,67 +1084,16 @@ View.prototype.set_tokens = function(model) {
     }
 };
 
-View.prototype.set_context = function(model) {
-/*
-    var table = this.context_table;
-    if (!table) {
-        return;
+View.prototype.set_sample_context = function(model) {
+    if (this.samples) {
+        this.samples.set_sample_context(model);
     }
+};
 
-    var sample_data = model.db.sample_data[model.sel.corpuscode][model.sel.datasetcode];
-    var columns = [
-        {
-            html: 'sample',
-            kind: 'link',
-            val: function(p) { return { label: p.samplecode, link: sample_data[p.samplecode].link }; },
-            key: function(p) { return p.samplecode; }
-        },
-        {
-            html: 'description',
-            kind: 'plain',
-            val: function(p) { return sample_data[p.samplecode].description; },
-            key: function(p) { return sample_data[p.samplecode].description; }
-        },
-        {
-            html: 'token',
-            kind: 'plain',
-            val: function(p) { return p.shortlabel; },
-            key: function(p) { return p.shortlabel; }
-        },
-        { kind: 'pad' },
-        {
-            html: 'before',
-            kind: 'wrap',
-            classed: 'before',
-            hright: true,
-            val: function(p) { return p.before; },
-            key: function(p) { return p.before_sort; }
-        },
-        { kind: 'pad' },
-        {
-            html: 'word',
-            kind: 'link',
-            classed: 'word',
-            hcenter: true,
-            val: function(p) { return { label: p.word, link: p.link }; },
-            key: function(p) { return p.word_sort; }
-        },
-        { kind: 'pad' },
-        {
-            html: 'after',
-            kind: 'wrapwrap',
-            classed: 'after',
-            val: function(p) { return p.after; },
-            key: function(p) { return p.after_sort; }
-        }
-    ];
-
-    this.context_rows = table_builder(
-        columns, 
-        model.get_context(),
-        table
-    );
-*/
+View.prototype.set_token_context = function(model) {
+    if (this.types) {
+        this.types.set_token_context(model);
+    }
 };
 
 View.prototype.set_info = function(model) {
@@ -1143,7 +1202,8 @@ var Controller = function(model) {
             invalidates: [
                 'page',
                 'curves', 'points', 'results', 'selection',
-                'sample_table', 'token_table', 'context_table'            ]
+                'sample_table', 'token_table', 'sample_context', 'token_context'
+            ]
         },
         {
             menu: 'Corpus',
@@ -1152,7 +1212,7 @@ var Controller = function(model) {
             invalidates: [
                 'datasetcode', 'groupcode', 'collectioncode', 'samplecode', 'tokencode',
                 'curves', 'points', 'selection',
-                'sample_table', 'token_table', 'context_table'
+                'sample_table', 'token_table', 'sample_context', 'token_context'
             ]
         },
         {
@@ -1162,7 +1222,7 @@ var Controller = function(model) {
             invalidates: [
                 'tokencode',
                 'curves', 'points', 'selection',
-                'sample_table', 'token_table', 'context_table'
+                'sample_table', 'token_table', 'sample_context', 'token_context'
             ]
         },
         {
@@ -1181,7 +1241,7 @@ var Controller = function(model) {
             invalidates: [
                 'samplecode', 'tokencode',
                 'points', 'selection',
-                'sample_table', 'token_table', 'context_table'
+                'sample_table', 'token_table', 'sample_context', 'token_context'
             ]
         },
         {
@@ -1197,14 +1257,14 @@ var Controller = function(model) {
             invalidates: [
                 'tokencode',
                 'selection',
-                'context_table'
+                'sample_context'
             ]
         },
         {
             key: 'tokencode',
             invalidates: [
                 'selection',
-                'context_table'
+                'token_context'
             ]
         }
     ];
@@ -1232,8 +1292,11 @@ Controller.prototype.update_sel = function(changes) {
     if (changes.force || changes.invalid.token_table) {
         this.view.set_tokens(this.model);
     }
-    if (changes.force || changes.invalid.context_table) {
-        this.view.set_context(this.model);
+    if (changes.force || changes.invalid.sample_context) {
+        this.view.set_sample_context(this.model);
+    }
+    if (changes.force || changes.invalid.token_context) {
+        this.view.set_token_context(this.model);
     }
     if (changes.force || changes.invalid.selection) {
         this.view.set_info(this.model);
@@ -1881,9 +1944,6 @@ Model.prototype.fix_sel = function() {
             sel.samplecode = null;
         }
     }
-    if (sel.samplecode && sel.tokencode) {
-        sel.tokencode = null;
-    }
     if (!sel.statcode || !(sel.statcode in this.db.statcode_map)) {
         sel.statcode = get1(get0first(this.db.statcodes), "code");
     }
@@ -2021,31 +2081,37 @@ Model.prototype.get_tokens = function() {
     return r;
 };
 
-Model.prototype.get_context = function() {
+Model.prototype.get_token_context = function() {
     var sel = this.sel;
-    if (!sel.samplecode && !sel.tokencode) {
+    if (!sel.tokencode) {
         return [];
     }
     var data = this.db.data;
     var t = get2(data.context, sel.corpuscode, sel.datasetcode);
-
     var r = [];
-    var samplecodes = [];
-    if (sel.samplecode) {
-        samplecodes = [sel.samplecode];
-    } else {
-        samplecodes = Object.keys(this.db.data.sample[sel.corpuscode]);
-    }
+    var samplecodes = Object.keys(this.db.data.sample[sel.corpuscode]);
     for (var i = 0; i < samplecodes.length; ++i) {
         var tt = get1(t, samplecodes[i]);
-        if (!tt) {
-        } else if (sel.tokencode) {
+        if (tt) {
             r = r.concat(get1list(tt, sel.tokencode));
-        } else {
-            for (var tokencode in tt) {
-                r = r.concat(get1list(tt, tokencode));
-            }
         }
+    }
+    return r;
+};
+
+Model.prototype.get_sample_context = function() {
+    var sel = this.sel;
+    if (!sel.samplecode) {
+        return [];
+    }
+    var data = this.db.data;
+    var tt = get3(data.context, sel.corpuscode, sel.datasetcode, sel.samplecode);
+    if (!tt) {
+        return [];
+    }
+    var r = [];
+    for (var tokencode in tt) {
+        r = r.concat(get1list(tt, tokencode));
     }
     return r;
 };
