@@ -977,11 +977,17 @@ TypeTable.prototype.set_token_context = function(model) {
         }
     ];
 
-    table_builder(
+    var rows = table_builder(
         columns, 
         context,
         table
     );
+
+    rows.classed("highlighted", function(d) {
+        return model.sel.corpuscode === d.corpuscode &&
+            model.sel.datasetcode === d.datasetcode &&
+            d.samplecode in get2obj(model.db.sample_collection_map, model.sel.corpuscode, model.sel.collectioncode);
+    });
 };
 
 ResultTable.prototype.set_sel = function(model) {

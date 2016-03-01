@@ -91,11 +91,6 @@ strong {
     height: calc(33% - 15px);
 }
 
-.content {
-}
-
-
-
 /* menu bar */
 
 .sidemenu {
@@ -121,9 +116,6 @@ strong {
     padding-top: 2px;
     padding-bottom: 2px;
     padding-left: 15px;
-}
-
-.sidemenu .menuitem {
 }
 
 .sidemenu ul li.control {
@@ -176,11 +168,8 @@ svg {
 
 table {
     border-collapse: collapse;
-    border-bottom: 4px solid #eee;
-    margin-top: 15px;
-    margin-bottom: 20px;
-    margin-left: auto;
-    margin-right: auto;
+    border-bottom: 4px solid #ccc;
+    border: 20px solid #fff;
 }
 
 tr {
@@ -198,10 +187,14 @@ td, th {
 }
 
 th {
-    background-color: #eee;
+    background-color: #ccc;
     font-weight: 600;
     padding-bottom: 5px;
     padding-top: 5px;
+}
+
+th.inactive {
+    color: #000;
 }
 
 .wrap {
@@ -271,6 +264,17 @@ td.after span {
     border-bottom: 1px solid #337ab7;
     border-top: 1px solid #337ab7;
 }
+
+.highlighted {
+    color: #337ab7;
+    background-color: #eee;
+}
+
+.highlighted td {
+    border-bottom: 1px solid #eee;
+    border-top: 1px solid #eee;
+}
+
 
 /* SVG plots */
 
