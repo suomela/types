@@ -5,9 +5,10 @@ import os.path
 import subprocess
 import sys
 import TypesDatabase
-import TypesParallel
 
 TOOL = 'types-run'
+BIN_DIR = os.path.realpath(sys.path[0])
+TMP_DIR = 'tmp'
 
 CITER=1000000
 PITER=100000000
@@ -25,7 +26,12 @@ def get_args():
     parser.add_option('--db', metavar='FILE', dest='db',
                       help='which database to read [default: %default]',
                       default=TypesDatabase.DEFAULT_FILENAME)
-    TypesParallel.add_options(parser)
+    parser.add_option('--bindir', metavar='DIRECTORY', dest='bindir',
+                      help='where to find program files [default: %default]',
+                      default=BIN_DIR)
+    parser.add_option('--tmpdir', metavar='FILE', dest='tmpdir',
+                      help='where to store temporary files [default: %default]',
+                      default=TMP_DIR)
     parser.add_option('--dry-run', dest='dryrun', action='store_true',
                       help='initialise the database if needed, but do not run calculation; just tell what would happen',
                       default=False)
@@ -52,6 +58,32 @@ def get_args():
                       default=Y_DEF)
     (options, args) = parser.parse_args()
     return options
+
+
+class Runner:
+    def __init__(self, tool, bin, cmds, args):
+        self.tool = tool
+        self.bin = bin
+        self.fullpath = os.path.join(args.bindir, bin)
+        self.cmds = cmds
+
+    def error(self, msg):
+        sys.stderr.write("%s: error: %s\n" % (self.tool, msg))
+        sys.exit(1)
+
+    def run(self):
+        sys.stderr.write('%s (%d): ' % (self.bin, len(self.cmds)))
+        for a in self.cmds:
+            cmd = [ self.fullpath ] + [ str(i) for i in a ]
+            # self.msg("run: %s" % ' '.join(cmd))
+            process = subprocess.Popen(cmd)
+            process.wait()
+            if process.returncode != 0:
+                if process.returncode > 0:
+                    self.error("%s returned %d" % (self.bin, process.returncode))
+                else:
+                    self.error("%s received signal %d" % (self.bin, -process.returncode))
+        sys.stderr.write('\n')
 
 
 class Task:
@@ -133,11 +165,11 @@ def init_and_get_task(args):
 def get_input_file(args, i):
     return os.path.join(args.tmpdir, 'input-%d' % (i+1))
 
-def get_output_c_file(args, i, j):
-    return os.path.join(args.tmpdir, 'output-c-%d-%d' % (i+1, j+1))
+def get_output_c_file(args, i):
+    return os.path.join(args.tmpdir, 'output-c-%d' % (i+1))
 
-def get_output_p_file(args, i, j):
-    return os.path.join(args.tmpdir, 'output-p-%d-%d' % (i+1, j+1))
+def get_output_p_file(args, i):
+    return os.path.join(args.tmpdir, 'output-p-%d' % (i+1))
 
 def print_tasks(args, task):
     for i, corpuscode, datasetcode in task.inputs:
@@ -152,7 +184,7 @@ def run_query(args, task):
     for i, corpuscode, datasetcode in task.inputs:
         cmd = [ 'P', args.db, corpuscode, datasetcode, get_input_file(args, i) ]
         cmds.append(cmd)
-    TypesParallel.Parallel(TOOL, 'types-query', cmds, args).run_serial()
+    Runner(TOOL, 'types-query', cmds, args).run()
 
 def run_comp(args, task):
     cmds = []
@@ -161,35 +193,33 @@ def run_comp(args, task):
         k = (corpuscode, datasetcode)
         stat = task.pstat[k]
         if len(stat) > 0:
-            for j in range(args.parts):
-                cmd = [
-                    '--progress',
-                    '--rng-state-file', rngstate,
-                    '--raw-input', get_input_file(args, i),
-                    '--processes', args.parts,
-                    '--id', j+1,
-                    '--raw-output', get_output_p_file(args, i, j),
-                    '--iterations', args.piter,
-                ] + [ '--p-%s' % f for f in stat ]
-                cmds.append(cmd)
+            cmd = [
+                '--progress',
+                '--rng-state-file', rngstate,
+                '--raw-input', get_input_file(args, i),
+                '--processes', 1,
+                '--id', 1,
+                '--raw-output', get_output_p_file(args, i),
+                '--iterations', args.piter,
+            ] + [ '--p-%s' % f for f in stat ]
+            cmds.append(cmd)
     for i, corpuscode, datasetcode in task.inputs:
         k = (corpuscode, datasetcode)
         stat = task.cstat[k]
         if len(stat) > 0:
-            for j in range(args.parts):
-                cmd = [
-                    '--progress',
-                    '--rng-state-file', rngstate,
-                    '--raw-input', get_input_file(args, i),
-                    '--processes', args.parts,
-                    '--id', j+1,
-                    '--raw-output', get_output_c_file(args, i, j),
-                    '--iterations', args.citer,
-                    '--x', args.x,
-                    '--y', args.y
-                ] + [ '--%s' % f for f in stat ]
-                cmds.append(cmd)
-    TypesParallel.Parallel(TOOL, 'types-comp', cmds, args).run()
+            cmd = [
+                '--progress',
+                '--rng-state-file', rngstate,
+                '--raw-input', get_input_file(args, i),
+                '--processes', 1,
+                '--id', 1,
+                '--raw-output', get_output_c_file(args, i),
+                '--iterations', args.citer,
+                '--x', args.x,
+                '--y', args.y
+            ] + [ '--%s' % f for f in stat ]
+            cmds.append(cmd)
+    Runner(TOOL, 'types-comp', cmds, args).run()
     for i, corpuscode, datasetcode in task.inputs:
         os.remove(get_input_file(args, i))
 
@@ -207,13 +237,13 @@ def run_store(args, task):
         def add(check, fn):
             k = (corpuscode, datasetcode)
             if len(check[k]) > 0:
-                files = [ fn(args, i, j) for j in range(args.parts) ]
+                files = [ fn(args, i) ]
                 cmd = [ 'P', args.db, corpuscode, datasetcode ] + files
                 cmds.append(cmd)
                 all_files.extend(files)
         add(task.cstat, get_output_c_file)
         add(task.pstat, get_output_p_file)
-    TypesParallel.Parallel(TOOL, 'types-store', cmds, args).run_serial()
+    Runner(TOOL, 'types-store', cmds, args).run()
     for f in all_files:
         os.remove(f)
 

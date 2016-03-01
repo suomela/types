@@ -50,10 +50,7 @@ done
 
 rcmd="$dir/types-run --db=tmp/types.sqlite --citer 10000 --piter 10000 --x 10000 --y 100"
 cp check/types.sqlite tmp/types.sqlite || exit 1
-$rcmd --local || exit 1
-check/verify-all || exit 1
-cp check/types.sqlite tmp/types.sqlite || exit 1
-$rcmd --parts 3 --loginfile tmp/loginfile || exit 1
+$rcmd || exit 1
 check/verify-all || exit 1
 
 pcmd="$dir/types-web --db=tmp/types.sqlite --destdir=tmp/html"
