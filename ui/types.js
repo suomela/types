@@ -516,148 +516,6 @@ Plot.prototype.ev_settings_changed = function() {
     this.settings_reset.attr('disabled', null);
 };
 
-
-//// View: Indicator
-
-var Indicator = function() {
-    this.loading = d3.select("#indicator_loading");
-    this.error = d3.select("#indicator_error");
-    this.msg_title = d3.select("#indicator_msg_title");
-    this.msg = d3.select("#indicator_msg");
-    this.info = d3.select("#info");
-    this.plot_title = d3.select("#plot_title");
-    this.sample_title = d3.select("#sample_title");
-    this.token_title = d3.select("#token_title");
-    this.context_title = d3.select("#context_title");
-};
-
-Indicator.prototype.set_loading = function(f) {
-    this.loading.style("display", f ? null : "none");
-};
-
-Indicator.prototype.set_error = function(title, error) {
-    this.error.style("display", null);
-    this.msg_title.text(title + ":");
-    this.msg.text(error);
-};
-
-Indicator.prototype.set_info = function(model) {
-    this.info.selectAll("*").remove();
-    var stat = model.get_stat();
-    var corpus = model.get_corpus();
-    var dataset = model.get_dataset();
-    var p = model.get_point();
-
-    if (model.sel.datasetcode && stat) {
-        this.plot_title.text(model.sel.datasetcode + ": " + stat.label);
-    } else {
-        this.plot_title.text("");
-    }
-
-    var parts;
-    var set_title = function(t) {
-        var sel = t.selectAll("span").data(parts);
-        sel.enter().append("span");
-        sel.exit().remove();
-        sel.text(function(d) { return d; });
-    };
-
-    parts = [];
-    if (model.sel.collectioncode) {
-        parts.push("collection: " + model.sel.collectioncode);
-        if (model.sel.samplecode) {
-            parts.push("selected: " + model.sel.samplecode);
-        }
-    }
-    set_title(this.sample_title);
-
-    parts = [];
-    if (model.sel.datasetcode) {
-        parts.push("dataset: " + model.sel.datasetcode);
-        if (model.sel.collectioncode) {
-            parts.push("collection: " + model.sel.collectioncode);
-        }
-        if (model.sel.tokencode) {
-            parts.push("selected: " + model.sel.tokencode);
-        }
-    }
-    set_title(this.token_title);
-
-    parts = [];
-    if (model.sel.tokencode) {
-        parts.push("token: " + model.sel.tokencode);
-        if (model.sel.collectioncode) {
-            parts.push("highlighted: " + model.sel.collectioncode);
-        }
-    } else if (model.sel.datasetcode && model.sel.samplecode) {
-        parts.push("dataset: " + model.sel.datasetcode);
-        parts.push("sample: " + model.sel.samplecode);
-    }
-    set_title(this.context_title);
-
-    var par;
-    var t;
-    if (p) {
-        par = this.info.append("p");
-        t = [];
-        t.push("This collection contains ");
-        t.push(f_large(p.x) + " " + stat.xlabel);
-        t.push(" and ");
-        t.push(f_large(p.y) + " " + stat.ylabel);
-        t.push(".");
-        if (p.fraction <= config.p_threshold) {
-            t.push(" Only approx. ");
-        } else {
-            t.push(" Approx. ");
-        }
-        t.push(["strong", f_fraction(100 * p.fraction) + "%"]);
-        t.push(" of random collections with ");
-        t.push(f_large(p.x) + " " + stat.xlabel);
-        t.push(" contain ");
-        t.push(p.side === "below" ? "at most" : "at least");
-        t.push(" ");
-        t.push(f_large(p.y) + " " + stat.ylabel);
-        t.push(".");
-        if (p.fraction > config.p_threshold) {
-            t.push(" This seems to be a fairly typical collection.");
-        } else {
-            if (p.fdr > config.fdr_threshold) {
-                t.push(" This finding is probably not interesting:");
-                t.push(" the false discovery rate is larger than ");
-                t.push(config.fdr_threshold);
-                t.push(".");
-            } else {
-                t.push(" This finding is probably interesting:");
-                t.push(" the false discovery rate is approx. ");
-                t.push(["strong", f_fraction(p.fdr)]);
-                t.push(".");
-            }
-        }
-        textmaker(par, t);
-    } else if (corpus) {
-        par = this.info.append("p");
-        t = [];
-        t.push("This corpus contains ");
-        t.push(f_large(corpus.samplecount) + " samples");
-        t.push(" and ");
-        t.push(f_large(corpus.wordcount) + " " + model.db.data.label.word.labeltext);
-        t.push(".");
-        textmaker(par, t);
-        if (dataset) {
-            par = this.info.append("p");
-            t = [];
-            t.push("This dataset contains ");
-            t.push(f_large(dataset.hapaxes) + " " + model.db.data.label.hapax.labeltext);
-            t.push(", ");
-            t.push(f_large(dataset.tokens) + " " + model.db.data.label.type.labeltext);
-            t.push(", and ");
-            t.push(f_large(dataset.types) + " " + model.db.data.label.token.labeltext);
-            t.push(".");
-            textmaker(par, t);
-        }
-    }
-};
-
 //// View
 
 var View = function(ctrl) {
@@ -671,19 +529,16 @@ var View = function(ctrl) {
 View.prototype.set_page = function(model) {
     this.content1.selectAll("*").remove();
     this.content2.selectAll("*").remove();
-    this.plot = null;
-    this.result_table = null;
-    if (!model.sel.pagecode) {
-        this.result_table = this.content1.append("table").classed("results", true);
-    } else if (model.sel.pagecode === 'plot') {
-        this.plot = new Plot(this.ctrl, this);
-    } else if (model.sel.pagecode === 'samples') {
-        this.sample_table = this.content1.append("table").classed("samples", true);
-    } else if (model.sel.pagecode === 'types') {
-        this.token_table = this.content1.append("table").classed("types", true);
-    } else if (model.sel.pagecode === 'context') {
-        this.context_table = this.content1.append("table").classed("context", true);
-    }
+
+    var p_main = !model.sel.pagecode;
+    var p_plot = model.sel.pagecode === 'plot';
+    var p_samples = model.sel.pagecode === 'samples';
+    var p_types = model.sel.pagecode === 'types';
+
+    this.result_table = p_main ? this.content1.append("table").classed("results", true) : null;
+    this.plot = p_plot ? new Plot(this.ctrl, this) : null;
+    this.sample_table = p_samples ? this.content1.append("table").classed("samples", true) : null;
+    this.token_table = p_types ? this.content1.append("table").classed("types", true) : null;
     this.window1.node().focus();
 };
 
@@ -1140,6 +995,123 @@ View.prototype.set_results = function(model) {
         .on("click", ctrl.ev_result_cell_click.bind(ctrl));
 };
 
+View.prototype.set_info = function(model) {
+    this.info.selectAll("*").remove();
+    var stat = model.get_stat();
+    var corpus = model.get_corpus();
+    var dataset = model.get_dataset();
+    var p = model.get_point();
+
+    if (model.sel.datasetcode && stat) {
+        this.plot_title.text(model.sel.datasetcode + ": " + stat.label);
+    } else {
+        this.plot_title.text("");
+    }
+
+    var parts;
+    var set_title = function(t) {
+        var sel = t.selectAll("span").data(parts);
+        sel.enter().append("span");
+        sel.exit().remove();
+        sel.text(function(d) { return d; });
+    };
+
+    parts = [];
+    if (model.sel.collectioncode) {
+        parts.push("collection: " + model.sel.collectioncode);
+        if (model.sel.samplecode) {
+            parts.push("selected: " + model.sel.samplecode);
+        }
+    }
+    set_title(this.sample_title);
+
+    parts = [];
+    if (model.sel.datasetcode) {
+        parts.push("dataset: " + model.sel.datasetcode);
+        if (model.sel.collectioncode) {
+            parts.push("collection: " + model.sel.collectioncode);
+        }
+        if (model.sel.tokencode) {
+            parts.push("selected: " + model.sel.tokencode);
+        }
+    }
+    set_title(this.token_title);
+
+    parts = [];
+    if (model.sel.tokencode) {
+        parts.push("token: " + model.sel.tokencode);
+        if (model.sel.collectioncode) {
+            parts.push("highlighted: " + model.sel.collectioncode);
+        }
+    } else if (model.sel.datasetcode && model.sel.samplecode) {
+        parts.push("dataset: " + model.sel.datasetcode);
+        parts.push("sample: " + model.sel.samplecode);
+    }
+    set_title(this.context_title);
+
+    var par;
+    var t;
+    if (p) {
+        par = this.info.append("p");
+        t = [];
+        t.push("This collection contains ");
+        t.push(f_large(p.x) + " " + stat.xlabel);
+        t.push(" and ");
+        t.push(f_large(p.y) + " " + stat.ylabel);
+        t.push(".");
+        if (p.fraction <= config.p_threshold) {
+            t.push(" Only approx. ");
+        } else {
+            t.push(" Approx. ");
+        }
+        t.push(["strong", f_fraction(100 * p.fraction) + "%"]);
+        t.push(" of random collections with ");
+        t.push(f_large(p.x) + " " + stat.xlabel);
+        t.push(" contain ");
+        t.push(p.side === "below" ? "at most" : "at least");
+        t.push(" ");
+        t.push(f_large(p.y) + " " + stat.ylabel);
+        t.push(".");
+        if (p.fraction > config.p_threshold) {
+            t.push(" This seems to be a fairly typical collection.");
+        } else {
+            if (p.fdr > config.fdr_threshold) {
+                t.push(" This finding is probably not interesting:");
+                t.push(" the false discovery rate is larger than ");
+                t.push(config.fdr_threshold);
+                t.push(".");
+            } else {
+                t.push(" This finding is probably interesting:");
+                t.push(" the false discovery rate is approx. ");
+                t.push(["strong", f_fraction(p.fdr)]);
+                t.push(".");
+            }
+        }
+        textmaker(par, t);
+    } else if (corpus) {
+        par = this.info.append("p");
+        t = [];
+        t.push("This corpus contains ");
+        t.push(f_large(corpus.samplecount) + " samples");
+        t.push(" and ");
+        t.push(f_large(corpus.wordcount) + " " + model.db.data.label.word.labeltext);
+        t.push(".");
+        textmaker(par, t);
+        if (dataset) {
+            par = this.info.append("p");
+            t = [];
+            t.push("This dataset contains ");
+            t.push(f_large(dataset.hapaxes) + " " + model.db.data.label.hapax.labeltext);
+            t.push(", ");
+            t.push(f_large(dataset.tokens) + " " + model.db.data.label.type.labeltext);
+            t.push(", and ");
+            t.push(f_large(dataset.types) + " " + model.db.data.label.token.labeltext);
+            t.push(".");
+            textmaker(par, t);
+        }
+    }
+};
+
 View.prototype.ev_resize = function() {
     if (this.plot) {
         this.plot.recalc_plot();
@@ -1254,7 +1226,7 @@ Controller.prototype.update_sel = function(changes) {
         this.view.set_context(this.model);
     }
     if (changes.force || changes.invalid.selection) {
-        // this.view.indicator.set_info(this.model);
+        // this.view.set_info(this.model);
         this.view.set_sel(this.model);
     }
 };
