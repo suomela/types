@@ -518,134 +518,6 @@ Plot.prototype.ev_settings_changed = function() {
 
 //// Tables
 
-var ResultTable = function(view) {
-    this.ctrl = view.ctrl;
-    this.table = view.content1.append("table").classed("results", true);
-};
-
-ResultTable.prototype.set_results = function(model) {
-    var ctrl = this.ctrl;
-    var db = model.db;
-    this.table.selectAll("*").remove();
-
-    var columns = [
-        ['corpus', function(p) { return p.corpuscode; }],
-        ['dataset', function(p) { return p.datasetcode; }],
-        ['collection', function(p) { return p.collectioncode; }],
-        ['axes', function(p) { return db.statcode_map[p.statcode].label; }],
-        ['side', function(p) { return p.side; }],
-        ['p-value', function(p) {
-            return f_fraction(p.fraction);
-        }],
-        ['FDR', function(p) {
-            if (p.fdr < 1) {
-                return f_fraction(p.fdr);
-            } else {
-                return "> 1";
-            }
-        }]
-    ];
-
-    var head = this.table.append("thead");
-    head.append("tr").selectAll("th")
-        .data(columns).enter()
-        .append("th").text(function(d) {
-            return d[0];
-        });
-    var body = this.table.append("tbody");
-    this.result_rows = body.selectAll("tr")
-        .data(db.point_ordered).enter()
-        .append("tr")
-        .classed("clickable", true);
-    this.result_rows.selectAll("td")
-        .data(function(row) {
-            return columns.map(function(c) {
-                return { row: row, column: c };
-            });
-        }).enter()
-        .append("td").text(function(d) {
-            return d.column[1](d.row);
-        })
-        .on("click", ctrl.ev_result_cell_click.bind(ctrl));
-};
-
-ResultTable.prototype.set_sel = function(model) {
-    if (this.result_rows) {
-        this.result_rows.classed("selected", function(d) {
-            return model.sel.corpuscode === d.corpuscode &&
-                model.sel.datasetcode === d.datasetcode &&
-                model.sel.collectioncode === d.collectioncode &&
-                model.sel.statcode === d.statcode;
-        });
-    }
-};
-
-//// View
-
-var View = function(ctrl) {
-    this.ctrl = ctrl;
-    this.content1 = d3.select("#content1");
-    this.content2 = d3.select("#content2");
-    this.window1 = d3.select("#window1");
-    this.window2 = d3.select("#window2");
-};
-
-View.prototype.set_page = function(model) {
-    this.content1.selectAll("*").remove();
-    this.content2.selectAll("*").remove();
-
-    var p_main = !model.sel.pagecode;
-    var p_plot = model.sel.pagecode === 'plot';
-    var p_samples = model.sel.pagecode === 'samples';
-    var p_types = model.sel.pagecode === 'types';
-
-    this.result_table = p_main ? new ResultTable(this) : null;
-    this.plot = p_plot ? new Plot(this) : null;
-    this.sample_table = p_samples ? this.content1.append("table").classed("samples", true) : null;
-    this.token_table = p_types ? this.content1.append("table").classed("types", true) : null;
-    this.window1.node().focus();
-};
-
-View.prototype.set_curves = function(model) {
-    if (this.plot) {
-        this.plot.set_curves(model.get_curves());
-        this.plot.recalc_axes();
-        this.plot.recalc_curves();
-    }
-};
-
-View.prototype.set_points = function(model) {
-    if (this.plot) {
-        this.plot.set_points(model.get_points());
-        this.plot.recalc_points();
-    }
-};
-
-View.prototype.set_sel = function(model) {
-    if (this.result_table) {
-        this.result_table.set_sel(model);
-    }
-    if (this.sample_rows) {
-        this.sample_rows.classed("selected", function(d) {
-            return model.sel.corpuscode === d.corpuscode &&
-                model.sel.samplecode === d.samplecode;
-        });
-    }
-    if (this.token_rows) {
-        this.token_rows.classed("selected", function(d) {
-            return model.sel.corpuscode === d.corpuscode &&
-                model.sel.datasetcode === d.datasetcode &&
-                model.sel.tokencode === d.tokencode;
-        });
-    }
-    if (this.context_rows) {
-        var samplecodes = get2obj(model.db.sample_collection_map, model.sel.corpuscode, model.sel.collectioncode);
-        this.context_rows.classed("selected", function(d) {
-            return model.sel.tokencode && d.samplecode in samplecodes;
-        });
-    }
-};
-
 var stop_propagation = function(e) {
     e.stopPropagation();
 };
@@ -768,12 +640,68 @@ var table_builder = function(columns, data, table, row_hook) {
     return tr;
 };
 
-View.prototype.set_samples = function(model) {
-    var table = this.sample_table;
-    if (!table) {
-        return;
-    }
+var ResultTable = function(view) {
+    this.ctrl = view.ctrl;
+    this.table = view.content1.append("table").classed("results", true);
+};
 
+var SampleTable = function(view) {
+    this.ctrl = view.ctrl;
+    this.table = view.content1.append("table").classed("samples", true);
+};
+
+var TypeTable = function(view) {
+    this.ctrl = view.ctrl;
+    this.table = view.content1.append("table").classed("types", true);
+};
+
+ResultTable.prototype.set_results = function(model) {
+    var ctrl = this.ctrl;
+    var db = model.db;
+    this.table.selectAll("*").remove();
+
+    var columns = [
+        ['corpus', function(p) { return p.corpuscode; }],
+        ['dataset', function(p) { return p.datasetcode; }],
+        ['collection', function(p) { return p.collectioncode; }],
+        ['axes', function(p) { return db.statcode_map[p.statcode].label; }],
+        ['side', function(p) { return p.side; }],
+        ['p-value', function(p) {
+            return f_fraction(p.fraction);
+        }],
+        ['FDR', function(p) {
+            if (p.fdr < 1) {
+                return f_fraction(p.fdr);
+            } else {
+                return "> 1";
+            }
+        }]
+    ];
+
+    var head = this.table.append("thead");
+    head.append("tr").selectAll("th")
+        .data(columns).enter()
+        .append("th").text(function(d) {
+            return d[0];
+        });
+    var body = this.table.append("tbody");
+    this.rows = body.selectAll("tr")
+        .data(db.point_ordered).enter()
+        .append("tr")
+        .classed("clickable", true);
+    this.rows.selectAll("td")
+        .data(function(row) {
+            return columns.map(function(c) {
+                return { row: row, column: c };
+            });
+        }).enter()
+        .append("td").text(function(d) {
+            return d.column[1](d.row);
+        })
+        .on("click", ctrl.ev_result_cell_click.bind(ctrl));
+};
+
+SampleTable.prototype.set_samples = function(model) {
     var columns = [
         {
             html: 'sample',
@@ -842,20 +770,15 @@ View.prototype.set_samples = function(model) {
         }
     ];
 
-    this.sample_rows = table_builder(
+    this.rows = table_builder(
         columns,
         model.get_samples(),
-        table,
+        this.table,
         this.ctrl.ev_sample_cell_click.bind(this.ctrl)
     );
 };
 
-View.prototype.set_tokens = function(model) {
-    var table = this.token_table;
-    if (!table) {
-        return;
-    }
-
+TypeTable.prototype.set_tokens = function(model) {
     var columns = [
         {
             html: 'type',
@@ -933,15 +856,115 @@ View.prototype.set_tokens = function(model) {
         }
     ];
 
-    this.token_rows = table_builder(
+    this.rows = table_builder(
         columns,
         model.get_tokens(),
-        table,
+        this.table,
         this.ctrl.ev_token_cell_click.bind(this.ctrl)
     );
 };
 
+ResultTable.prototype.set_sel = function(model) {
+    if (this.rows) {
+        this.rows.classed("selected", function(d) {
+            return model.sel.corpuscode === d.corpuscode &&
+                model.sel.datasetcode === d.datasetcode &&
+                model.sel.collectioncode === d.collectioncode &&
+                model.sel.statcode === d.statcode;
+        });
+    }
+};
+
+SampleTable.prototype.set_sel = function(model) {
+    if (this.rows) {
+        this.rows.classed("selected", function(d) {
+            return model.sel.corpuscode === d.corpuscode &&
+                model.sel.samplecode === d.samplecode;
+        });
+    }
+};
+
+TypeTable.prototype.set_sel = function(model) {
+    if (this.rows) {
+        this.rows.classed("selected", function(d) {
+            return model.sel.corpuscode === d.corpuscode &&
+                model.sel.datasetcode === d.datasetcode &&
+                model.sel.tokencode === d.tokencode;
+        });
+    }
+};
+
+//// View
+
+var View = function(ctrl) {
+    this.ctrl = ctrl;
+    this.content1 = d3.select("#content1");
+    this.content2 = d3.select("#content2");
+    this.window1 = d3.select("#window1");
+    this.window2 = d3.select("#window2");
+};
+
+View.prototype.set_page = function(model) {
+    this.content1.selectAll("*").remove();
+    this.content2.selectAll("*").remove();
+    var p_main    = !model.sel.pagecode;
+    var p_samples = model.sel.pagecode === 'samples';
+    var p_types   = model.sel.pagecode === 'types';
+    var p_plot    = model.sel.pagecode === 'plot';
+    this.results = p_main    ? new ResultTable(this) : null;
+    this.samples = p_samples ? new SampleTable(this) : null;
+    this.types   = p_types   ? new TypeTable(this)   : null;
+    this.plot    = p_plot    ? new Plot(this)        : null;
+    this.window1.node().focus();
+};
+
+View.prototype.set_curves = function(model) {
+    if (this.plot) {
+        this.plot.set_curves(model.get_curves());
+        this.plot.recalc_axes();
+        this.plot.recalc_curves();
+    }
+};
+
+View.prototype.set_points = function(model) {
+    if (this.plot) {
+        this.plot.set_points(model.get_points());
+        this.plot.recalc_points();
+    }
+};
+
+View.prototype.set_sel = function(model) {
+    if (this.results) {
+        this.results.set_sel(model);
+    }
+    if (this.samples) {
+        this.samples.set_sel(model);
+    }
+    if (this.types) {
+        this.types.set_sel(model);
+    }
+};
+
+View.prototype.set_results = function(model) {
+    if (this.results) {
+        this.results.set_results(model);
+    }
+};
+
+View.prototype.set_samples = function(model) {
+    if (this.samples) {
+        this.samples.set_samples(model);
+    }
+};
+
+View.prototype.set_tokens = function(model) {
+    if (this.types) {
+        this.types.set_tokens(model);
+    }
+};
+
 View.prototype.set_context = function(model) {
+/*
     var table = this.context_table;
     if (!table) {
         return;
@@ -998,15 +1021,9 @@ View.prototype.set_context = function(model) {
     this.context_rows = table_builder(
         columns, 
         model.get_context(),
-        table,
-        this.ctrl.ev_context_cell_click.bind(this.ctrl)
+        table
     );
-};
-
-View.prototype.set_results = function(model) {
-    if (this.result_table) {
-        this.result_table.set_results(model);
-    }
+*/
 };
 
 View.prototype.set_info = function(model) {
@@ -1364,20 +1381,18 @@ Controller.prototype.ev_result_cell_click = function(d) {
 };
 
 Controller.prototype.ev_sample_cell_click = function(d) {
-    var x = d.row;
-    x['pagecode'] = 'types';
-    this.recalc_sel(x);
+    if (this.model.all_set(d.row)) {
+        this.recalc_sel({ samplecode: null });
+    } else {
+        this.recalc_sel(d.row);
+    }
 };
 
 Controller.prototype.ev_token_cell_click = function(d) {
-    this.recalc_sel({ tokencode: d.row.tokencode, pagecode: 'context' });
-};
-
-Controller.prototype.ev_context_cell_click = function(d) {
-    if (this.model.sel.tokencode) {
-        this.recalc_sel({ samplecode: d.row.samplecode, tokencode: null, collectioncode: null });
+    if (this.model.all_set(d.row)) {
+        this.recalc_sel({ tokencode: null });
     } else {
-        this.recalc_sel({ tokencode: d.row.tokencode, samplecode: null });
+        this.recalc_sel(d.row);
     }
 };
 
@@ -1840,8 +1855,7 @@ var Model = function() {
         { label: "Overview", code: null },
         { label: "Plot", code: "plot" },
         { label: "Samples", code: "samples" },
-        { label: "Types", code: "types" },
-        { label: "Context", code: "context" }
+        { label: "Types", code: "types" }
     ];
     this.pagecodemap = {};
     for (var i = 0; i < this.pagecodes.length; ++i) {
