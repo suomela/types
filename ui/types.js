@@ -582,7 +582,7 @@ var td_builder = function(d) {
     return e;
 };
 
-var table_builder = function(columns, data, table, row_hook) {
+var table_builder = function(columns, data, table, row_hook, default_sort) {
     var get_max = function(c) {
         if (c.kind !== 'num') {
             return null;
@@ -639,6 +639,9 @@ var table_builder = function(columns, data, table, row_hook) {
     th.html(function(d) { return d.html; });
     th.classed("right", function(d) { return !d.hcenter && (d.right || d.hright); });
     th.classed("center", function(d) { return d.hcenter; });
+    if (default_sort) {
+        sorter(columns[default_sort], default_sort);
+    }
     return tr;
 };
 
@@ -779,11 +782,13 @@ SampleTable.prototype.set_samples = function(model) {
         columns,
         model.get_samples(),
         this.table,
-        this.ctrl.ev_sample_cell_click.bind(this.ctrl)
+        this.ctrl.ev_sample_cell_click.bind(this.ctrl),
+        2
     );
 };
 
 TypeTable.prototype.set_tokens = function(model) {
+    var coll = model.sel.collectioncode;
     var col1 = [
         {
             html: 'type',
@@ -801,7 +806,7 @@ TypeTable.prototype.set_tokens = function(model) {
             key: function(p) { return -p.tokencount; }
         }
     ];
-    var col2 = !model.sel.collectioncode ? [] : [
+    var col2 = !coll ? [] : [
         {
             html: 'in collection',
             kind: 'num',
@@ -839,7 +844,7 @@ TypeTable.prototype.set_tokens = function(model) {
             key: function(p) { return -p.samplecount; }
         },
     ];
-    var col4 = !model.sel.collectioncode ? [] : [
+    var col4 = !coll ? [] : [
         {
             html: 'in collection',
             kind: 'num',
@@ -872,7 +877,8 @@ TypeTable.prototype.set_tokens = function(model) {
         columns,
         model.get_tokens(),
         this.table,
-        this.ctrl.ev_token_cell_click.bind(this.ctrl)
+        this.ctrl.ev_token_cell_click.bind(this.ctrl),
+        coll ? 4 : 1
     );
 };
 
