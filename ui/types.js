@@ -229,8 +229,8 @@ var f_empty = function(f, x) {
         g#yaxisg                    (translated)
 */
 
-var Plot = function(ctrl, view) {
-    this.ctrl = ctrl;
+var Plot = function(view) {
+    this.ctrl = view.ctrl;
     this.plotdiv = view.content1.append("div").attr("class", "plot");
     this.plot = this.plotdiv.append("svg");
     this.curveareag = this.plot.append("g");
@@ -516,6 +516,70 @@ Plot.prototype.ev_settings_changed = function() {
     this.settings_reset.attr('disabled', null);
 };
 
+//// Tables
+
+var ResultTable = function(view) {
+    this.ctrl = view.ctrl;
+    this.table = view.content1.append("table").classed("results", true);
+};
+
+ResultTable.prototype.set_results = function(model) {
+    var ctrl = this.ctrl;
+    var db = model.db;
+    this.table.selectAll("*").remove();
+
+    var columns = [
+        ['corpus', function(p) { return p.corpuscode; }],
+        ['dataset', function(p) { return p.datasetcode; }],
+        ['collection', function(p) { return p.collectioncode; }],
+        ['axes', function(p) { return db.statcode_map[p.statcode].label; }],
+        ['side', function(p) { return p.side; }],
+        ['p-value', function(p) {
+            return f_fraction(p.fraction);
+        }],
+        ['FDR', function(p) {
+            if (p.fdr < 1) {
+                return f_fraction(p.fdr);
+            } else {
+                return "> 1";
+            }
+        }]
+    ];
+
+    var head = this.table.append("thead");
+    head.append("tr").selectAll("th")
+        .data(columns).enter()
+        .append("th").text(function(d) {
+            return d[0];
+        });
+    var body = this.table.append("tbody");
+    this.result_rows = body.selectAll("tr")
+        .data(db.point_ordered).enter()
+        .append("tr")
+        .classed("clickable", true);
+    this.result_rows.selectAll("td")
+        .data(function(row) {
+            return columns.map(function(c) {
+                return { row: row, column: c };
+            });
+        }).enter()
+        .append("td").text(function(d) {
+            return d.column[1](d.row);
+        })
+        .on("click", ctrl.ev_result_cell_click.bind(ctrl));
+};
+
+ResultTable.prototype.set_sel = function(model) {
+    if (this.result_rows) {
+        this.result_rows.classed("selected", function(d) {
+            return model.sel.corpuscode === d.corpuscode &&
+                model.sel.datasetcode === d.datasetcode &&
+                model.sel.collectioncode === d.collectioncode &&
+                model.sel.statcode === d.statcode;
+        });
+    }
+};
+
 //// View
 
 var View = function(ctrl) {
@@ -535,8 +599,8 @@ View.prototype.set_page = function(model) {
     var p_samples = model.sel.pagecode === 'samples';
     var p_types = model.sel.pagecode === 'types';
 
-    this.result_table = p_main ? this.content1.append("table").classed("results", true) : null;
-    this.plot = p_plot ? new Plot(this.ctrl, this) : null;
+    this.result_table = p_main ? new ResultTable(this) : null;
+    this.plot = p_plot ? new Plot(this) : null;
     this.sample_table = p_samples ? this.content1.append("table").classed("samples", true) : null;
     this.token_table = p_types ? this.content1.append("table").classed("types", true) : null;
     this.window1.node().focus();
@@ -555,16 +619,11 @@ View.prototype.set_points = function(model) {
         this.plot.set_points(model.get_points());
         this.plot.recalc_points();
     }
-}
+};
 
 View.prototype.set_sel = function(model) {
-    if (this.result_rows) {
-        this.result_rows.classed("selected", function(d) {
-            return model.sel.corpuscode === d.corpuscode &&
-                model.sel.datasetcode === d.datasetcode &&
-                model.sel.collectioncode === d.collectioncode &&
-                model.sel.statcode === d.statcode;
-        });
+    if (this.result_table) {
+        this.result_table.set_sel(model);
     }
     if (this.sample_rows) {
         this.sample_rows.classed("selected", function(d) {
@@ -945,54 +1004,9 @@ View.prototype.set_context = function(model) {
 };
 
 View.prototype.set_results = function(model) {
-    var table = this.result_table;
-    if (!table) {
-        return;
+    if (this.result_table) {
+        this.result_table.set_results(model);
     }
-
-    var ctrl = this.ctrl;
-    var db = model.db;
-    table.selectAll("*").remove();
-
-    var columns = [
-        ['corpus', function(p) { return p.corpuscode; }],
-        ['dataset', function(p) { return p.datasetcode; }],
-        ['collection', function(p) { return p.collectioncode; }],
-        ['axes', function(p) { return db.statcode_map[p.statcode].label; }],
-        ['side', function(p) { return p.side; }],
-        ['p-value', function(p) {
-            return f_fraction(p.fraction);
-        }],
-        ['FDR', function(p) {
-            if (p.fdr < 1) {
-                return f_fraction(p.fdr);
-            } else {
-                return "> 1";
-            }
-        }]
-    ];
-
-    var head = table.append("thead");
-    head.append("tr").selectAll("th")
-        .data(columns).enter()
-        .append("th").text(function(d) {
-            return d[0];
-        });
-    var body = table.append("tbody");
-    this.result_rows = body.selectAll("tr")
-        .data(db.point_ordered).enter()
-        .append("tr")
-        .classed("clickable", true);
-    this.result_rows.selectAll("td")
-        .data(function(row) {
-            return columns.map(function(c) {
-                return { row: row, column: c };
-            });
-        }).enter()
-        .append("td").text(function(d) {
-            return d.column[1](d.row);
-        })
-        .on("click", ctrl.ev_result_cell_click.bind(ctrl));
 };
 
 View.prototype.set_info = function(model) {
