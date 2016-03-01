@@ -1723,12 +1723,14 @@ Database.prototype.setup_tokens_collection1 = function(corpuscode, datasetcode) 
         dataset.collection_tokencount[collectioncode] = xt;
         dataset.collection_samplecount[collectioncode] = xs;
         var sc = this.data.sample_collection[corpuscode][collectioncode];
-        for (var i = 0; i < sc.length; ++i) {
-            var samplecode = sc[i];
-            var s = this.sample_data[corpuscode][datasetcode][samplecode];
-            for (var tokencode in s.tokencount) {
-                add1(xt, tokencode, s.tokencount[tokencode]);
-                add1(xs, tokencode, 1);
+        if (sc) {
+            for (var i = 0; i < sc.length; ++i) {
+                var samplecode = sc[i];
+                var s = this.sample_data[corpuscode][datasetcode][samplecode];
+                for (var tokencode in s.tokencount) {
+                    add1(xt, tokencode, s.tokencount[tokencode]);
+                    add1(xs, tokencode, 1);
+                }
             }
         }
     }
