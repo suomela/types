@@ -23,8 +23,13 @@ h1 {
     font-weight: 400;
 }
 
-h1 + p, p + p {
-    margin-top: 12px;
+h1, p, ul {
+    margin-bottom: 12px;
+}
+
+li {
+    list-style: none;
+    margin-left: 9px;
 }
 
 a:link, a:visited {
@@ -62,6 +67,19 @@ strong {
     font-size: 0.85em;
 }
 
+.hidden {
+    display: none;
+}
+
+.key {
+    display: inline-block;
+    background-color: #eee;
+    border: 1px solid black;
+    min-width: 2.5ex;
+    text-align: center;
+    margin: 2px;
+}
+
 /* general layout */
 
 .sidemenu {
@@ -83,13 +101,24 @@ strong {
 
 .top {
     top: 10px;
-    height: calc(67% - 15px);
+    height: calc(70% - 15px);
 }
 
 .bottom {
     bottom: 10px;
-    height: calc(33% - 15px);
+    height: calc(30% - 15px);
 }
+
+.zoomed .top {
+    top: 10px;
+    height: calc(30% - 15px);
+}
+
+.zoomed .bottom {
+    bottom: 10px;
+    height: calc(70% - 15px);
+}
+
 
 /* menu bar */
 

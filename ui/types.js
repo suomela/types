@@ -1032,22 +1032,39 @@ var View = function(ctrl) {
     this.ctrl = ctrl;
     this.content1 = d3.select("#content1");
     this.content2 = d3.select("#content2");
+    this.help1 = d3.select("#help1");
     this.window1 = d3.select("#window1");
     this.window2 = d3.select("#window2");
+    this.windows = d3.select("#windows");
+    this.zoom = false;
+};
+
+View.prototype.toggle_zoom = function() {
+    this.set_zoom(!this.zoom);
+    this.ev_resize();
+};
+
+View.prototype.set_zoom = function(zoom) {
+    this.zoom = zoom;
+    this.windows.classed("zoomed", this.zoom);
 };
 
 View.prototype.set_page = function(model) {
     this.content1.selectAll("*").remove();
     this.content2.selectAll("*").remove();
+    this.set_zoom(false);
     this.info = null;
     var p_main    = !model.sel.pagecode;
     var p_samples = model.sel.pagecode === 'samples';
     var p_types   = model.sel.pagecode === 'types';
     var p_plot    = model.sel.pagecode === 'plot';
+    var p_help    = model.sel.pagecode === 'help';
     this.results = p_main    ? new ResultTable(this) : null;
     this.samples = p_samples ? new SampleTable(this) : null;
     this.types   = p_types   ? new TypeTable(this)   : null;
     this.plot    = p_plot    ? new Plot(this)        : null;
+    this.content1.classed("hidden", p_help);
+    this.help1.classed("hidden", !p_help);
     this.window1.node().focus();
 };
 
@@ -1119,6 +1136,7 @@ View.prototype.set_info = function(model) {
     var dataset = model.get_dataset();
     var p = model.get_point();
     var t;
+    var extra = false;
 
     if (corpus) {
         t = [];
@@ -1282,7 +1300,8 @@ var Controller = function(model) {
     ];
     d3.select(window)
         .on('resize', this.view.ev_resize.bind(this.view))
-        .on('hashchange', this.ev_hashchange.bind(this));
+        .on('hashchange', this.ev_hashchange.bind(this))
+        .on('keydown', this.ev_key.bind(this));
 };
 
 Controller.prototype.update_sel = function(changes) {
@@ -1447,6 +1466,29 @@ Controller.prototype.ev_token_cell_click = function(d) {
         this.recalc_sel({ tokencode: null });
     } else {
         this.recalc_sel(d.row);
+    }
+};
+
+Controller.prototype.ev_key = function(e) {
+    var c = d3.event.keyCode;
+    if (c === 90) {  // Z
+        this.view.toggle_zoom();
+    } else if (c === 49) {  // 1
+        this.view.window1.node().focus();
+    } else if (c === 50) {  // 2
+        this.view.window2.node().focus();
+    } else if (c === 79 ) {  // O
+        this.recalc_sel({ pagecode: null });
+    } else if (c === 80 ) {  // P
+        this.recalc_sel({ pagecode: 'plot' });
+    } else if (c === 83 ) {  // S
+        this.recalc_sel({ pagecode: 'samples' });
+    } else if (c === 84 ) {  // T
+        this.recalc_sel({ pagecode: 'types' });
+    } else if (c === 72 ) {  // H
+        this.recalc_sel({ pagecode: 'help' });
+    } else if (c === 191 ) {  // ?
+        this.recalc_sel({ pagecode: 'help' });
     }
 };
 
@@ -1911,7 +1953,8 @@ var Model = function() {
         { label: "Overview", code: null },
         { label: "Plot", code: "plot" },
         { label: "Samples", code: "samples" },
-        { label: "Types", code: "types" }
+        { label: "Types", code: "types" },
+        { label: "Help", code: "help" }
     ];
     this.pagecodemap = {};
     for (var i = 0; i < this.pagecodes.length; ++i) {
