@@ -582,7 +582,7 @@ var td_builder = function(d) {
     return e;
 };
 
-var table_builder = function(columns, data, table, row_hook, default_sort) {
+var table_builder = function(columns, data, table, row_hook, fallback_key, default_sort) {
     var get_max = function(c) {
         if (c.kind !== 'num') {
             return null;
@@ -626,7 +626,12 @@ var table_builder = function(columns, data, table, row_hook, default_sort) {
             return;
         }
         tr.sort(function(a, b) {
-            return d3.ascending(c.key(a), c.key(b));
+            var x = d3.ascending(c.key(a), c.key(b));
+            if (x == 0) {
+                return d3.ascending(fallback_key(a), fallback_key(b));
+            } else {
+                return x;
+            }
         });
         sort_key = i;
         th_style();
@@ -783,6 +788,7 @@ SampleTable.prototype.set_samples = function(model) {
         model.get_samples(),
         this.table,
         this.ctrl.ev_sample_cell_click.bind(this.ctrl),
+        function(p) { return p.samplecode; },
         2
     );
 };
@@ -878,6 +884,7 @@ TypeTable.prototype.set_tokens = function(model) {
         model.get_tokens(),
         this.table,
         this.ctrl.ev_token_cell_click.bind(this.ctrl),
+        function(p) { return p.tokencode; },
         coll ? 8 : 2
     );
 };
@@ -890,7 +897,6 @@ SampleTable.prototype.set_sample_context = function(model) {
         return;
     }
 
-    var sample_data = model.db.sample_data[model.sel.corpuscode][model.sel.datasetcode];
     var columns = [
         {
             html: 'token',
@@ -929,7 +935,9 @@ SampleTable.prototype.set_sample_context = function(model) {
     table_builder(
         columns, 
         context,
-        table
+        table,
+        null,
+        function(p) { return p.fallbackkey; }
     );
 };
 
@@ -986,7 +994,9 @@ TypeTable.prototype.set_token_context = function(model) {
     var rows = table_builder(
         columns, 
         context,
-        table
+        table,
+        null,
+        function(p) { return p.fallbackkey; }
     );
 
     rows.classed("highlighted", function(d) {
@@ -1821,6 +1831,7 @@ Database.prototype.setup_context = function() {
                         context.datasetcode = datasetcode;
                         context.samplecode = samplecode;
                         context.tokencode = tokencode;
+                        context.fallbackkey = corpuscode + " " + datasetcode + " " + samplecode + " " + tokencode;
                         context.shortlabel = tokencode;
                         context.longlabel = tokencode;
                         if (tokeninfo && tokeninfo.shortlabel) {
