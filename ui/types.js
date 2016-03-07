@@ -878,7 +878,7 @@ TypeTable.prototype.set_tokens = function(model) {
         model.get_tokens(),
         this.table,
         this.ctrl.ev_token_cell_click.bind(this.ctrl),
-        coll ? 4 : 1
+        coll ? 8 : 2
     );
 };
 
