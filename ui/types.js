@@ -1963,8 +1963,8 @@ var Model = function() {
     this.pagecodes = [
         { label: "Overview", code: null },
         { label: "Plot", code: "plot" },
-        { label: "Samples", code: "samples" },
         { label: "Types", code: "types" },
+        { label: "Samples", code: "samples" },
         { label: "Help", code: "help" }
     ];
     this.pagecodemap = {};
