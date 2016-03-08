@@ -1,0 +1,3 @@
+table.results tbody tr[data-statcode="token-word"] {
+    color: #bbb;
+}

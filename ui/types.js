@@ -701,7 +701,11 @@ ResultTable.prototype.set_results = function(model) {
     this.rows = body.selectAll("tr")
         .data(db.point_ordered).enter()
         .append("tr")
-        .classed("clickable", true);
+        .classed("clickable", true)
+        .attr("data-corpuscode", function(p) { return p.corpuscode; })
+        .attr("data-datasetcode", function(p) { return p.datasetcode; })
+        .attr("data-collectioncode", function(p) { return p.collectioncode; })
+        .attr("data-statcode", function(p) { return p.statcode; });
     this.rows.selectAll("td")
         .data(function(row) {
             return columns.map(function(c) {
