@@ -16,7 +16,7 @@ to set the compilation environment. Then open a terminal and run:
 
     git clone git://github.com/suomela/types.git
     cd types
-    
+
     ./config
     make
     make check

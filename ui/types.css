@@ -83,6 +83,16 @@ strong {
     margin: 2px;
 }
 
+h1.toolname {
+    margin-bottom: 0px;
+}
+
+p.toolversion {
+    margin-top: 0px;
+    color: #888;
+    margin-bottom: 24px;
+}
+
 /* general layout */
 
 .sidemenu {
