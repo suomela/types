@@ -1419,7 +1419,7 @@ var Controller = function(model) {
     d3.select(window)
         .on('resize', this.view.ev_resize.bind(this.view))
         .on('hashchange', this.ev_hashchange.bind(this))
-        .on('keydown', this.ev_key.bind(this));
+        .on('keypress', this.ev_key.bind(this));
 };
 
 Controller.prototype.update_sel = function(changes) {
@@ -1601,27 +1601,31 @@ Controller.prototype.ev_token_cell_click = function(d) {
 };
 
 Controller.prototype.ev_key = function(e) {
-    var c = d3.event.keyCode;
-    if (c === 90) {  // Z
-        this.view.toggle_zoom();
-    } else if (c === 49) {  // 1
+    var ev = d3.event;
+    if (ev.altKey || ev.metaKey || ev.ctrlKey) {
+        return;
+    }
+    var c = ev.charCode;
+    if (c === 49) {  // 1
         this.view.window1.node().focus();
     } else if (c === 50) {  // 2
         this.view.window2.node().focus();
-    } else if (c === 79 ) {  // O
+    } else if (c === 90+32) {  // Z
+        this.view.toggle_zoom();
+    } else if (c === 79+32 ) {  // O
         this.recalc_sel({ pagecode: null });
-    } else if (c === 80 ) {  // P
+    } else if (c === 80+32 ) {  // P
         this.recalc_sel({ pagecode: 'plot' });
-    } else if (c === 83 ) {  // S
+    } else if (c === 83+32 ) {  // S
         this.recalc_sel({ pagecode: 'samples' });
-    } else if (c === 84 ) {  // T
+    } else if (c === 84+32 ) {  // T
         this.recalc_sel({ pagecode: 'types' });
-    } else if (c === 72 ) {  // H
+    } else if (c === 72+32 ) {  // H
         this.recalc_sel({ pagecode: 'help' });
-    } else if (c === 191 ) {  // ?
-        this.recalc_sel({ pagecode: 'help' });
-    } else if (c === 82 ) {  // R
+    } else if (c === 82+32 ) {  // R
         this.home();
+    } else if (c === 63 ) {  // ?
+        this.recalc_sel({ pagecode: 'help' });
     }
 };
 
