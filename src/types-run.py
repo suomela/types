@@ -11,7 +11,7 @@ BIN_DIR = os.path.realpath(sys.path[0])
 TMP_DIR = 'tmp'
 
 CITER=1000000
-PITER=100000000
+PITER=10000000
 X_DEF=1000
 Y_DEF=1000
 
