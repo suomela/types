@@ -290,11 +290,12 @@ td.after span {
 .selected {
     color: #337ab7;
     background-color: #eee;
+    border-right: 20px solid #000;
 }
 
 .selected td {
-    border-bottom: 1px solid #337ab7;
-    border-top: 1px solid #337ab7;
+    border-bottom: 1px solid #000;
+    border-top: 1px solid #000;
 }
 
 .highlighted {
