@@ -1331,6 +1331,7 @@ var Controller = function(model) {
     this.fields = [
         {
             menu: '<i>types</i>2',
+            home: true,
             key: 'pagecode',
             get: model.get_pagecodes.bind(model),
             invalidates: [
@@ -1498,6 +1499,10 @@ Controller.prototype.update_inputs = function(changes) {
         var values = f.get();
 
         var menutitle = mainmenu.append("div");
+        if (f.home) {
+            menutitle.classed("home", true);
+            menutitle.on('click', ctrl.home.bind(ctrl));
+        }
         var submenu = mainmenu.append("div");
         menutitle.classed("title", true).html(f.menu);
         submenu.classed("submenu", true);
@@ -1536,11 +1541,13 @@ Controller.prototype.update_hash = function() {
     location.hash = this.expected_hash;
 };
 
-Controller.prototype.recalc_sel = function(x, force) {
+Controller.prototype.recalc_sel = function(x, force, home) {
     var model = this.model;
     var old = model.sel;
     model.sel = {};
-    this.set_sel_raw(old, x);
+    if (!home) {
+        this.set_sel_raw(old, x);
+    }
     model.fix_sel();
     var changes = this.find_changed(old);
     changes.force = force;
@@ -1550,6 +1557,10 @@ Controller.prototype.recalc_sel = function(x, force) {
     this.update_inputs(changes);
     this.update_sel(changes);
     this.update_hash();
+};
+
+Controller.prototype.home = function() {
+    this.recalc_sel({}, true, true);
 };
 
 Controller.prototype.data = function(data) {
@@ -1609,6 +1620,8 @@ Controller.prototype.ev_key = function(e) {
         this.recalc_sel({ pagecode: 'help' });
     } else if (c === 191 ) {  // ?
         this.recalc_sel({ pagecode: 'help' });
+    } else if (c === 82 ) {  // R
+        this.home();
     }
 };
 

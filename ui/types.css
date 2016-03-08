@@ -279,7 +279,7 @@ td.after span {
     left: 0px;
 }
 
-.clickable {
+.clickable, .home {
     cursor: pointer;
 }
 
