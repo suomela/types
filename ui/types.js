@@ -582,7 +582,35 @@ var td_builder = function(d) {
     return e;
 };
 
-var table_builder = function(columns, data, table, row_hook, fallback_key, default_sort) {
+var table_builder = function(ctrl, columns, data, table, row_hook, sort_key_field, sort_key_default, fallback_key) {
+    var get_column = function(id) {
+        for (var i = 0; i < columns.length; ++i) {
+            if (columns[i].id === id) {
+                return columns[i];
+            }
+        }
+        return null;
+    };
+
+    var sort_key = ctrl.model.sel[sort_key_field];
+    if (!sort_key) {
+        sort_key = sort_key_default;
+    }
+    var sort_column = get_column(sort_key);
+    if (!sort_column) {
+        sort_key = sort_key_default;
+        sort_column = get_column(sort_key);
+    }
+    var sort_fn = sort_column.key;
+    data.sort(function(a, b) {
+        var x = d3.ascending(sort_fn(a), sort_fn(b));
+        if (x === 0) {
+            return d3.ascending(fallback_key(a), fallback_key(b));
+        } else {
+            return x;
+        }
+    });
+
     var get_max = function(c) {
         if (c.kind !== 'num') {
             return null;
@@ -611,42 +639,27 @@ var table_builder = function(columns, data, table, row_hook, fallback_key, defau
     td.append(td_builder);
     td.attr("class", function(d) { return d.column.classed; });
     td.classed("right", function(d) { return d.column.right; });
-    var th;
-    var sort_key = null;
-    var th_style = function() {
-        th.classed("active", function(c, i) {
-            return c.key && (i === sort_key);
-        });
-        th.classed("inactive", function(c, i) {
-            return c.key && (i !== sort_key);
-        });
-    };
-    var sorter = function(c, i) {
-        if (!c.key) {
-            return;
-        }
-        tr.sort(function(a, b) {
-            var x = d3.ascending(c.key(a), c.key(b));
-            if (x == 0) {
-                return d3.ascending(fallback_key(a), fallback_key(b));
-            } else {
-                return x;
-            }
-        });
-        sort_key = i;
-        th_style();
-    };
-    th = head.append("tr").selectAll("th")
+
+    var th = head.append("tr").selectAll("th")
         .data(columns).enter()
         .append("th")
-        .on("click", sorter);
-    th_style();
-    th.html(function(d) { return d.html; });
-    th.classed("right", function(d) { return !d.hcenter && (d.right || d.hright); });
-    th.classed("center", function(d) { return d.hcenter; });
-    if (default_sort) {
-        sorter(columns[default_sort], default_sort);
-    }
+        .on("click", function(c) {
+            if (c.key && c.id && (c.id !== sort_key)) {
+                var x = {};
+                x[sort_key_field] = (c.id === sort_key_default) ? null : c.id;
+                ctrl.recalc_sel(x);
+            }
+        })
+        .html(function(d) { return d.html; })
+        .classed("active", function(c, i) {
+            return c.key && (c.id === sort_key);
+        })
+        .classed("inactive", function(c, i) {
+            return c.key && (c.id !== sort_key);
+        })
+        .classed("right", function(d) { return !d.hcenter && (d.right || d.hright); })
+        .classed("center", function(d) { return d.hcenter; });
+
     return tr;
 };
 
@@ -721,18 +734,21 @@ ResultTable.prototype.set_results = function(model) {
 SampleTable.prototype.set_samples = function(model) {
     var columns = [
         {
+            id: 'samplecode',
             html: 'sample',
             kind: 'link',
             val: function(p) { return { label: p.samplecode, link: p.link }; },
             key: function(p) { return p.samplecode; }
         },
         {
+            id: 'description',
             html: 'description',
             kind: 'plain',
             val: function(p) { return p.description; },
             key: function(p) { return p.description; }
         },
         {
+            id: 'wordcount',
             html: model.db.data.label.word.labeltext,
             kind: 'num',
             format: f_large,
@@ -742,6 +758,7 @@ SampleTable.prototype.set_samples = function(model) {
             key: function(p) { return -p.wordcount; }
         },
         {
+            id: 'tokens',
             html: model.db.data.label.token.labeltext,
             kind: 'num',
             format: f_large,
@@ -751,6 +768,7 @@ SampleTable.prototype.set_samples = function(model) {
             key: function(p) { return -p.tokens; }
         },
         {
+            id: 'token_fraction',
             html: "/1000",
             kind: 'num',
             format: f_fraction,
@@ -760,6 +778,7 @@ SampleTable.prototype.set_samples = function(model) {
             key: function(p) { return -p.tokens/p.wordcount; }
         },
         {
+            id: 'types',
             html: model.db.data.label.type.labeltext,
             kind: 'num',
             format: f_large,
@@ -769,6 +788,7 @@ SampleTable.prototype.set_samples = function(model) {
             key: function(p) { return -p.types; }
         },
         {
+            id: 'hapaxes',
             html: model.db.data.label.hapax.labeltext,
             kind: 'num',
             format: f_large,
@@ -779,6 +799,7 @@ SampleTable.prototype.set_samples = function(model) {
         },
         { kind: 'pad' },
         {
+            id: 'unique',
             html: "unique",
             kind: 'plain',
             classed: 'wrap small',
@@ -788,25 +809,36 @@ SampleTable.prototype.set_samples = function(model) {
     ];
 
     this.rows = table_builder(
+        this.ctrl,
         columns,
         model.get_samples(),
         this.table,
         this.ctrl.ev_sample_cell_click.bind(this.ctrl),
-        function(p) { return p.samplecode; },
-        2
+        'sort_key_samples',
+        'wordcount',
+        function(p) { return p.samplecode; }
     );
 };
 
 TypeTable.prototype.set_tokens = function(model) {
-    var coll = model.sel.collectioncode;
-    var col1 = [
+    if (model.sel.collectioncode) {
+        this.set_tokens_fancy(model);
+    } else {
+        this.set_tokens_plain(model);
+    }
+};
+
+TypeTable.prototype.set_tokens_fancy = function(model) {
+    var columns = [
         {
+            id: 'shortlabel',
             html: 'type',
             kind: 'plain',
             val: function(p) { return p.shortlabel; },
             key: function(p) { return p.shortlabel; }
         },
         {
+            id: 'tokencount',
             html: model.db.data.label.token.labeltext,
             kind: 'num',
             format: f_large,
@@ -814,10 +846,9 @@ TypeTable.prototype.set_tokens = function(model) {
             hcenter: true,
             val: function(p) { return p.tokencount; },
             key: function(p) { return -p.tokencount; }
-        }
-    ];
-    var col2 = !coll ? [] : [
+        },
         {
+            id: 'tokencountc',
             html: 'in collection',
             kind: 'num',
             format: f_large,
@@ -827,6 +858,7 @@ TypeTable.prototype.set_tokens = function(model) {
             key: function(p) { return -p.tokencount_collection; }
         },
         {
+            id: 'tokencountf',
             html: 'fraction',
             kind: 'num',
             format: f_fraction3,
@@ -836,15 +868,15 @@ TypeTable.prototype.set_tokens = function(model) {
             key: function(p) { return -p.tokencount_fraction; }
         },
         {
+            id: 'tokencounts',
             html: 'score',
             kind: 'score',
             hcenter: true,
             val: function(p) { return p.tokencount_score; },
             key: function(p) { return -p.tokencount_score[1]; }
-        }
-    ];
-    var col3 = [
+        },
         {
+            id: 'samplecount',
             html: 'samples',
             kind: 'num',
             format: f_large,
@@ -852,10 +884,9 @@ TypeTable.prototype.set_tokens = function(model) {
             hcenter: true,
             val: function(p) { return p.samplecount; },
             key: function(p) { return -p.samplecount; }
-        }
-    ];
-    var col4 = !coll ? [] : [
+        },
         {
+            id: 'samplecountc',
             html: 'in collection',
             kind: 'num',
             format: f_large,
@@ -865,6 +896,7 @@ TypeTable.prototype.set_tokens = function(model) {
             key: function(p) { return -p.samplecount_collection; }
         },
         {
+            id: 'samplecountf',
             html: 'fraction',
             kind: 'num',
             format: f_fraction3,
@@ -874,6 +906,7 @@ TypeTable.prototype.set_tokens = function(model) {
             key: function(p) { return -p.samplecount_fraction; }
         },
         {
+            id: 'samplecounts',
             html: 'score',
             kind: 'score',
             hcenter: true,
@@ -881,15 +914,57 @@ TypeTable.prototype.set_tokens = function(model) {
             key: function(p) { return -p.samplecount_score[1]; }
         }
     ];
-    var columns = col1.concat(col2, col3, col4);
-
     this.rows = table_builder(
+        this.ctrl,
         columns,
         model.get_tokens(),
         this.table,
         this.ctrl.ev_token_cell_click.bind(this.ctrl),
-        function(p) { return p.tokencode; },
-        coll ? 8 : 2
+        'sort_key_tokens_fancy',
+        'samplecounts',
+        function(p) { return p.tokencode; }
+    );
+};
+
+TypeTable.prototype.set_tokens_plain = function(model) {
+    var columns = [
+        {
+            id: 'shortlabel',
+            html: 'type',
+            kind: 'plain',
+            val: function(p) { return p.shortlabel; },
+            key: function(p) { return p.shortlabel; }
+        },
+        {
+            id: 'tokencount',
+            html: model.db.data.label.token.labeltext,
+            kind: 'num',
+            format: f_large,
+            right: true,
+            hcenter: true,
+            val: function(p) { return p.tokencount; },
+            key: function(p) { return -p.tokencount; }
+        },
+        {
+            id: 'samplecount',
+            html: 'samples',
+            kind: 'num',
+            format: f_large,
+            right: true,
+            hcenter: true,
+            val: function(p) { return p.samplecount; },
+            key: function(p) { return -p.samplecount; }
+        }
+    ];
+    this.rows = table_builder(
+        this.ctrl,
+        columns,
+        model.get_tokens(),
+        this.table,
+        this.ctrl.ev_token_cell_click.bind(this.ctrl),
+        'sort_key_tokens_plain',
+        'samplecount',
+        function(p) { return p.tokencode; }
     );
 };
 
@@ -903,6 +978,7 @@ SampleTable.prototype.set_sample_context = function(model) {
 
     var columns = [
         {
+            id: 'shortlabel',
             html: 'token',
             kind: 'plain',
             val: function(p) { return p.shortlabel; },
@@ -910,6 +986,7 @@ SampleTable.prototype.set_sample_context = function(model) {
         },
         { kind: 'pad' },
         {
+            id: 'before',
             html: 'before',
             kind: 'wrap',
             classed: 'before',
@@ -919,6 +996,7 @@ SampleTable.prototype.set_sample_context = function(model) {
         },
         { kind: 'pad' },
         {
+            id: 'word',
             html: 'word',
             kind: 'link',
             classed: 'word',
@@ -928,6 +1006,7 @@ SampleTable.prototype.set_sample_context = function(model) {
         },
         { kind: 'pad' },
         {
+            id: 'after',
             html: 'after',
             kind: 'wrapwrap',
             classed: 'after',
@@ -937,10 +1016,13 @@ SampleTable.prototype.set_sample_context = function(model) {
     ];
 
     table_builder(
+        this.ctrl,
         columns, 
         context,
         table,
         null,
+        'sort_key_sample_context',
+        'word',
         function(p) { return p.fallbackkey; }
     );
 };
@@ -956,12 +1038,14 @@ TypeTable.prototype.set_token_context = function(model) {
     var sample_data = model.db.sample_data[model.sel.corpuscode][model.sel.datasetcode];
     var columns = [
         {
+            id: 'samplecode',
             html: 'sample',
             kind: 'link',
             val: function(p) { return { label: p.samplecode, link: sample_data[p.samplecode].link }; },
             key: function(p) { return p.samplecode; }
         },
         {
+            id: 'description',
             html: 'description',
             kind: 'plain',
             val: function(p) { return sample_data[p.samplecode].description; },
@@ -969,6 +1053,7 @@ TypeTable.prototype.set_token_context = function(model) {
         },
         { kind: 'pad' },
         {
+            id: 'before',
             html: 'before',
             kind: 'wrap',
             classed: 'before',
@@ -978,6 +1063,7 @@ TypeTable.prototype.set_token_context = function(model) {
         },
         { kind: 'pad' },
         {
+            id: 'word',
             html: 'word',
             kind: 'link',
             classed: 'word',
@@ -987,6 +1073,7 @@ TypeTable.prototype.set_token_context = function(model) {
         },
         { kind: 'pad' },
         {
+            id: 'after',
             html: 'after',
             kind: 'wrapwrap',
             classed: 'after',
@@ -996,10 +1083,13 @@ TypeTable.prototype.set_token_context = function(model) {
     ];
 
     var rows = table_builder(
+        this.ctrl,
         columns, 
         context,
         table,
         null,
+        'sort_key_token_context',
+        'samplecode',
         function(p) { return p.fallbackkey; }
     );
 
@@ -1298,18 +1388,31 @@ var Controller = function(model) {
         },
         {
             key: 'samplecode',
-            invalidates: [
-                'tokencode',
-                'selection',
-                'sample_context'
-            ]
+            invalidates: ['tokencode', 'selection', 'sample_context']
         },
         {
             key: 'tokencode',
-            invalidates: [
-                'selection',
-                'token_context'
-            ]
+            invalidates: ['selection', 'token_context']
+        },
+        {
+            key: 'sort_key_samples',
+            invalidates: ['sample_table']
+        },
+        {
+            key: 'sort_key_tokens_fancy',
+            invalidates: ['token_table']
+        },
+        {
+            key: 'sort_key_tokens_plain',
+            invalidates: ['token_table']
+        },
+        {
+            key: 'sort_key_sample_context',
+            invalidates: ['sample_context']
+        },
+        {
+            key: 'sort_key_token_context',
+            invalidates: ['token_context']
         }
     ];
     d3.select(window)
@@ -1425,6 +1528,9 @@ Controller.prototype.update_hash = function() {
     var x = [];
     for (var i = 0; i < this.fields.length; ++i) {
         x.push(hash_encode(this.model.sel[this.fields[i].key]));
+    }
+    while (x.length > 0 && x[x.length-1] === '') {
+        x.pop();
     }
     this.expected_hash = x.join("/");
     location.hash = this.expected_hash;
@@ -1962,7 +2068,12 @@ var Model = function() {
         collectioncode: null,
         statcode: null,
         samplecode: null,
-        tokencode: null
+        tokencode: null,
+        sort_key_samples: null,
+        sort_key_tokens_fancy: null,
+        sort_key_tokens_plain: null,
+        sort_key_sample_context: null,
+        sort_key_token_context: null
     };
     this.pagecodes = [
         { label: "Overview", code: null },
