@@ -51,6 +51,14 @@ Then install GCC:
     brew install gcc
 
 
+### Ubuntu Linux 15.04
+
+You will probably already have Python and GCC installed, and you will
+just need to install SQLite library and development tools:
+
+    sudo apt-get install sqlite3 libsqlite3-dev
+
+
 License
 -------
 
