@@ -1244,7 +1244,7 @@ View.prototype.set_info = function(model) {
 
     if (corpus) {
         t = [];
-        t.push("Corpus ");
+        t.push("The corpus ");
         t.push(["strong", model.sel.corpuscode]);
         t.push(" contains ");
         t.push(f_large(corpus.samplecount) + " samples");
@@ -1256,7 +1256,7 @@ View.prototype.set_info = function(model) {
 
     if (dataset) {
         t = [];
-        t.push("Dataset ");
+        t.push("The dataset ");
         t.push(["strong", model.sel.datasetcode]);
         t.push(" contains ");
         t.push(f_large(dataset.hapaxes) + " " + model.db.data.label.hapax.labeltext);
@@ -1270,7 +1270,7 @@ View.prototype.set_info = function(model) {
 
     if (p) {
         t = [];
-        t.push("Collection ");
+        t.push("The collection ");
         t.push(["strong", model.sel.collectioncode]);
         t.push(" contains ");
         t.push(f_large(p.x) + " " + stat.xlabel);
