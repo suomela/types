@@ -1281,9 +1281,9 @@ View.prototype.set_info = function(model) {
 
         t = [];
         if (p.fraction <= config.p_threshold) {
-            t.push("Only approx. ");
+            t.push("Only ");
         } else {
-            t.push(" Approx. ");
+            t.push("Approximately ");
         }
         t.push(["strong", f_fraction(100 * p.fraction) + "%"]);
         t.push(" of random collections with ");
@@ -1306,7 +1306,7 @@ View.prototype.set_info = function(model) {
                 t.push(".");
             } else {
                 t.push("This finding is probably interesting:");
-                t.push(" the false discovery rate is approx. ");
+                t.push(" the false discovery rate is ");
                 t.push(["strong", f_fraction(p.fdr)]);
                 t.push(".");
             }
