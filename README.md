@@ -1,5 +1,5 @@
-Type and hapax accumulation curves
-==================================
+types2: Type and hapax accumulation curves
+==========================================
 
 This is a tool for analysing textual diversity, richness, and
 productivity in text corpora and other data sets.
@@ -20,6 +20,19 @@ to set the compilation environment. Then open a terminal and run:
     ./config
     make
     make check
+
+
+Quick start
+-----------
+
+  - Create an empty database at `db/types.sqlite`
+  - Populate the database with your input data
+  - Run `bin/types-run` to perform data analysis
+  - Run `bin/types-web` to create the web user interface
+  - Open `web/index.html` in your web browser
+
+You will find the database template in `template/types.sqlite`.
+You can simply copy it to `db/types.sqlite` to get started.
 
 
 Examples
