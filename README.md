@@ -4,8 +4,10 @@ types2: Type and hapax accumulation curves
 This is a tool for analysing textual diversity, richness, and
 productivity in text corpora and other data sets.
 
-For more information, see
-http://users.ics.aalto.fi/suomela/types2/
+For more information, see:
+
+  - http://users.ics.aalto.fi/suomela/types2/
+  - http://users.ics.aalto.fi/suomela/types2-d2e/
 
 
 Downloading and compilation
@@ -22,8 +24,8 @@ to set the compilation environment. Then open a terminal and run:
     make check
 
 
-Quick start
------------
+Workflow
+--------
 
   - Create an empty database at `db/types.sqlite`
   - Populate the database with your input data
