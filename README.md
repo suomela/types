@@ -56,7 +56,11 @@ You will need:
 
 ### OS X 10.11
 
-First, install Homebrew as usual, and make sure it is up-to-date:
+First, make sure you have installed the command line tools:
+
+    xcode-select --install
+
+Then install Homebrew as usual, and make sure it is up-to-date:
 
     ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
     brew update
