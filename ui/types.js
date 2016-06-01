@@ -1751,7 +1751,7 @@ Database.prototype.setup_statcodes = function() {
     this.statcode_map = {};
     for (var i = 0; i < config.statcodes.length; ++i) {
         var statcode = config.statcodes[i];
-        if (this.data.stat[statcode]) {
+        if (this.data.stat[statcode] && this.data.defaultstat['v'].includes(statcode)) {
             var x = this.data.stat[statcode].x;
             var y = this.data.stat[statcode].y;
             var xlabel = this.data.label[x].labeltext;

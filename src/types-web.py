@@ -16,6 +16,7 @@ DEFAULT_DEST = 'web'
 what = [
     ('label', ['labelcode'], [], [], 'normal'),
     ('stat', ['statcode'], [], [], 'normal'),
+    ('defaultstat', ['statcode'], [], [], 'set'),
     ('corpus', ['corpuscode'], [], [], 'normal'),
     ('dataset', ['corpuscode', 'datasetcode'], [], [], 'normal'),
     ('sample', ['corpuscode', 'samplecode'], [], [], 'normal'),
@@ -123,7 +124,10 @@ def dump(data, conn, table, keys, skip, sort, kind):
                 if v not in p:
                     p[v] = {}
                 p = p[v]
-            v = row[key_columns[-2]]
+            if len(key_columns) > 1:
+                v = row[key_columns[-2]]
+            else:
+                v = 'v'
             if v not in p:
                 p[v] = []
             p = p[v]
