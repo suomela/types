@@ -268,14 +268,14 @@ var Plot = function(view) {
     };
     var label;
     label = this.ctrldiv.append("label").text("X ticks:");
-    this.settings_yticks = label.append("input")
+    this.settings_xticks = label.append("input")
         .attr("type", "range")
         .attr("min", "0")
         .attr("max", "10")
         .attr("value", "5")
         .on(on_settings);
     label = this.ctrldiv.append("label").text("Y ticks:");
-    this.settings_xticks = label.append("input")
+    this.settings_yticks = label.append("input")
         .attr("type", "range")
         .attr("min", "0")
         .attr("max", "10")
