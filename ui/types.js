@@ -1261,9 +1261,9 @@ View.prototype.set_info = function(model) {
         t.push(" contains ");
         t.push(f_large(dataset.hapaxes) + " " + model.db.data.label.hapax.labeltext);
         t.push(", ");
-        t.push(f_large(dataset.tokens) + " " + model.db.data.label.type.labeltext);
+        t.push(f_large(dataset.types) + " " + model.db.data.label.type.labeltext);
         t.push(", and ");
-        t.push(f_large(dataset.types) + " " + model.db.data.label.token.labeltext);
+        t.push(f_large(dataset.tokens) + " " + model.db.data.label.token.labeltext);
         t.push(".");
         textmaker(this.info.append("p"), t);
     }
