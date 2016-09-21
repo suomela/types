@@ -350,7 +350,7 @@ class Config:
                                "-Wno-conversion", "-Wno-vla", "-Wno-padded",
                                "-Wno-format-nonliteral", "-Wno-sign-compare",
                                "-Wno-covered-switch-default", "-Wno-cast-align",
-                               "-Wno-unused"))
+                               "-Wno-unused", "-Wno-double-promotion"))
             self.cflags_prod.append("-Wno-unused-parameter")
             if not self.openmp:
                 self.cflags_prod.append("-Wno-source-uses-openmp")
