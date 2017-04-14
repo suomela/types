@@ -54,7 +54,7 @@ You will need:
   - SQLite 3
 
 
-### OS X 10.11
+### OS X 10.12
 
 First, make sure you have installed the command line tools:
 
@@ -62,7 +62,7 @@ First, make sure you have installed the command line tools:
 
 Then install Homebrew as usual, and make sure it is up-to-date:
 
-    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
     brew update
 
 Then install GCC:
@@ -70,12 +70,12 @@ Then install GCC:
     brew install gcc
 
 
-### Ubuntu Linux 15.04
+### Ubuntu Linux 17.04
 
 You will probably already have Python and GCC installed, and you will
-just need to install SQLite library and development tools:
+just need to install the SQLite library and development tools and Git:
 
-    sudo apt-get install sqlite3 libsqlite3-dev
+    sudo apt-get install sqlite3 libsqlite3-dev git
 
 
 License
