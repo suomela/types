@@ -2,4 +2,5 @@ pipelines:
   default:
     - step:
         script:
+          - apt-get install sqlite3 libsqlite3-dev
           - ./config
