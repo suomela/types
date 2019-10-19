@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import optparse
 import os
@@ -14,7 +14,7 @@ DEFINE_RE = re.compile(r'^#define +(\w+) +(.*)$', re.MULTILINE)
 
 def tryrun2(cmd):
     try:
-        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     except:
         return None
     output, error = p.communicate()
@@ -51,7 +51,7 @@ def definemap(dump):
 
 def try_get_version(r, label, ind, v1, v2, v3):
     if ind in r and v1 in r and v2 in r and v3 in r:
-        return (label, (r[v1], r[v2], r[v3]))
+        return (label, [int(r[v1]), int(r[v2]), int(r[v3])])
     else:
         return None
 
@@ -120,13 +120,13 @@ class Tool:
             "?" if name is None else name,
             "?" if version is None else versionstring(version)
         )
-        print "- %-30s %-20s %s" % (full, toolstring, okstring)
+        print("- %-30s %-20s %s" % (full, toolstring, okstring))
 
     def find_best(self):
-        print "Trying to find %s..." % self.long
+        print("Trying to find %s..." % self.long)
         if self.msg is not None:
-            print self.msg
-        print
+            print(self.msg)
+        print()
         tool = None
         best = None
         pathseen = set()
@@ -143,9 +143,9 @@ class Tool:
                         if pref is not None and (best is None or best < pref):
                             tool = (full, name, version)
                             best = pref
-        print
+        print()
         if tool is None:
-            print "Error: could not find %s." % self.long
+            print("Error: could not find %s." % self.long)
             sys.exit(1)
         return tool
 
@@ -153,13 +153,13 @@ class Tool:
         tool = None
         toolversion = None
         if hint is not None:
-            print "Testing %s..." % hint
+            print("Testing %s..." % hint)
             if self.msg is not None:
-                print self.msg
-            print
+                print(self.msg)
+            print()
             (name, version, pref) = self.hook(hint)
             self.report(hint, name, version, pref)
-            print
+            print()
             if pref is not None:
                 return (hint, name, version)
         if tool is None:
@@ -191,7 +191,7 @@ class Config:
 
     def do_all(self):
         self.get_args()
-        print
+        print()
         self.find_platform()
         self.find_cc()
         self.find_python()
@@ -219,46 +219,46 @@ class Config:
         self.osx = False
         self.linux = False
         if sys.platform.startswith('darwin'):
-            print "This seems to be a Mac OS X system."
+            print("This seems to be a Mac OS X system.")
             self.osx = True
         elif sys.platform.startswith('linux'):
-            print "This seems to be a Linux system."
+            print("This seems to be a Linux system.")
             self.linux = True
         else:
-            print "I do not recognise platform '%s'." % sys.platform
-            print "I will try to use reasonable default values."
-        print
+            print("I do not recognise platform '%s'." % sys.platform)
+            print("I will try to use reasonable default values.")
+        print()
 
     def find_cc(self):
         (self.cc, self.ccname, self.ccversion) = CC.find_tool(self.args.cc)
-        print "I will use %s, which seems to be %s version %s." % (
+        print("I will use %s, which seems to be %s version %s." % (
             self.cc, self.ccname, versionstring(self.ccversion)
-        )
-        print "You can override it with the --cc flag."
-        print
+        ))
+        print("You can override it with the --cc flag.")
+        print()
 
     def find_python(self):
         (self.python, self.pythonname, self.pythonversion) = PYTHON.find_tool(self.args.python)
-        print "I will use %s, which seems to be %s version %s." % (
+        print("I will use %s, which seems to be %s version %s." % (
             self.python, self.pythonname, versionstring(self.pythonversion)
-        )
-        print "You can override it with the --python flag."
-        print
+        ))
+        print("You can override it with the --python flag.")
+        print()
 
     def find_sqlite(self):
-        print "Making sure that sqlite3 is installed..."
-        print
+        print("Making sure that sqlite3 is installed...")
+        print()
         result = tryrun(['sqlite3', '-version'])
         if result is None:
-            print "Error: could not find sqlite3."
+            print("Error: could not find sqlite3.")
             sys.exit(1)
 
     def platform_features(self):
-        print "Inspecting the platform..."
-        print
+        print("Inspecting the platform...")
+        print()
         if self.linux and os.path.isfile('/proc/cpuinfo'):
-            print "- reading processor features..."
-            print
+            print("- reading processor features...")
+            print()
             with open('/proc/cpuinfo') as f:
                 for l in f:
                     if FLAGS_RE.match(l):
@@ -268,8 +268,8 @@ class Config:
                         if 'popcnt' in flags:
                             self.popcnt = True
         elif self.osx:
-            print "- reading processor features..."
-            print
+            print("- reading processor features...")
+            print()
             r = tryrun(['sysctl', '-n', 'machdep.cpu.features'])
             if r is not None:
                 flags = set(r.strip().split(' '))
@@ -282,16 +282,16 @@ class Config:
                 self.sse2 = True
 
         if self.args.disable_openmp:
-            print "- not using OpenMP as requested"
-            print
+            print("- not using OpenMP as requested")
+            print()
             self.openmp = False
         if self.osx and self.ccname == 'clang':
-            print "- clang on OS X does not support OpenMP"
-            print
+            print("- clang on OS X does not support OpenMP")
+            print()
             self.openmp = False
         if self.args.enable_openmp and self.openmp == False:
-            print "- using OpenMP as requested"
-            print
+            print("- using OpenMP as requested")
+            print()
             self.openmp = True
 
         features = []
@@ -299,8 +299,8 @@ class Config:
         features.append("SSE2" if self.sse2 else "no SSE2")
         features.append("POPCNT" if self.popcnt else "no POPCNT")
 
-        print "- summary:", ', '.join(features)
-        print
+        print("- summary:", ', '.join(features))
+        print()
 
 
     def compiler_flags(self):
@@ -364,12 +364,12 @@ class Config:
 
 
     def write_flags(self):
-        print "Writing configuration..."
-        print
+        print("Writing configuration...")
+        print()
         with open('etc/config.inc', 'w') as f:
             def setval(what, val):
                 l = "%s = %s" % (what, val)
-                print l
+                print(l)
                 f.write(l)
                 f.write("\n")
             def setlist(what, l):
@@ -388,6 +388,6 @@ class Config:
             setlist('LDLIBSDB',  ['-lsqlite3'])
             setval('MEXP', str(MEXP))
 
-        print
+        print()
 
 Config().do_all()

@@ -1,4 +1,4 @@
-import cPickle
+import pickle
 import codecs
 import collections
 import json
@@ -11,5 +11,5 @@ import sqlite3
 import subprocess
 import sys
 
-assert sys.version_info >= (2,6)
-print "OK"
+assert sys.version_info >= (3,7)
+print("OK")

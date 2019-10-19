@@ -151,13 +151,13 @@ def main():
     s = args.srcdir
     d = args.destdir
     if not os.path.exists(d):
-        print d
+        print(d)
         os.makedirs(d)
 
     for fn in os.listdir(s):
         if fn.startswith('.'):
             continue
-        print fn
+        print(fn)
         shutil.copy2(os.path.join(s, fn), os.path.join(d, fn))
 
     for w in what:

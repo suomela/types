@@ -73,6 +73,7 @@ class Runner:
 
     def run(self):
         sys.stderr.write('%s (%d): ' % (self.bin, len(self.cmds)))
+        sys.stderr.flush()
         for a in self.cmds:
             cmd = [ self.fullpath ] + [ str(i) for i in a ]
             # self.msg("run: %s" % ' '.join(cmd))
@@ -109,7 +110,7 @@ class Task:
 
     def prepare(self):
         self.inputs = []
-        l = sorted(self.sizes.iteritems(), key=lambda x:(-x[1],x[0]))
+        l = sorted(iter(self.sizes.items()), key=lambda x:(-x[1],x[0]))
         for i, p in enumerate(l):
             k, size = p
             corpuscode, datasetcode = k
@@ -177,7 +178,7 @@ def print_tasks(args, task):
         pstat = task.pstat[k]
         cstat = task.cstat[k]
         stats = [ 'c-%s' % s for s in cstat ] + [ 'p-%s' % s for s in pstat ]
-        print "%s %s: %s" % (corpuscode, datasetcode, ' '.join(stats))
+        print("%s %s: %s" % (corpuscode, datasetcode, ' '.join(stats)))
 
 def run_query(args, task):
     cmds = []

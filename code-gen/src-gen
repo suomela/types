@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import struct
 import sys
 
@@ -481,10 +479,10 @@ def get_seed():
     LEN = struct.calcsize(FORMAT)
     assert LEN == 4
     seed = []
-    with open('etc/seed') as f:
+    with open('etc/seed', 'rb') as f:
         while True:
             s = f.read(LEN)
-            if s == '':
+            if s == b'':
                 break
             seed.append(struct.unpack(FORMAT, s))
     return {
