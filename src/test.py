@@ -11,5 +11,5 @@ import sqlite3
 import subprocess
 import sys
 
-assert sys.version_info >= (3,7)
+assert sys.version_info >= (3,4)
 print("OK")
