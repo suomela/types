@@ -6,8 +6,8 @@ productivity in text corpora and other data sets.
 
 For more information, see:
 
-  - http://users.ics.aalto.fi/suomela/types2/
-  - http://users.ics.aalto.fi/suomela/types2-d2e/
+  - https://jukkasuomela.fi/types2/
+  - https://jukkasuomela.fi/types2-d2e/
 
 
 Downloading and compilation
@@ -139,7 +139,7 @@ Copyright (c) 2019 Jukka Suomela.
 
 Enjoy, use at your own risk.
 
-To contact the author, see http://users.ics.aalto.fi/suomela/
+To contact the author, see https://jukkasuomela.fi/
 
 You can use any of the following licenses to distribute this software:
 
