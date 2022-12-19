@@ -20,6 +20,7 @@ create_temp_sample(const char * restrict corpuscode)
         "SELECT samplecode, wordcount FROM sample WHERE corpuscode = ? ORDER BY samplecode",
         BIND(STRING(corpuscode))
     );
+    db_exec("CREATE INDEX tmp_sample_idx ON tmp_sample(samplecode)", NOBIND);
     return db_getuint("SELECT COUNT(0) FROM tmp_sample", NOBIND);
 }
 
