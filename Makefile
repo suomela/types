@@ -202,7 +202,7 @@ $(characteristic):
 	cp -p $(sfmt)/jump/characteristic.$(MEXP).txt $@
 
 version:
-	code-gen/update-version
+	$(PYTHON) code-gen/update-version
 
 ### External libraries
 
