@@ -16,7 +16,7 @@ Downloading and compilation
 See the section *Installing dependencies* below for information on how
 to set the compilation environment. Then open a terminal and run:
 
-    git clone git://github.com/suomela/types.git
+    git clone https://github.com/suomela/types.git
     cd types
 
     ./config
@@ -70,12 +70,12 @@ Then install GCC:
     brew install gcc
 
 
-### Ubuntu Linux 17.04
+### Ubuntu Linux 22.04
 
-You will probably already have Python and GCC installed, and you will
-just need to install the SQLite library and development tools and Git:
+These packages should suffice:
 
-    sudo apt-get install sqlite3 libsqlite3-dev git
+    sudo apt update
+    sudo apt install git make gcc python3 sqlite3 libsqlite3-dev
 
 
 License
