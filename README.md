@@ -10,6 +10,13 @@ For more information, see:
   - https://jukkasuomela.fi/types2-d2e/
 
 
+News
+----
+
+For a new version of this tool, see https://github.com/suomela/types3
+
+
+
 Downloading and compilation
 ---------------------------
 
